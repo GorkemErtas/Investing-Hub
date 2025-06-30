@@ -1,0 +1,56 @@
+# dependencies
+node_modules/
+
+# Expo ve build çıktıları
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native dosyalar
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+
+# PEM/private key dosyaları
+*.pem
+
+# local env files (örn. .env.local, .env.development.local)
+.env*.local
+
+# genel .env (root ve alt dizinlerdeki .env dosyalarını izleme dışı bırak)
+.env
+
+# backend credential dosyası
+backend/service-account.json
+backend/.env
+
+# Diğer potansiyel secrets veya config dosyaları
+# Örneğin utils içindeki credential varsa (ihtiyaç halinde aç)
+# utils/service-account.json
+# utils/.env
+
+# typescript
+*.tsbuildinfo
+
+# örnek config dosyaları (eğer varsa)
+app-example
+
+# Eğer başka ortam/CI dosyaları varsa, gerektiğinde ekle:
+# /secrets.json
+# /config/*.secret.js
+

@@ -1,0 +1,28 @@
+{
+  "name": "ihapp-backend",
+  "version": "1.0.0",
+  "description": "İHApp Backend Servisi",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "cors": "^2.8.5",
+    "mongoose": "^8.13.2",
+    "dotenv": "^16.0.0",
+    "firebase-admin": "^13.4.0",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^6.10.1",
+    "onnxruntime-node": "^1.22.0-rev",
+    "axios": "^1.8.4",
+    "bcryptjs": "^3.0.2",
+    "csv-parser": "^3.2.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.0"
+  },
+  "private": true
+}
+

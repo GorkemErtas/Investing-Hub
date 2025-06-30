@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "26654882729",
+    "project_id": "investinghub-a698b",
+    "storage_bucket": "investinghub-a698b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:26654882729:android:ec4b56179b7406232be2b8",
+        "android_client_info": {
+          "package_name": "com.trertas.ihmobileexpo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAbmD693yLCmlyUjZ5yH4wKLnN81l88iDQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
