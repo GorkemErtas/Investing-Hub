@@ -12,9 +12,7 @@ const User = require('./models/User');
 const fetch = require("node-fetch");
 const Portfolio = require('./models/Portfolio');
 const nodemailer = require('nodemailer');
-const fs = require('fs');
 const Settings = require('./models/Settings');
-const { sendNotificationToUser } = require('./utils/pushNotifications');
 require("dotenv").config();
 
 //deneme2
@@ -27,8 +25,8 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-const PORT = process.env.PORT || 6000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/authdb';
+const PORT = process.env.PORT || 5000;
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://mongo:27017/ihapp';
 
 // -------------------- DATABASE CONNECTION --------------------
 mongoose
@@ -179,52 +177,20 @@ app.post('/login', async (req, res) => {
 });
 
 
-// ---------------------- SAVE FCM TOKEN ----------------------
-app.post("/save-push-token", async (req, res) => {
-  const { userId, token } = req.body;
-  try {
-    await User.findByIdAndUpdate(userId, { fcmToken: token });
-    res.json({ success: true });
-  } catch (err) {
-    console.error("❌ Error saving FCM token:", err);
-    res.status(500).json({ error: "Could not save token" });
-  }
-});
-
-// ---------------------- TEST NOTIFICATION ----------------------
-app.post("/test-notification", async (req, res) => {
-  try {
-    const user = await User.findOne({ fcmToken: { $ne: "" } });
-    if (!user) return res.status(404).json({ error: "No user with FCM token" });
-
-    console.log("📨 Test bildirimi gönderiliyor kullanıcıya:", user.email);
-
-    await sendNotificationToUser(
-      user,
-      "📢 Push Notification Test",
-      "Bu bir test bildirimidir (Postman)."
-    );
-
-    res.json({ success: true });
-  } catch (err) {
-    console.error("🚨 Test notification error:", err);
-    res.status(500).json({ error: "Failed to send test notification" });
-  }
-});
  
   
 
+
+
 // -------------------- CRYPTO DATA FETCHING --------------------
-// Cache variables
 let cachedCryptoData = [];
 let cachedTrendingData = [];
 let cachedExchangesData = [];
 let lastFetchTime = null;
+let recentlyTriggered = new Map(); // { userId => [ { coin, message, currentPrice, timestamp } ] }
 
-// Fetch cryptocurrency data (Top 50 pairs from Binance)
 const fetchCryptoData = async () => {
   try {
-    // Valid 30 symbols
     const symbols = [
       'BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'XRPUSDT', 'ADAUSDT',
       'DOGEUSDT', 'MATICUSDT', 'SOLUSDT', 'DOTUSDT', 'SHIBUSDT',
@@ -234,10 +200,11 @@ const fetchCryptoData = async () => {
       'AXSUSDT', 'SANDUSDT', 'VETUSDT', 'EGLDUSDT', 'EOSUSDT'
     ];
 
-    const requests = symbols.map((symbol) =>
-      axios.get(`https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`)
+    const responses = await Promise.all(
+      symbols.map((symbol) =>
+        axios.get(`https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`)
+      )
     );
-    const responses = await Promise.all(requests);
 
     cachedCryptoData = responses.map((response) => ({
       symbol: response.data.symbol.replace('USDT', ''),
@@ -250,9 +217,6 @@ const fetchCryptoData = async () => {
       monthlyChange: 0,
     }));
 
-    console.log('Crypto data fetched successfully for 30 symbols.');
-
-    // Weekly & monthly fetch
     for (let coin of cachedCryptoData) {
       const binanceSymbol = coin.symbol + 'USDT';
       try {
@@ -262,74 +226,105 @@ const fetchCryptoData = async () => {
         console.error(`Failed to fetch weekly/monthly for ${binanceSymbol}`, error.message);
       }
     }
-    
-// 🔔 Bildirim gönderme kısmı (GÜNCELLENDİ - only once, then clear alert)
-const users = await User.find({ fcmToken: { $ne: "" } });
 
-for (const user of users) {
-  try {
-    const settings = await Settings.findOne({ userId: user._id });
-    const selectedCoins = settings?.selectedCoins || [];
-    const priceAlerts = settings?.priceAlerts || new Map();
-    let settingsModified = false;
+    // 🔔 Eşik kontrolü
+const settingsList = await Settings.find({});
+for (const settings of settingsList) {
+  const alerts = [];
+  const { userId, priceAlerts } = settings;
+  if (!priceAlerts) continue;
 
-    console.log(`🔍 Checking alerts for user ${user._id}`);
-    console.log("➡️ Selected coins:", selectedCoins);
-    console.log("➡️ Price alerts:", priceAlerts);
+  const notifiedCoins = settings.notifiedCoins || new Map();
 
-    for (const coin of cachedCryptoData) {
-      const coinSymbol = coin.symbol.toUpperCase();
+  for (const coin of cachedCryptoData) {
+    const symbol = coin.symbol;
+    const alert = priceAlerts.get(symbol);
+    const alreadyNotified = notifiedCoins.get(symbol);
 
-      if (!selectedCoins.map(c => c.toUpperCase()).includes(coinSymbol)) {
-        continue;
-      }
+    if (!alert || alreadyNotified) continue;
 
-      const coinAlerts = priceAlerts instanceof Map
-        ? priceAlerts.get(coinSymbol)
-        : priceAlerts[coinSymbol];
+    const currentPrice = coin.price;
+    const min = alert.min ?? 0;
+    const max = alert.max ?? Infinity;
+    let message = "";
+    let triggered = false;
 
-      if (!coinAlerts || coinAlerts.min == null || coinAlerts.max == null) {
-        continue;
-      }
-
-      const shouldNotify = coin.price >= coinAlerts.max || coin.price <= coinAlerts.min;
-      if (shouldNotify) {
-        console.log(`📢 Triggering notification for ${coinSymbol} (price: ${coin.price})`);
-
-        await sendNotificationToUser(
-          user,
-          `⚠️ ${coin.symbol} Alert`,
-          `${coin.symbol} is now $${coin.price.toFixed(2)} (min: ${coinAlerts.min}, max: ${coinAlerts.max})`
-        );
-
-        // Remove alert to avoid repeated notifications
-        if (priceAlerts instanceof Map) {
-          priceAlerts.delete(coinSymbol);
-        } else {
-          delete priceAlerts[coinSymbol];
-        }
-
-        settingsModified = true;
-      }
+    if (currentPrice < min) {
+      message = `${symbol} price dropped below $${min}`;
+      triggered = true;
+    } else if (currentPrice > max) {
+      message = `${symbol} price exceeded $${max}`;
+      triggered = true;
     }
 
-    if (settingsModified) {
-      settings.priceAlerts = priceAlerts;
-      await settings.save();
-    }
+    if (triggered) {
+      alerts.push({
+        coin: symbol,
+        currentPrice,
+        message,
+        timestamp: new Date(),
+      });
+      console.log(`[ALERT] ${symbol} for user ${userId}: ${message} (current: ${currentPrice})`);
 
-  } catch (err) {
-    console.error(`❌ Failed checking alerts for user ${user._id}:`, err.message);
+      // 🔒 notifiedCoins'e ekle
+      notifiedCoins.set(symbol, true);
+    }
+  }
+
+  if (alerts.length > 0) {
+    recentlyTriggered.set(userId.toString(), alerts);
+
+    // Map güncellendiği için kaydet
+    settings.notifiedCoins = notifiedCoins;
+    settings.markModified('notifiedCoins');
+    await settings.save();
   }
 }
-    lastFetchTime = new Date();
-  } catch (err) {
-    console.error("❌ Error fetching crypto data:", err.message);
+
+    
+
+    console.log('Crypto data fetched successfully for 30 symbols.');
+  } catch (error) {
+    console.error('Error fetching crypto data:', error.message);
   }
 };
 
+// 🔄 Kullanıcının tetiklenen geçici bildirimlerini getir
+app.get('/triggered-alerts/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log(`[GET /triggered-alerts] userId: ${userId}`);
+
+    const data = recentlyTriggered.get(userId) || [];
+    console.log(`[GET /triggered-alerts] Sending alerts:`, data);
+    recentlyTriggered.delete(userId); // Bildirimi sadece bir kez göster
+
+    return res.status(200).json(data);
+  } catch (err) {
+    console.error('[GET /triggered-alerts] Error:', err.message);
+    return res.status(500).json({ message: 'Failed to fetch triggered alerts', error: err.message });
+  }
+});
 
 
+
+// Bildirimi temizleme (coin düzeyinde)
+app.delete('/triggered-alerts/:userId/:coin', async (req, res) => {
+  try {
+    const { userId, coin } = req.params;
+    const settings = await Settings.findOne({ userId });
+
+    if (!settings) return res.status(404).json({ message: 'Settings not found' });
+
+    settings.notifiedCoins?.set(coin, false);  // bildirimi pasifleştir
+    settings.markModified('notifiedCoins');
+    await settings.save();
+
+    return res.status(200).json({ message: `Alert for ${coin} removed.` });
+  } catch (err) {
+    return res.status(500).json({ message: 'Failed to remove alert', error: err.message });
+  }
+});
 // --------------------------------------------------------
 // PART 2: Add or replace endpoints for multi-timeframe
 // Insert around line ~290 or so, near your other CRYPTO endpoints.
@@ -609,31 +604,6 @@ async function fetchMonthlyChange(symbol) {
   }
 }
 
-// Candlestick chart verisi için
-app.get('/candlestick-data/:symbol/:interval', async (req, res) => {
-  try {
-    const { symbol, interval } = req.params;
-    const binanceSymbol = `${symbol.toUpperCase()}USDT`;
-
-    const response = await axios.get(
-      `https://api.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${interval}&limit=100`
-    );
-
-    const candlestickData = response.data.map((entry) => ({
-      timestamp: entry[0],
-      open: parseFloat(entry[1]),
-      high: parseFloat(entry[2]),
-      low: parseFloat(entry[3]),
-      close: parseFloat(entry[4]),
-      volume: parseFloat(entry[5]),
-    }));
-
-    res.json({ data: candlestickData });
-  } catch (error) {
-    console.error("❌ Error fetching candlestick data:", error.message);
-    res.status(500).json({ error: 'Failed to fetch candlestick data' });
-  }
-});
 
 
 
@@ -649,23 +619,88 @@ const fetchHistoricalData = async (symbol, interval = "1m", limit = 20) => {
 };
 let historicalDataCache = {};
 // Endpoint to get graph data
+
+const fs = require('fs');
+const path = require('path');
+const csv = require('csv-parser');
+
 app.get('/graph-data/:symbol', async (req, res) => {
   const { symbol } = req.params;
-  const { timeframe } = req.query; 
-  const interval = timeframe || "1d"; 
-  const binanceSymbol = `${symbol.toUpperCase()}USDT`;
+  const timeframe = req.query.timeframe || '1m';
+  const from = req.query.from ? new Date(Number(req.query.from) * 1000) : null;
 
-  if (historicalDataCache[binanceSymbol]?.[interval]) {
-    return res.json(historicalDataCache[binanceSymbol][interval]);
-  }
+  const validIntervals = ['1m', '15m', '1h', '1d', '1w', '1M'];
+  const interval = validIntervals.includes(timeframe) ? timeframe : '1m';
 
-  const historicalData = await fetchHistoricalData(binanceSymbol, interval);
-  if (!historicalDataCache[binanceSymbol]) {
-    historicalDataCache[binanceSymbol] = {};
+  try {
+    const response = await axios.get('https://api.binance.com/api/v3/klines', {
+      params: {
+        symbol: `${symbol.toUpperCase()}USDT`,
+        interval,
+        limit: 1000, // daha fazla veri alınca filtreleme daha etkili olur
+      },
+    });
+
+    let formatted = response.data.map((row) => ({
+      time: new Date(row[0]).toISOString(),
+      timestamp: row[0],
+      price: parseFloat(row[4]), // Close price
+    }));
+
+    if (from) {
+      formatted = formatted.filter((point) => new Date(point.timestamp) >= from);
+    }
+
+    formatted = formatted.map(({ time, price }) => ({ time, price }));
+
+    res.json(formatted);
+  } catch (error) {
+    console.error("Binance API error:", error.message);
+    res.status(500).json({ message: "Failed to fetch chart data from Binance API" });
   }
-  historicalDataCache[binanceSymbol][interval] = historicalData;
-  res.json(historicalData);
 });
+
+
+app.get('/graph-candles/:symbol', async (req, res) => {
+  const { symbol } = req.params;
+  const timeframe = req.query.timeframe || '1m';
+  const from = req.query.from ? new Date(Number(req.query.from) * 1000) : null;
+
+  const validIntervals = ['1m', '15m', '1h', '1d', '1w', '1M'];
+  const interval = validIntervals.includes(timeframe) ? timeframe : '1m';
+
+  try {
+    const response = await axios.get('https://api.binance.com/api/v3/klines', {
+      params: {
+        symbol: `${symbol.toUpperCase()}USDT`,
+        interval,
+        limit: 1000,
+      },
+    });
+
+    let formatted = response.data.map((row) => ({
+      x: new Date(row[0]).toISOString(), // time
+      timestamp: row[0],
+      o: parseFloat(row[1]),
+      h: parseFloat(row[2]),
+      l: parseFloat(row[3]),
+      c: parseFloat(row[4]),
+    }));
+
+    if (from) {
+      formatted = formatted.filter((c) => new Date(c.timestamp) >= from);
+    }
+
+    formatted = formatted.map(({ x, o, h, l, c }) => ({ x, o, h, l, c }));
+
+    res.json(formatted);
+  } catch (error) {
+    console.error("Error fetching candlestick data:", error.message);
+    res.status(500).json({ message: "Failed to fetch candlestick data from Binance API" });
+  }
+});
+
+
 
 // Periodic refresh of historical data
 setInterval(async () => {
@@ -707,47 +742,60 @@ setInterval(async () => {
   });
 
   app.post('/portfolio/:id/transaction', async (req, res) => {
-    const { id } = req.params; // Portfolio ID
-    const { symbol, action, quantity, price, transactionDate } = req.body; // Include transactionDate
-  
-    if (!symbol || !action || !quantity || !price || !transactionDate) {
-      return res.status(400).json({
-        message: 'All fields are required: symbol, action, quantity, price, transactionDate',
-      });
+  const { id } = req.params; // Portfolio ID
+  const { symbol, action, quantity, price, transactionDate } = req.body;
+
+  if (!symbol || !action || !quantity || !price || !transactionDate) {
+    return res.status(400).json({
+      message: 'All fields are required: symbol, action, quantity, price, transactionDate',
+    });
+  }
+
+  try {
+    const total = quantity * price;
+    if (quantity <= 0 || price <= 0) {
+      return res.status(400).json({ message: 'Quantity and price must be positive numbers' });
     }
-  
-    try {
-      const total = quantity * price; // Calculate total
-      if (quantity <= 0 || price <= 0) {
-        return res.status(400).json({ message: 'Quantity and price must be positive numbers' });
-      }
-  
-      if (!['buy', 'sell'].includes(action)) {
-        return res.status(400).json({ message: 'Action must be either "buy" or "sell"' });
-      }
-  
-      const portfolio = await Portfolio.findById(id);
-      if (!portfolio) {
-        return res.status(404).json({ message: 'Portfolio not found' });
-      }
-  
-      const newTransaction = {
-        symbol,
-        action,
-        quantity,
-        price,
-        total,
-        date: new Date(transactionDate),
-      };
-  
-      portfolio.transactions.push(newTransaction);
-      await portfolio.save();
-  
-      res.status(201).json({ message: 'Transaction added successfully', portfolio });
-    } catch (error) {
-      res.status(500).json({ message: 'Error adding transaction', error: error.message });
+
+    if (!['buy', 'sell'].includes(action)) {
+      return res.status(400).json({ message: 'Action must be either "buy" or "sell"' });
     }
-  });
+
+    const portfolio = await Portfolio.findById(id);
+    if (!portfolio) {
+      return res.status(404).json({ message: 'Portfolio not found' });
+    }
+
+    // 👇 Check if enough balance exists for sell
+    if (action === 'sell') {
+      const totalOwned = portfolio.transactions
+        .filter(tx => tx.symbol === symbol)
+        .reduce((acc, tx) => {
+          return acc + (tx.action === 'buy' ? tx.quantity : -tx.quantity);
+        }, 0);
+
+      if (totalOwned < quantity) {
+        return res.status(400).json({ message: `Not enough ${symbol} to sell.` });
+      }
+    }
+
+    const newTransaction = {
+      symbol,
+      action,
+      quantity,
+      price,
+      total,
+      date: new Date(transactionDate),
+    };
+
+    portfolio.transactions.push(newTransaction);
+    await portfolio.save();
+
+    res.status(201).json({ message: 'Transaction added successfully', portfolio });
+  } catch (error) {
+    res.status(500).json({ message: 'Error adding transaction', error: error.message });
+  }
+});
 
 app.put('/portfolio/:id', async (req, res) => {
   const { id } = req.params;
@@ -992,14 +1040,10 @@ app.get('/settings/:userId', async (req, res) => {
 
     const settings = await Settings.findOne({ userId });
     if (!settings) {
-      return res.status(200).json({ selectedCoins: [], theme: 'light' });
+      return res.status(404).json({ message: 'Settings not found for this user.' });
     }
 
-    res.status(200).json({
-      selectedCoins: settings.selectedCoins || [],
-      theme: settings.theme || 'light',
-      priceAlerts: settings.priceAlerts || {},
-    });
+    res.status(200).json(settings);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching settings', error: error.message });
   }
@@ -1011,22 +1055,34 @@ app.put('/settings/:userId', async (req, res) => {
     const { userId } = req.params;
     const { theme, selectedCoins, priceAlerts } = req.body;
 
-    const updateFields = {};
-    if (theme) updateFields.theme = theme;
-    if (selectedCoins) updateFields.selectedCoins = selectedCoins;
-    if (priceAlerts) updateFields.priceAlerts = priceAlerts;
+    const updatedSettings = await Settings.findOne({ userId });
+    if (!updatedSettings) return res.status(404).json({ message: 'Settings not found' });
 
-    const updatedSettings = await Settings.findOneAndUpdate(
-      { userId },
-      { $set: updateFields },
-      { new: true, upsert: true }
-    );
+    updatedSettings.theme = theme || updatedSettings.theme;
+    updatedSettings.selectedCoins = selectedCoins || updatedSettings.selectedCoins;
+
+    if (priceAlerts) {
+      updatedSettings.priceAlerts = priceAlerts;
+
+      // Bildirim tetiklenmişse ama eşik değiştiyse notifiedCoin sıfırla
+      for (const [coin, thresholds] of Object.entries(priceAlerts)) {
+        const wasNotified = updatedSettings.notifiedCoins?.get(coin);
+        if (wasNotified && (thresholds.min !== 0 || thresholds.max !== Infinity)) {
+          updatedSettings.notifiedCoins.set(coin, false);
+        }
+      }
+    }
+
+    updatedSettings.markModified('priceAlerts');
+    updatedSettings.markModified('notifiedCoins');
+    await updatedSettings.save();
 
     res.status(200).json({ message: 'Settings updated successfully', settings: updatedSettings });
   } catch (error) {
     res.status(500).json({ message: 'Error updating settings', error: error.message });
   }
 });
+
 
 
 
@@ -1090,22 +1146,18 @@ const fetchCryptoNews = async (language = "en", forceRefresh = false) => {
 app.get("/crypto-news", async (req, res) => {
   try {
     const language = req.query.lang || "en";
-    const forceRefresh = req.query.refresh === "true";
+    const forceRefresh = req.query.refresh === "true"; // Allow manual refresh
 
     if (!["en", "tr"].includes(language)) {
       return res.status(400).json({ message: "Invalid language. Use 'en' or 'tr'." });
     }
 
-    const [cryptoPanicNews, dailyAnalysis] = await Promise.all([
-      fetchCryptoPanicNews(language, forceRefresh),
-      fetchCryptoNews(language, forceRefresh),
-    ]);
+    const news = await fetchCryptoPanicNews(language, forceRefresh);
 
     res.json({
       language,
-      news: cryptoPanicNews,         // arrayAdd commentMore actions
-      dailyAnalysis: dailyAnalysis,  // string
-      lastUpdated: new Date(),
+      news,
+      lastUpdated: cachedCryptoPanicNews.lastUpdated,
     });
   } catch (error) {
     console.error("Error fetching crypto news:", error.message);
@@ -1140,44 +1192,51 @@ const fetchCryptoPanicNews = async (language = "en", forceRefresh = false) => {
   try {
     const now = new Date();
 
-    // Refresh cache if older than 24 hours or if forceRefresh is triggered
     const shouldRefresh =
       !cachedCryptoPanicNews.lastUpdated ||
       now - cachedCryptoPanicNews.lastUpdated >= 24 * 60 * 60 * 1000 ||
       forceRefresh;
 
     if (!shouldRefresh) {
-      console.log(`Using cached CryptoPanic news (${language})`);
-      return cachedCryptoPanicNews[language];
+      console.log(`Using cached CryptoPanic news`);
+      return cachedCryptoPanicNews["en"];
     }
 
-    console.log(`Fetching new CryptoPanic news in ${language}...`);
-    
+    console.log(`Fetching new CryptoPanic news in ENGLISH...`);
 
-    // Make the GET request
-    const response = await axios.get("https://cryptopanic.com/api/developer/v2/posts/", {
-  params: {
-    auth_token: process.env.CRYPTOPANIC_API_KEY,
-    regions: language,
-    kind: "news",
-    public: true,
-  },
-});
+    const params = {
+      auth_token: process.env.CRYPTOPANIC_TOKEN,
+      regions: "en",
+      kind: "news",
+      public: true,
+    };
 
-    // Check and cache results
-    if (response.data.results && response.data.results.length > 0) {
-      cachedCryptoPanicNews[language] = response.data.results;
+    const response = await axios.get("https://cryptopanic.com/api/v1/posts/", { params });
+
+    const isProbablyEnglish = (text) => /^[\x00-\x7F]*$/.test(text); // ASCII only
+
+    const filtered = response.data.results.filter(
+      (item) => isProbablyEnglish(item.title)
+    );
+
+    if (filtered.length > 0) {
+      cachedCryptoPanicNews["en"] = filtered;
       cachedCryptoPanicNews.lastUpdated = new Date();
-      return response.data.results;
+      return filtered;
     }
 
-    console.log("No news found.");
+    console.log("No English news found.");
     return [];
   } catch (error) {
     console.error("Error fetching CryptoPanic news:", error.message);
     return [];
   }
 };
+
+
+
+
+
 
 
 // -------------------- COIN GECKPO--------------------
@@ -1964,10 +2023,7 @@ for (const symbol of symbols) {
     test(symbol, interval);
   }
 }
-
-
-
 // -------------------- START SERVER --------------------
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });

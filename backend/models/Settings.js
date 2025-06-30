@@ -12,7 +12,7 @@ const SettingsSchema = new mongoose.Schema({
   },
   default: {},
 },
-notifiedCoins: {
+  notifiedCoins: {
   type: Map,
   of: Boolean,
   default: {},

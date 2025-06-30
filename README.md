@@ -1,50 +1,24 @@
-# Welcome to your Expo app 👋
+INVESTING HUB V2 - CRYPTO PORTFOLIO & EDUCATIONAL PLATFORM
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Investing Hub v2, kullanıcıların kripto para birimlerini takip edebileceği, portföy yönetimi yapabileceği ve eğitim içeriklerine erişebileceği bir platformdur. Kullanıcılar, gerçek zamanlı piyasa verilerini izleyebilir, öğretici ve eğitici modüllerden yararlanarak eğlenceli vakit geçirebilir ve portföylerini detaylı şekilde yönetebilir.
 
-## Get started
 
-1. Install dependencies
+ÖZELLİKLER
 
-   ```bash
-   npm install
-   ```
+✅ Kullanıcı Kaydı & Kimlik Doğrulama: Kullanıcılar kayıt olup e-posta doğrulaması yaparak giriş yapabilir.
 
-2. Start the app
+✅ Kripto Piyasası Verileri: Güncel fiyatları, en çok kazanan ve kaybeden kripto paraları görüntüleyin.
 
-   ```bash
-    npx expo start
-   ```
+✅ Portföy Yönetimi: Kripto varlıklarınızı ekleyin, güncelleyin ve alım-satım işlemlerini takip edin.
 
-In the output, you'll find options to open the app in a
+✅ Eğitim Modülü (Learning Hub): Kripto para ve blockchain hakkında videolar izleyin ve testler çözerek bilginizi artırın.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+✅ Grafik & İstatistikler: Fiyat hareketlerini farklı zaman dilimlerinde analiz edin.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+✅ Güvenli Giriş & Kimlik Doğrulama: E-posta doğrulama ve JWT tabanlı güvenli giriş ve verilerin şifrelenmesi.
 
-## Get a fresh project
 
-When you're ready, run:
 
-```bash
-npm run reset-project
-```
+GELİŞTİRME
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Backend için Node.js & Express.js, veritabanı olarak MongoDB, frontend için React.js kullanılmıştır.
