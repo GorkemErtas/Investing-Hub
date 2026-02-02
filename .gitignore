@@ -11,6 +11,21 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+.npm-cache/
+.venv/
+__pycache__/
+*.pyc
+ml/data/
+ml/artifacts/
+coverage/
+test-results/
+playwright-report/
 
 # Editor directories and files
 .vscode/*
