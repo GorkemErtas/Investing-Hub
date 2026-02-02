@@ -1,0 +1,12 @@
+node_modules
+.venv
+.npm-cache
+dist
+backend/dist
+ml/data
+ml/artifacts
+ml/reports/latest.json
+package-lock.json
+backend/models
+test-results
+playwright-report
