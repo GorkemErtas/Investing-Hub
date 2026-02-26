@@ -1,0 +1,12 @@
+{
+  "version": "daily-return-v1",
+  "symbols": ["BTCUSDT", "ETHUSDT"],
+  "start_month": "2021-01",
+  "end_month": "2025-12",
+  "seed": 42,
+  "train_fraction": 0.6,
+  "validation_fraction": 0.2,
+  "walk_forward_splits": 4,
+  "required_relative_rmse_improvement": 0.02,
+  "max_absolute_daily_return": 0.8
+}
