@@ -1,38 +1,21 @@
-# 1. Temel imaj (Node.js + Debian tabanlı)
-FROM node:18
-
-# 2. Sistem araçlarını kur (ONNX derlemesi için gerekli)
-RUN apt-get update && \
-    apt-get install -y python3 make g++ curl cmake && \
-    apt-get clean
-
-# 3. Çalışma dizinine geç
+FROM node:24-alpine AS build
 WORKDIR /app
+COPY package.json package-lock.json ./
+COPY backend/package.json ./backend/package.json
+RUN npm ci --ignore-scripts
+COPY backend/tsconfig.json ./backend/tsconfig.json
+COPY backend/src ./backend/src
+COPY shared ./shared
+RUN npm run build -w backend
 
-# 4. package.json dosyalarını kopyala
-COPY package*.json ./
-
-# 5. ONNX için CPU-only build ayarları
-ENV npm_config_onnxruntime_node_prebuild=false \
-    ONNXRUNTIME_PREFER_SYSTEM_LIB=1 \
-    npm_config_build_from_source=true
-
-# 6. ONNX’in sadece CPU uyumlu sürümünü yükle
-RUN npm install onnxruntime-node@1.15.1
-
-# 7. Diğer tüm bağımlılıkları kur
-RUN npm install
-
-# 8. Uygulama dosyalarını kopyala
-COPY . .
-
-# 9. Ortam değişkenini ayarla
+FROM node:24-alpine
+WORKDIR /app
 ENV NODE_ENV=production
-
-# 10. Express uygulamasının dinleyeceği port
+COPY package.json package-lock.json ./
+COPY backend/package.json ./backend/package.json
+RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
+COPY --from=build /app/backend/dist ./backend/dist
+USER node
 EXPOSE 5000
-
-# 11. Başlatma komutu
-CMD ["npm", "start"]
-
-
+HEALTHCHECK --interval=30s --timeout=3s CMD node -e "fetch('http://127.0.0.1:5000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+CMD ["node", "backend/dist/backend/src/server.js"]

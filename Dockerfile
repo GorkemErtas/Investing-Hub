@@ -1,23 +1,18 @@
-# ---------- build ----------
-FROM node:20-alpine AS build
+FROM node:24-alpine AS build
 WORKDIR /app
+COPY package.json package-lock.json ./
+COPY backend/package.json ./backend/package.json
+RUN npm ci --ignore-scripts
+COPY tsconfig.json vite.config.ts index.html ./
+COPY src ./src
+COPY shared ./shared
+COPY public ./public
+COPY backend/tsconfig.json ./backend/tsconfig.json
+COPY backend/src ./backend/src
+RUN npm run build
 
-COPY package*.json ./
-RUN npm ci            
-
-# 1) build arg
-ARG VITE_API_URL=http://13.61.189.194:5000
-# 2) env — vite build bunu okur
-ENV VITE_API_URL=${VITE_API_URL}
-
-COPY . .
-RUN npm run build      
-
-# ---------- runtime ----------
-FROM node:20-alpine
-RUN npm i -g serve
-COPY --from=build /app/dist /app/dist
-EXPOSE 80
-CMD ["serve", "-s", "/app/dist", "-l", "80"]
-
-
+FROM nginx:stable-alpine
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY nginx/default.conf /etc/nginx/conf.d/default.conf
+EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=3s CMD wget -q --spider http://127.0.0.1:8080/ || exit 1
