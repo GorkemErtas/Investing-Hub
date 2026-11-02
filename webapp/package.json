@@ -1,0 +1,59 @@
+{
+  "name": "investing-hub",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "backend"
+  ],
+  "engines": {
+    "node": "^24.0.0 || ^26.0.0"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n api,web \"npm run dev -w backend\" \"vite\"",
+    "build": "npm run typecheck && vite build && npm run build -w backend",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p backend/tsconfig.json",
+    "lint": "eslint . --max-warnings 0",
+    "test": "vitest run",
+    "preview": "vite preview",
+    "start": "npm start -w backend",
+    "test:browser": "playwright test",
+    "format": "prettier --write src shared backend/src tests docs *.json *.ts *.js README.md",
+    "format:check": "prettier --check src shared backend/src tests docs *.json *.ts *.js README.md"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.90.0",
+    "decimal.js": "^10.6.0",
+    "lightweight-charts": "^5.0.9",
+    "lucide-react": "^0.468.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.9.0",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.64.1",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.10.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@types/supertest": "^6.0.3",
+    "@vitejs/plugin-react": "^6.2.0",
+    "concurrently": "^9.2.0",
+    "eslint": "^10.14.0",
+    "eslint-plugin-react-hooks": "^7.0.0",
+    "globals": "^16.5.0",
+    "prettier": "^3.9.10",
+    "supertest": "^7.1.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.72.1",
+    "vite": "^8.3.5",
+    "vitest": "^4.0.0"
+  },
+  "overrides": {
+    "minimatch": "^11.0.1"
+  }
+}
