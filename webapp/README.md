@@ -1,24 +1,11 @@
-INVESTING HUB V2 - CRYPTO PORTFOLIO & EDUCATIONAL PLATFORM
+# Investing Hub web
 
-Investing Hub v2, kullanıcıların kripto para birimlerini takip edebileceği, portföy yönetimi yapabileceği ve eğitim içeriklerine erişebileceği bir platformdur. Kullanıcılar, gerçek zamanlı piyasa verilerini izleyebilir, öğretici ve eğitici modüllerden yararlanarak eğlenceli vakit geçirebilir ve portföylerini detaylı şekilde yönetebilir.
+Guest-only React + TypeScript application. Run `npm ci` from the repository root, then `npm run dev` to start this Vite app and the single root backend. To run only the frontend use `npm run dev:web`; the backend must be available on port 5000 for live data.
 
+The dashboard, search/watchlist, actual OHLCV charts, technical analysis, simulated portfolio editor/export, Learning Hub, themes and disabled research status are retained. Portfolios and preferences stay in browser storage; no login, MongoDB or Firebase is required or called by this app. USDT is the quote currency. Fees enter weighted-average cost basis and realized P/L through `@investing-hub/shared/portfolio`.
 
-ÖZELLİKLER
+Build with `npm run build -w webapp` after building shared (`npm run build -w shared`), or use root `npm run build`. Tests: `npm run test -w webapp`, `npm run lint -w webapp`, and root `npm run test:browser`. The browser suite uses controlled market fixtures; it verifies UI behavior independently of an exchange outage. Vite and Nginx route `/api` to `/backend`; there is no nested backend or web-only domain package.
 
-✅ Kullanıcı Kaydı & Kimlik Doğrulama: Kullanıcılar kayıt olup e-posta doğrulaması yaparak giriş yapabilir.
+Docker: `docker compose up --build` from the root. Deployment uses `webapp/Dockerfile` with the **root** build context and `webapp/nginx/default.conf`. Never build from a stale nested context. No forecast is approved; offline methodology and reports live in root `ml`.
 
-✅ Kripto Piyasası Verileri: Güncel fiyatları, en çok kazanan ve kaybeden kripto paraları görüntüleyin.
-
-✅ Portföy Yönetimi: Kripto varlıklarınızı ekleyin, güncelleyin ve alım-satım işlemlerini takip edin.
-
-✅ Eğitim Modülü (Learning Hub): Kripto para ve blockchain hakkında videolar izleyin ve testler çözerek bilginizi artırın.
-
-✅ Grafik & İstatistikler: Fiyat hareketlerini farklı zaman dilimlerinde analiz edin.
-
-✅ Güvenli Giriş & Kimlik Doğrulama: E-posta doğrulama ve JWT tabanlı güvenli giriş ve verilerin şifrelenmesi.
-
-
-
-GELİŞTİRME
-
-Backend için Node.js & Express.js, veritabanı olarak MongoDB, frontend için React.js kullanılmıştır.
+See [root setup](../README.md), [architecture](../docs/ARCHITECTURE.md) and [actual verification](../docs/VERIFICATION.md).

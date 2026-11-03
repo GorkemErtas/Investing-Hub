@@ -1,176 +1,61 @@
-# 📱 Investing Hub Mobil Uygulama
+# Investing Hub
 
-Investing Hub, kripto para piyasalarını takip etmenizi, portföy yönetimi yapmanızı, al-sat simülasyonları gerçekleştirmenizi ve eğitim içerikleriyle bilginizi artırmanızı sağlayan kapsamlı bir mobil uygulamadır. React Native + Expo altyapısıyla geliştirilmiştir ve Firebase, EAS, makine öğrenimi modelleri gibi teknolojileri entegre şekilde kullanır.
+A modular monolith with a guest React web demo, an Expo mobile app, one TypeScript API, universal contracts/accounting, and an offline Python research pipeline. All trading is simulated. Market quotes are in **USDT**, not USD. No forecast is published.
 
----
+| Directory   | Responsibility                                                                                              |
+| ----------- | ----------------------------------------------------------------------------------------------------------- |
+| `webapp`    | Modern responsive dashboard, charts, guest portfolios, Learning Hub and research status                     |
+| `mobileapp` | Expo Router screens, native app/assets, secure session and storage adapters                                 |
+| `backend`   | Public cached market API and optional authenticated mobile services                                         |
+| `shared`    | Zod contracts, Decimal chronological ledger, analysis and typed HTTP client; no React/platform dependencies |
+| `ml`        | Reproducible offline experiments, recorded evaluation and one quarantined legacy-model archive              |
+| `docs`      | Audit, architecture, endpoint migration, security and actual verification results                           |
 
-## 🚀 Özellikler
+## Web and public API
 
-- 📊 **Gerçek Zamanlı Piyasa Takibi** – Coin fiyatlarını, trendleri ve grafiklerini canlı takip edin.
-- 💼 **Portföy Yönetimi** – Portföy oluşturun, işlemler ekleyin, takip edin.
-- 🧠 **Eğitim Merkezi** – Video dersler ve grafik tabanlı quiz’lerle öğrenin.
-- 🤖 **Fiyat Tahminleri** – ML modeliyle kısa vadeli fiyat tahminlerini görüntüleyin.
-- 🔔 **Bildirimler** – Fiyat uyarıları ve portföy değişiklikleri için push bildirim alın.
-- 🌗 **Karanlık Mod** – Kullanıcı tercihine göre aydınlık/karanlık tema.
-- 🔐 **Kullanıcı Yönetimi** – Kayıt, e-posta doğrulama ve giriş desteği.
-- 📦 **Firebase Entegrasyonu** – Bildirimler için FCM kullanılır.
-- 🧪 **TypeScript & Jest** – Güçlü tip kontrolü ve test altyapısı.
+Use Node 24 or 26 and npm. From the repository root:
 
----
-
-## 📁 Proje Yapısı
-
-```
-.
-├── android/                      # Native Android yapılandırmaları
-├── app/                          # Sayfalar ve navigasyon
-├── assets/                       # İkonlar, splash, vs.
-├── backend/                      # Node.js + Express sunucu kodları
-├── components/                   # UI bileşenleri
-├── context/                      # Auth, Tema, Ayarlar context’leri
-├── utils/                        # Yardımcı fonksiyonlar (bildirim, vs.)
-├── custom-entry.js              # Firebase headless handler kaydı
-├── firebase-headless.js         # Arka plan mesaj işleyicisi
-├── app.json                     # Expo yapılandırması
-├── eas.json                     # EAS build ayarları
-├── package.json                 # Bağımlılıklar
-├── tsconfig.json                # TypeScript yapılandırması
-└── .gitignore                   # Versiyon kontrol dışı dosyalar
+```powershell
+npm ci
+npm run dev
 ```
 
----
+Open `http://127.0.0.1:3000`. The web dev server proxies `/api` to the root backend on port 5000. The guest demo requires no account, MongoDB, SMTP, Firebase or paid API key. Guest portfolios stay in the browser under the existing `ih:*:v1` keys.
 
-## 🧪 Kurulum ve Geliştirme
+Run independently in two terminals with `npm run dev:api` and `npm run dev:web`. For production: `npm run build`, then `npm start -w backend`; serve `webapp/dist` with the documented reverse proxy. `npm run dev:web` alone still needs a running API for live quotes.
 
-### Gereksinimler
+## Mobile
 
-- Node.js & npm/yarn
-- Expo CLI (`npm install -g expo-cli`)
-- Firebase hesabı (Cloud Messaging aktif)
-- Android Studio (Android için)
-- Bir fiziksel cihaz veya emulator
+The Expo SDK 53 install is intentionally isolated from the web workspace, so native React 19.0 does not resolve the web's newer React installation. First install/build shared code with the root instructions, then:
 
-### Kurulum Adımları
-
-1. Repo'yu klonla:
-   ```bash
-   git clone https://github.com/kullaniciadi/ihmobileexpo.git
-   cd ihmobileexpo
-   ```
-
-2. Bağımlılıkları yükle:
-   ```bash
-   npm install
-   # veya
-   yarn
-   ```
-
-3. Sunucu IP'ni belirt:
-   - `env-config.js` dosyasında `API_BASE_URL`'i kendi IP adresine göre değiştir:
-     ```js
-     export const API_BASE_URL = "http://192.168.x.x:5001";
-     ```
-
-4. Firebase kurulumu:
-   - `google-services.json` dosyasını `android/app/` klasörüne yerleştir.
-
-5. Uygulamayı başlat:
-   ```bash
-   npm start
-   ```
-
-6. Android için çalıştır:
-   ```bash
-   npm run android
-   ```
-
-7. iOS için (sadece macOS):
-   ```bash
-   npm run ios
-   ```
-
----
-
-## 🛠️ EAS Deployment
-
-Uygulama EAS ile build edilebilir. Geliştirme profili şu şekilde yapılandırılmıştır:
-
-```json
-// eas.json
-{
-  "cli": { "version": ">= 3.0.0" },
-  "build": {
-    "development": {
-      "developmentClient": true,
-      "distribution": "internal"
-    }
-  }
-}
+```powershell
+npm --prefix mobileapp ci
+Copy-Item mobileapp/.env.example mobileapp/.env.local
+# Edit EXPO_PUBLIC_API_URL for your emulator/device/backend.
+npm --prefix mobileapp start
 ```
 
-### Build alma:
+Use `http://10.0.2.2:5000` for the Android emulator, your computer's LAN origin for a physical device, and HTTPS for a production build. The app validates the URL. Run a native development build with `npm --prefix mobileapp run android`; Firebase native modules require a development build rather than Expo Go. Public mobile market/learning screens work without account services. See [mobile setup](mobileapp/README.md) for account, EAS, native and notification requirements.
 
-```bash
-npm install -g eas-cli
-eas login
-eas build --profile development --platform android
-```
+## Optional mobile accounts
 
----
+Set a private `MONGO_URI` and a strong `JWT_SECRET` of at least 32 random bytes in the backend process environment. Nothing loads historical `.env` files automatically. Use [backend configuration](backend/README.md) and its safe example. Registration additionally requires SMTP; existing verified users can log in without it. Firebase delivery and price-alert polling are separately opt-in.
 
-## 🔔 Bildirim Sistemi
+The API keeps the existing `users`, `portfolios` and `settings` collections. Existing bcrypt hashes, ownership IDs and transaction field names are read compatibly; no database records are deleted or migrated automatically. Private requests authenticate the caller and constrain every operation to their ownership. Mongo failure does not stop public market data.
 
-- `@react-native-firebase/messaging` ile FCM kullanılır.
-- Arka plan mesajları `firebase-headless.js` içinde işlenir.
-- `custom-entry.js` dosyasında headless task kaydı yapılır.
-- Bildirimler foreground ve background’da alınabilir.
+## Verification
 
-Firebase tarafında:
-
-- Cloud Messaging aktifleştirilmelidir.
-- API anahtarı ve `google-services.json` doğru tanımlanmalıdır.
-
----
-
-## 🔐 Kimlik Doğrulama Akışı
-
-- Kullanıcılar e-posta, isim ve şifre ile kayıt olur.
-- Mail adresine gönderilen doğrulama kodu ile doğrulama yapılır.
-- Giriş yapıldığında token ve kullanıcı bilgileri `AsyncStorage` ile saklanır.
-
-> Giriş sonrası: `router.replace('/home')` ile yönlendirme yapılır.
-
----
-
-## 🧪 Test
-
-Testleri çalıştırmak için:
-
-```bash
+```powershell
+npm run build
+npm run typecheck
 npm test
+npm run lint
+npm run test:browser
+npm --prefix mobileapp run typecheck
+npm --prefix mobileapp test
+npm --prefix mobileapp run doctor
 ```
 
-Jest & jest-expo ile testler yapılandırılmıştır.
+Python setup and tests are in [ml/README.md](ml/README.md). Docker files use the root build context; `docker compose up --build` serves the guest web app on loopback port 8080 without Mongo. See [deployment](docs/DEPLOYMENT.md) before enabling mobile services or exposing a host publicly.
 
----
-
-## 🌐 Web Desteği
-
-Uygulama Expo’nun `expo-router` yapısını kullanır ve web için de çalışabilir:
-
-```bash
-npm run web
-```
-
----
-
-## 👥 Geliştirici Kadrosu
-
-Bu proje Yaşar Üniversitesi kapsamında bir dönem projesi olarak geliştirilmiştir.
-
-- 👨‍💻 Görkem Ertaş  
-- 👨‍💻 Cem Arda Doğan  
-- 👨‍💻 Asil Demian Özbay  
-- 👨‍💻 Taylan Özgür Elma  
-
-Mentör: Dr. Barış Yıldız
+Read [audit/plan](docs/MIGRATION_AUDIT.md), [architecture](docs/ARCHITECTURE.md), [every legacy endpoint](docs/API_COMPATIBILITY.md), [security](docs/SECURITY.md), [verification and remaining limitations](docs/VERIFICATION.md), and [review/staging groups](docs/REVIEW_GUIDE.md). Historical web-only reports are labeled under `docs/historical-web`.
