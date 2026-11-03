@@ -1,0 +1,46 @@
+{
+  "name": "@investing-hub/shared",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./contracts": {
+      "types": "./contracts.ts",
+      "react-native": "./dist/contracts.js",
+      "default": "./dist/contracts.js"
+    },
+    "./portfolio": {
+      "types": "./portfolio.ts",
+      "react-native": "./dist/portfolio.js",
+      "default": "./dist/portfolio.js"
+    },
+    "./analysis": {
+      "types": "./analysis.ts",
+      "react-native": "./dist/analysis.js",
+      "default": "./dist/analysis.js"
+    },
+    "./mobile": {
+      "types": "./mobile.ts",
+      "react-native": "./dist/mobile.js",
+      "default": "./dist/mobile.js"
+    },
+    "./client": {
+      "types": "./client.ts",
+      "react-native": "./dist/client.js",
+      "default": "./dist/client.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "decimal.js": "^10.6.0",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.0"
+  }
+}

@@ -1,4 +1,4 @@
-import type { Candle } from './contracts.js';
+import type { Candle } from "./contracts.js";
 
 // Descriptive levels for the observed closed-candle range, never price forecasts.
 export function fibonacciLevels(candles: Candle[]) {
@@ -14,10 +14,13 @@ export function fibonacciLevels(candles: Candle[]) {
 
 export function movingAverage(candles: Candle[], period = 20) {
   if (!Number.isInteger(period) || period < 1)
-    throw new Error('Period must be a positive integer.');
+    throw new Error("Period must be a positive integer.");
   const closed = candles.filter((c) => c.completed);
   return closed.slice(period - 1).map((c, index) => ({
     openTime: c.openTime,
-    value: closed.slice(index, index + period).reduce((sum, row) => sum + row.close, 0) / period,
+    value:
+      closed
+        .slice(index, index + period)
+        .reduce((sum, row) => sum + row.close, 0) / period,
   }));
 }
