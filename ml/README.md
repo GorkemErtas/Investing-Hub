@@ -1,6 +1,6 @@
 # Daily forecasting research
 
-Python 3.13 is the verified runtime. Research is isolated from the web server. There is no Python HTTP service and no automatic model promotion. Original ONNX artifacts in `backend/models` remain untrusted and inactive.
+Python 3.13 is the verified runtime. Research is isolated from the web server. There is no Python HTTP service and no automatic model promotion. Original ONNX artifacts are retained once in `archive/legacy-models`, with checksums, outside every application/runtime build. They remain untrusted and inactive.
 
 From the repository root, on Windows:
 
