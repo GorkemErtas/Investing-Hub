@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Download, Pencil, Plus, Trash2, Wallet, X } from 'lucide-react';
-import { assets, type Symbol } from '../../shared/contracts';
+import { assets, type Symbol } from '@investing-hub/shared/contracts';
 import {
   account,
   validatePortfolio,
   type Portfolio as PortfolioData,
   type Transaction,
-} from '../../shared/portfolio';
+} from '@investing-hub/shared/portfolio';
 import { useMarkets } from '../lib/api';
 import { money, utc } from '../lib/format';
 import { Coin, Notice, Stat, Status } from '../components/ui';

@@ -6,7 +6,7 @@ import {
   predictionSchema,
   type Interval,
   type Symbol,
-} from '../../shared/contracts';
+} from '@investing-hub/shared/contracts';
 
 async function get<T>(path: string, schema: z.ZodType<T>, signal: AbortSignal): Promise<T> {
   const response = await fetch(`/api${path}`, {

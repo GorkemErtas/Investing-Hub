@@ -9,9 +9,9 @@ import {
   type UTCTimestamp,
 } from 'lightweight-charts';
 import { CandlestickChart, ChartNoAxesCombined } from 'lucide-react';
-import { assets, type Candle, type Interval, type Symbol } from '../../shared/contracts';
+import { assets, type Candle, type Interval, type Symbol } from '@investing-hub/shared/contracts';
 import { useCandles } from '../lib/api';
-import { fibonacciLevels, movingAverage } from '../../shared/analysis';
+import { fibonacciLevels, movingAverage } from '@investing-hub/shared/analysis';
 import { money, utc } from '../lib/format';
 import { Coin, ErrorState, Notice, Skeleton, Status } from './ui';
 

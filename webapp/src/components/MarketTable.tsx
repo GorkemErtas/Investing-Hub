@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ArrowDownUp, Search, Star } from 'lucide-react';
-import { assets, type Market, type Symbol } from '../../shared/contracts';
+import { assets, type Market, type Symbol } from '@investing-hub/shared/contracts';
 import { money } from '../lib/format';
 import { Change, Coin } from './ui';
 

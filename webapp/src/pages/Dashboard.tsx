@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { ArrowRight, ArrowUpRight, BarChart3, Layers3, Wallet, FlaskConical } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { assets, type Symbol } from '../../shared/contracts';
-import { account, type Portfolio } from '../../shared/portfolio';
+import { assets, type Symbol } from '@investing-hub/shared/contracts';
+import { account, type Portfolio } from '@investing-hub/shared/portfolio';
 import { useMarkets } from '../lib/api';
 import { money } from '../lib/format';
 import { Change, Coin, ErrorState, Notice, Skeleton, Stat, Status } from '../components/ui';

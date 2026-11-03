@@ -1,6 +1,6 @@
 import { AlertCircle, ArrowDownRight, ArrowUpRight, RefreshCw } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { assets, type DataMeta, type Symbol } from '../../shared/contracts';
+import { assets, type DataMeta, type Symbol } from '@investing-hub/shared/contracts';
 import { percent, utc } from '../lib/format';
 
 export function Coin({ symbol, small = false }: { symbol: Symbol; small?: boolean }) {

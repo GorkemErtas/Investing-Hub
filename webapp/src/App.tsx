@@ -14,12 +14,12 @@ import {
   X,
 } from 'lucide-react';
 import { z } from 'zod';
-import { symbolSchema, type Symbol } from '../shared/contracts';
+import { symbolSchema, type Symbol } from '@investing-hub/shared/contracts';
 import {
   examplePortfolio,
   validatePortfolio,
   type Portfolio as PortfolioData,
-} from '../shared/portfolio';
+} from '@investing-hub/shared/portfolio';
 import { useStored } from './lib/storage';
 import { Notice, Skeleton } from './components/ui';
 
