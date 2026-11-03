@@ -1,47 +1,27 @@
-version: "3.9"  # veya tamamen kaldırabilirsiniz
-
 services:
-  mongo:
-    image: mongo:6
-    restart: unless-stopped
-    volumes:
-      - mongo_data:/data/db
-    networks:
-      - mobil-net
-
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: mobil-backend
-    depends_on:
-      - mongo
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      CORS_ORIGINS: http://localhost:8080,http://127.0.0.1:8080
+    expose:
+      - "5000"
+    init: true
     restart: unless-stopped
-    env_file:
-      - ./backend/.env
-    ports:
-      - "6001:6001"
-    networks:
-      - mobil-net
-
-  frontend:
-    # Frontend build context ve yapı size bağlı; eğer ayrıysa düzenleyin
+    security_opt:
+      - no-new-privileges:true
+  web:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: mobil-frontend
+      context: .
+      dockerfile: webapp/Dockerfile
     depends_on:
-      - backend
-    restart: unless-stopped
+      backend:
+        condition: service_healthy
     ports:
-      - "8080:80"
-    networks:
-      - mobil-net
-
-volumes:
-  mongo_data:
-
-networks:
-  mobil-net:
-    driver: bridge
-
+      - "127.0.0.1:8080:8080"
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true

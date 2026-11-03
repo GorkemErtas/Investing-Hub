@@ -1,5 +1,23 @@
 # dependencies
 node_modules/
+.npm-cache/
+.venv/
+__pycache__/
+*.pyc
+coverage/
+test-results/
+playwright-report/
+dist-android/
+dist-web/
+dist-web-test/
+ml/data/
+ml/artifacts/
+**/build/
+**/.gradle/
+**/local.properties
+**/service-account*.json
+**/.env.*
+!**/.env.example
 
 # Expo ve build çıktıları
 .expo/

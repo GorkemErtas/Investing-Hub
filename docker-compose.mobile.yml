@@ -1,0 +1,21 @@
+# Explicit opt-in: docker compose -f docker-compose.yml -f docker-compose.mobile.yml up --build
+services:
+  mongo:
+    image: mongo:6
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    # No host database port. Use a separately secured existing Mongo deployment when needed.
+  backend:
+    depends_on:
+      - mongo
+    environment:
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/authdb}
+      JWT_SECRET: ${JWT_SECRET:?Set a strong JWT_SECRET of at least 32 bytes}
+      SMTP_URL: ${SMTP_URL:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+    ports:
+      - "127.0.0.1:5000:5000"
+volumes:
+  # Preserve the legacy volume name; never run down -v to migrate data.
+  mongo_data:
