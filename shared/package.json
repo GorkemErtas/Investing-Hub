@@ -4,6 +4,11 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./news": {
+      "types": "./news.ts",
+      "react-native": "./dist/news.js",
+      "default": "./dist/news.js"
+    },
     "./hybrid": {
       "types": "./hybrid.ts",
       "react-native": "./dist/hybrid.js",
