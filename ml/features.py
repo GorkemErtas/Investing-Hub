@@ -4,24 +4,34 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from common import COLUMNS, DAY_MS, utc_ms
+
 FEATURES = ['return_1', 'return_2', 'return_3', 'return_7', 'return_14',
             'volatility_7', 'volatility_14', 'mean_return_7', 'mean_return_14',
             'close_to_mean_7', 'close_to_mean_14', 'daily_range', 'body_return', 'log_volume_change']
-DAY_MS = 86_400_000
+FEATURE_VERSION = 'daily-past-only-v2'
 
 
-def validate_candles(raw: pd.DataFrame, max_return: float = 0.8) -> tuple[pd.DataFrame, dict]:
-    required = ['open_time', 'open', 'high', 'low', 'close', 'volume', 'close_time']
+def validate_candles(raw: pd.DataFrame, max_return: float = 0.8,
+                     now_ms: int | None = None) -> tuple[pd.DataFrame, dict]:
+    required = COLUMNS
     if not set(required).issubset(raw):
         raise ValueError('Missing OHLCV columns')
     frame = raw[required].apply(pd.to_numeric, errors='raise').copy()
     if not np.isfinite(frame.to_numpy()).all():
         raise ValueError('Nonfinite OHLCV value')
+    if frame.empty:
+        raise ValueError('Empty candle dataset')
+    for column in ('open_time', 'close_time'):
+        if ((frame[column] % 1 != 0) | (frame[column] < 1262304000000) |
+                (frame[column] >= 10**14)).any():
+            raise ValueError('Timestamps must be integral Unix milliseconds since 2010')
+        frame[column] = frame[column].astype('int64')
     if frame.open_time.duplicated().any():
         raise ValueError('Duplicate open timestamps')
     frame = frame.sort_values('open_time').reset_index(drop=True)
-    now = pd.Timestamp.now(tz='UTC').value // 1_000_000
-    if (frame.close_time >= now).any():
+    now = utc_ms() if now_ms is None else now_ms
+    if (frame.open_time + DAY_MS > now).any():
         raise ValueError('Incomplete daily candle')
     if ((frame.open_time % DAY_MS != 0) | (frame.close_time != frame.open_time + DAY_MS - 1)).any():
         raise ValueError('Non-UTC or invalid daily interval')
@@ -35,7 +45,8 @@ def validate_candles(raw: pd.DataFrame, max_return: float = 0.8) -> tuple[pd.Dat
         raise ValueError('Extreme daily return requires manual source review; no silent clipping')
     gaps = int((frame.open_time.diff().dropna() != DAY_MS).sum())
     frame['segment'] = frame.open_time.diff().ne(DAY_MS).cumsum()
-    return frame, {'rows': len(frame), 'gap_boundaries': gaps, 'duplicates': 0,
+    missing = int(((frame.open_time.diff().dropna() // DAY_MS) - 1).clip(lower=0).sum())
+    return frame, {'rows': len(frame), 'gap_boundaries': gaps, 'missing_days': missing, 'duplicates': 0,
                    'anomalies': 0, 'policy': 'Reject malformed/anomalous data; break windows at gaps, never fill prices.'}
 
 
@@ -67,8 +78,8 @@ def feature_frame(frame: pd.DataFrame) -> pd.DataFrame:
     return pd.concat(parts).sort_index().replace([np.inf, -np.inf], np.nan)
 
 
-def prepare(raw: pd.DataFrame, max_return: float = 0.8):
-    frame, quality = validate_candles(raw, max_return)
+def prepare(raw: pd.DataFrame, max_return: float = 0.8, now_ms: int | None = None):
+    frame, quality = validate_candles(raw, max_return, now_ms)
     data = feature_frame(frame).dropna(subset=FEATURES + ['target', 'target_time'])
     quality['usable_samples'] = len(data)
     quality['excluded_warmup_or_gap_samples'] = len(frame) - len(data)
