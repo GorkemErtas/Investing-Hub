@@ -1,5 +1,7 @@
 # Shared API
 
+Optional news intelligence uses CryptoPanic v2/public mode and official RSS, with Gemini restricted to structured analysis of validated excerpts. `GET /api/news/insights/BTCUSDT` and `/ETHUSDT` read cached snapshots only. From the repository root, build shared first, then run `npm run news:refresh -w backend`, `npm run news:status -w backend`, or `npm run news:prune -w backend`. It starts disabled; [news setup and operations](../docs/NEWS_INTELLIGENCE.md) documents private keys, source terms, budgets, retention and recovery. ML prediction routes remain unchanged.
+
 Express 5 / TypeScript modular monolith. `src/app.ts` composes public market/status routes and optional private mobile routes. `src/server.ts` owns network/database/mail/Firebase lifecycle. There is one active backend.
 
 ```powershell

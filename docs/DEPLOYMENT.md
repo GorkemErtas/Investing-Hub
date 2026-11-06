@@ -15,6 +15,10 @@ This builds `backend/Dockerfile` and `webapp/Dockerfile` with the root context. 
 
 Docker Desktop was unavailable during verification: Compose syntax validation is distinct from actual image build/container startup. Consult VERIFICATION for actual results.
 
+## Optional news worker
+
+Optional news workers use the same backend build: `node backend/dist/news/cli.js refresh` and `... prune` are finite commands. No timer is registered. A future timer should run refresh every 4-6 hours and prune at least daily, sharing `NEWS_STORAGE_PATH` on a persistent local volume with the API. The default directory inside a container is ephemeral and may be unwritable under the unprivileged runtime user. Mount/configure an owned writable persistent directory explicitly before enabling news. Multiple replicas/hosts and network filesystems need a separately reviewed coordination/storage design. Existing guest Compose remains disabled and unchanged. See [news operations](NEWS_INTELLIGENCE.md).
+
 ## Optional accounts
 
 Use an existing secured Mongo database by setting the backend process environment. Keep its original database/collections; no automatic data migration runs. Never point a fresh empty database at the app while assuming existing users were migrated. SMTP is optional for existing logins but required for new verified registrations. For Firebase, use Application Default Credentials from a private external path; no credential is copied into an image.

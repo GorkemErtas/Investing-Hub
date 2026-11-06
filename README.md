@@ -37,6 +37,10 @@ npm --prefix mobileapp start
 
 Use `http://10.0.2.2:5000` for the Android emulator, your computer's LAN origin for a physical device, and HTTPS for a production build. The app validates the URL. Run a native development build with `npm --prefix mobileapp run android`; Firebase native modules require a development build rather than Expo Go. Public mobile market/learning screens work without account services. See [mobile setup](mobileapp/README.md) for account, EAS, native and notification requirements.
 
+## News intelligence
+
+Source-supported news runs independently of ML forecasts. A finite worker collects CryptoPanic public API records and approved official RSS feeds; Gemini classifies only those excerpts. `GET /api/news/insights/:symbol` reads the durable cache without calling a provider. The feature defaults to disabled and requires a newly issued private Gemini key; CryptoPanic is optional. See [news setup, costs and source terms](docs/NEWS_INTELLIGENCE.md). No Search Grounding, article crawling, X/Twitter integration or scheduler is enabled.
+
 ## Optional mobile accounts
 
 Set a private `MONGO_URI` and a strong `JWT_SECRET` of at least 32 random bytes in the backend process environment. Nothing loads historical `.env` files automatically. Use [backend configuration](backend/README.md) and its safe example. Registration additionally requires SMTP; existing verified users can log in without it. Firebase delivery and price-alert polling are separately opt-in.
