@@ -1,5 +1,7 @@
 # Verification and remaining limitations
 
+For the 2026-11-06 dynamic ML lifecycle change and its regression results, see [ML verification](ML_VERIFICATION.md). The results below describe the earlier 2026-11-02 application migration.
+
 Run date: 2026-11-02, Windows/PowerShell, Node 26.13.0, npm 11.20.0; Python tests use a local Python 3.13 virtual environment. No Git staging, commits, branch changes or deployment were performed. The initial working tree was clean on main.
 
 ## Results

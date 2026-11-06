@@ -13,7 +13,9 @@ flowchart LR
   API -. optional .-> Mongo[(Existing MongoDB)]
   API -. optional .-> Mail[SMTP verification]
   API -. optional .-> FCM[Firebase delivery]
-  ML[ml: offline Python research] --> Reports[Reviewed reports / no approved model]
+  Binance[Binance official archives / completed UTC daily klines] --> CLI[ml: finite Python CLI jobs]
+  CLI --> Local[(Local SQLite datasets / registry / forecast ledger)]
+  CLI --> Reports[Development selection / prospective shadow evaluation]
 ```
 
 ## Boundaries
@@ -24,7 +26,7 @@ flowchart LR
 - `backend/src/app.ts` owns HTTP policy, validation and sanitized errors. `server.ts` owns environment composition and lifecycle. No active `server.js`, nested backend, ONNX runtime, generated-news provider or force-refresh endpoint remains.
 - `webapp` retains its UI, Query cache and browser adapters. Guest transaction data never leaves the browser. Existing storage keys and format remain valid. It consumes shared contracts/accounting without any mobile infrastructure requirement.
 - `mobileapp` owns navigation, native assets, platform APIs and secure-token/preferences adapters. One settings context replaces overlapping context requests. Its typed client validates response schemas, deduplicates only public data, and never caches a private response across sessions. Focus-aware polling ignores late responses and pauses background/hidden screens. Shared candle data feeds line/candle/analysis views.
-- `ml` remains an offline reproducible research pipeline. No training/inference executes in an HTTP handler. Current publication is disabled with null predictions on both clients. Historical binaries/scalers exist only under `ml/archive/legacy-models` and are excluded from runtime contexts.
+- `ml` owns incremental completed UTC daily datasets, offline training, a transactional model registry and prospective forecast history in local SQLite. Manual and finite daily/weekly commands are independent of Express. Approval/promotion is explicit and requires prospective evidence as well as historical selection checks. Data-only numeric artifacts avoid executable model deserialization. Current publication is disabled with null predictions on both clients, including after local activation. `shared/hybrid.ts` prepares a future composition contract without LLM calls. Historical binaries/scalers remain under `ml/archive/legacy-models`, excluded from runtime contexts. See [ML boundaries and migration audit](ML_LIFECYCLE.md).
 
 ## Package/build strategy
 

@@ -1,5 +1,7 @@
 # Security boundaries and owner follow-up
 
+The local ML lifecycle accepts only allowlisted Binance HTTPS sources, verifies archive sidecars, bounds requests/ZIP parsing, and commits datasets transactionally. Registry inference interprets bounded numeric JSON rather than loading joblib, pickle or legacy ONNX files. Local dataset/artifact checksums detect accidental edits; they do not authenticate an externally supplied database. Keep the research database operator-owned, outside concurrent cloud sync, and back it up with the CLI. No remote artifact import, Python service, Gemini calls or public forecast activation is introduced. See [ML lifecycle security and rollback boundaries](ML_LIFECYCLE.md).
+
 ## Implemented
 
 Private API identity comes solely from bearer JWT validation (HS256, issuer, audience, subject and expiry). Mongo is opt-in and requires a strong explicit secret. Every portfolio fetch/update/delete uses both owner and ID; settings/push are only `/me` operations. Client user IDs are rejected. Auth inputs are strict, password bytes are bounded to bcrypt's 72-byte limit, verification codes are cryptographically random and hashed in bounded expiring storage with attempt/rate limits. Only public profile fields are serialized.

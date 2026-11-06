@@ -8,7 +8,7 @@ A modular monolith with a guest React web demo, an Expo mobile app, one TypeScri
 | `mobileapp` | Expo Router screens, native app/assets, secure session and storage adapters                                 |
 | `backend`   | Public cached market API and optional authenticated mobile services                                         |
 | `shared`    | Zod contracts, Decimal chronological ledger, analysis and typed HTTP client; no React/platform dependencies |
-| `ml`        | Reproducible offline experiments, recorded evaluation and one quarantined legacy-model archive              |
+| `ml`        | Incremental daily datasets, offline training/registry, prospective forecast history and a quarantined archive |
 | `docs`      | Audit, architecture, endpoint migration, security and actual verification results                           |
 
 ## Web and public API
@@ -56,6 +56,6 @@ npm --prefix mobileapp test
 npm --prefix mobileapp run doctor
 ```
 
-Python setup and tests are in [ml/README.md](ml/README.md). Docker files use the root build context; `docker compose up --build` serves the guest web app on loopback port 8080 without Mongo. See [deployment](docs/DEPLOYMENT.md) before enabling mobile services or exposing a host publicly.
+Python setup, incremental sync, manual/weekly training, explicit model review, rollback and Windows scheduling are in [ml/README.md](ml/README.md). This local lifecycle does not enable public forecasts or register jobs. See its [architecture audit](docs/ML_LIFECYCLE.md) and [actual verification](docs/ML_VERIFICATION.md). Docker files use the root build context; `docker compose up --build` serves the guest web app on loopback port 8080 without Mongo. See [deployment](docs/DEPLOYMENT.md) before enabling mobile services or exposing a host publicly.
 
 Read [audit/plan](docs/MIGRATION_AUDIT.md), [architecture](docs/ARCHITECTURE.md), [every legacy endpoint](docs/API_COMPATIBILITY.md), [security](docs/SECURITY.md), [verification and remaining limitations](docs/VERIFICATION.md), and [review/staging groups](docs/REVIEW_GUIDE.md). Historical web-only reports are labeled under `docs/historical-web`.

@@ -1,5 +1,7 @@
 # Offline daily forecasting experiment
 
+Historical report preserved from the earlier static experiment. These observations have been inspected and are development evidence; they are not an untouched test for subsequent tuning. The dynamic lifecycle uses prospective prediction tracking and separate review gates; see [current methodology](../README.md).
+
 Binance Vision historical data; noncommercial research. Derived results licensed CC BY-NC-SA 4.0.
 
 | Pair    | Best validation candidate | Validation return RMSE | No-change RMSE | Walk-forward wins | Selected  | Test price RMSE (USDT) | Status                            |
