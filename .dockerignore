@@ -10,6 +10,7 @@
 .vscode
 .npm-cache
 .venv
+**/.news-data
 **/.env
 **/.env.*
 **/service-account*.json

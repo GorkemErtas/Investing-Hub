@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { fileURLToPath } from "node:url";
 
 const optionalText = z.preprocess(
   (value) => (value === "" ? undefined : value),
@@ -25,6 +26,56 @@ const schema = z.object({
   ),
   FIREBASE_ENABLED: z.enum(["true", "false"]).default("false"),
   PRICE_ALERTS_ENABLED: z.enum(["true", "false"]).default("false"),
+  NEWS_INTELLIGENCE_ENABLED: z.enum(["true", "false"]).default("false"),
+  GEMINI_API_KEY: z.preprocess(
+    (v) => (v === "" ? undefined : v),
+    z
+      .string()
+      .regex(/^[A-Za-z0-9_-]{20,200}$/)
+      .optional(),
+  ),
+  GEMINI_KEY_ROTATED: z.enum(["true", "false"]).default("false"),
+  CRYPTOPANIC_API_KEY: z.preprocess(
+    (v) => (v === "" ? undefined : v),
+    z
+      .string()
+      .regex(/^[A-Za-z0-9_-]{10,200}$/)
+      .optional(),
+  ),
+  CRYPTOPANIC_PLAN: z
+    .enum(["developer", "growth", "enterprise"])
+    .default("developer"),
+  NEWS_MAX_DAILY_SOURCE_REQUESTS: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(200)
+    .default(24),
+  NEWS_RETENTION_HOURS: z.coerce.number().int().min(24).max(168).default(72),
+  GEMINI_MODEL: z
+    .string()
+    .regex(/^gemini-[a-z0-9.-]+$/)
+    .max(100)
+    .default("gemini-3.5-flash-lite"),
+  NEWS_CACHE_TTL_SECONDS: z.coerce
+    .number()
+    .int()
+    .min(14400)
+    .max(21600)
+    .default(21600),
+  NEWS_MAX_DAILY_REQUESTS: z.coerce.number().int().min(1).max(100).default(16),
+  NEWS_PROVIDER_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .min(1000)
+    .max(60000)
+    .default(20000),
+  NEWS_STORAGE_PATH: z
+    .string()
+    .min(1)
+    .max(1024)
+    .refine((p) => !/[\x00-\x1f]/.test(p) && !p.includes("://"))
+    .default(fileURLToPath(new URL("../.news-data", import.meta.url))),
 });
 export function parseConfig(env: NodeJS.ProcessEnv) {
   const c = schema.parse(env);

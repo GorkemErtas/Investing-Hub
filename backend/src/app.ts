@@ -9,11 +9,14 @@ import { AppError } from "./errors.js";
 import { createMarketService, type MarketService } from "./market/service.js";
 import { predictionStatus } from "./predictions/service.js";
 import { createMobileRouter, type MobileModule } from "./mobile/routes.js";
+import { newsSymbolSchema } from "@investing-hub/shared/news";
+import { createNewsService, type NewsReader } from "./news/service.js";
 
 export function createApp(
   config: Config,
   market: MarketService = createMarketService(config),
   mobile?: MobileModule,
+  news: NewsReader = createNewsService(config),
 ) {
   const app = express();
   app.disable("x-powered-by");
@@ -75,6 +78,10 @@ export function createApp(
     z.strictObject({}).parse(req.query);
     res.json(predictionStatus(symbolSchema.parse(req.params.symbol)));
   });
+  app.get("/api/news/insights/:symbol", async (req, res) => {
+    z.strictObject({}).parse(req.query);
+    res.json(await news.read(newsSymbolSchema.parse(req.params.symbol)));
+  });
   // Optional private services do not intercept public market/prediction endpoints.
   const privatePaths = ["/api/auth", "/api/me", "/api/portfolios"];
   if (mobile) {
@@ -120,14 +127,12 @@ export function createApp(
       "type" in err &&
       ["entity.parse.failed", "entity.too.large"].includes(String(err.type))
     ) {
-      res
-        .status(err.type === "entity.too.large" ? 413 : 400)
-        .json({
-          error: {
-            code: "INVALID_BODY",
-            message: "JSON body is invalid or too large.",
-          },
-        });
+      res.status(err.type === "entity.too.large" ? 413 : 400).json({
+        error: {
+          code: "INVALID_BODY",
+          message: "JSON body is invalid or too large.",
+        },
+      });
       return;
     }
     if (
@@ -136,25 +141,21 @@ export function createApp(
       "name" in err &&
       /^(Mongo|Mongoose)/.test(String(err.name))
     ) {
-      res
-        .status(503)
-        .json({
-          error: {
-            code: "ACCOUNTS_UNAVAILABLE",
-            message: "Account storage is unavailable. Please retry later.",
-          },
-        });
+      res.status(503).json({
+        error: {
+          code: "ACCOUNTS_UNAVAILABLE",
+          message: "Account storage is unavailable. Please retry later.",
+        },
+      });
       return;
     }
     // Do not serialize provider responses, request data or exception strings.
-    res
-      .status(500)
-      .json({
-        error: {
-          code: "INTERNAL_ERROR",
-          message: "An unexpected error occurred.",
-        },
-      });
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_ERROR",
+        message: "An unexpected error occurred.",
+      },
+    });
   };
   app.use(errors);
   return app;
