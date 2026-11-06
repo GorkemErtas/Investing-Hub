@@ -4,6 +4,11 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./hybrid": {
+      "types": "./hybrid.ts",
+      "react-native": "./dist/hybrid.js",
+      "default": "./dist/hybrid.js"
+    },
     "./contracts": {
       "types": "./contracts.ts",
       "react-native": "./dist/contracts.js",
