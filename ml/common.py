@@ -73,7 +73,7 @@ def load_config(path: Path | None = None) -> dict:
     years = config['training_years']
     if not years or len(set(years)) != len(years) or any(y not in (None, 1, 2, 3) for y in years):
         raise ValueError('Training windows must be unique full-history/null, 3, 2 or 1 years')
-    if not 0 < config['max_absolute_daily_return'] <= 1:
+    if not 0 < config['max_absolute_daily_return'] <= 0.8:
         raise ValueError('Invalid daily-return anomaly threshold')
     if not 0 <= config['required_relative_rmse_improvement'] < 1:
         raise ValueError('Invalid improvement threshold')

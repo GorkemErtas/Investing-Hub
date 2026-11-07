@@ -31,16 +31,18 @@ def import_legacy(store: Store, directory: Path, symbol: str, now: int):
         raise ValueError('Legacy dataset checksum/file mismatch')
     if not asset.get('archives') or any(not a.get('url') or len(a.get('sha256', '')) != 64 for a in asset['archives']):
         raise ValueError('Legacy archive provenance missing')
-    frame, _ = validate_candles(pd.read_csv(path), now_ms=now)
     source = {'provider': manifest.get('provider'), 'kind': 'verified_legacy_import',
               'url': path.resolve().as_uri(), 'sha256': digest(payload), 'retrieved_at': now,
               'original_downloaded_at': manifest.get('downloaded_at'),
               'legacy_manifest': manifest, 'publisher_sha256': None}
+    raw = pd.read_csv(path, float_precision='round_trip')
+    frame, quality = validate_candles(raw, now_ms=now, symbol=symbol,
+                                     sources={int(t): source for t in raw.open_time})
     source_id = digest(canonical(source).encode())
     with store.transaction():
         if store.dataset(symbol):
             return False
-        store.save_candles(symbol, frame, [source], {int(t): source_id for t in frame.open_time}, now)
+        store.save_candles(symbol, frame, [source], {int(t): source_id for t in frame.open_time}, now, validation_quality=quality)
         store.event('legacy_import', {'symbol': symbol, 'sha256': digest(payload)}, now)
     return True
 
@@ -68,8 +70,10 @@ def sync(store: Store, provider, symbol: str, start: int, now: int, max_return=0
     # committed if another symbol fails; no half-written symbol is exposed.
     with store.transaction():
         old = store.frame(symbol)
+        validation_sources = {}
         if not old.empty:
             old, _, _ = store.verified_frame(symbol, now)
+            validation_sources = store.candle_sources(symbol)
         previous = store.dataset(symbol)
         boundary = previous.get('history_boundary') if previous else None
         if boundary is None and hasattr(provider, 'first_available') and (old.empty or start < int(old.open_time.min())):
@@ -111,7 +115,8 @@ def sync(store: Store, provider, symbol: str, start: int, now: int, max_return=0
                             pass
                     batches.append(provider.recent(symbol, left, right))
             for frame, source in batches:
-                frame, _ = validate_candles(frame, max_return, now_ms=now)
+                frame, _ = validate_candles(frame, max_return, now_ms=now, symbol=symbol,
+                                          sources={int(t): source for t in frame.open_time})
                 source_id = digest(canonical(source).encode())
                 # Initial partial listing month may contain earlier days than
                 # configured. Validate them, then retain only requested days.
@@ -121,13 +126,14 @@ def sync(store: Store, provider, symbol: str, start: int, now: int, max_return=0
                     if opening in source_for_open:
                         raise ValueError('Duplicate candle across downloaded batches')
                     source_for_open[opening] = source_id
+                    validation_sources[opening] = source
                 sources.append(source)
                 fetched.append(frame)
         combined = pd.concat([f for f in [old[COLUMNS], *fetched] if not f.empty], ignore_index=True)
-        combined, _ = validate_candles(combined, max_return, now_ms=now)
+        combined, quality = validate_candles(combined, max_return, now_ms=now, symbol=symbol, sources=validation_sources)
         unresolved = set(range(start, end + DAY_MS, DAY_MS)) - set(combined.open_time)
         if unresolved:
             raise ValueError(f'{symbol}: missing {len(unresolved)} requested daily candles; nothing committed')
-        meta = store.save_candles(symbol, combined, sources, source_for_open, now, boundary)
+        meta = store.save_candles(symbol, combined, sources, source_for_open, now, boundary, quality)
         store.event('sync', {'symbol': symbol, 'added': len(missing), 'fingerprint': meta['fingerprint']}, now)
         return {'symbol': symbol, 'added': len(missing), 'dataset': meta}

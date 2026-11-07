@@ -94,7 +94,7 @@ def walk_forward(data, config, algorithm, days):
 
 def training_code_hash():
     return digest(b''.join((ROOT / name).read_bytes() for name in
-                          ('train.py', 'features.py', 'artifact.py', 'common.py', 'calibration.py')) +
+                          ('train.py', 'features.py', 'artifact.py', 'common.py', 'calibration.py', 'anomaly_reviews.py', 'reviews/historical_price_movements.json')) +
                   (ROOT.parent / 'shared' / 'contracts.ts').read_bytes())
 
 
@@ -104,7 +104,7 @@ def train_models(store, symbol, config, now):
         raise ValueError('Repair dataset gaps before training')
     if int(frame.open_time.max()) != latest_open(now):
         raise ValueError('Sync latest completed data before training')
-    data, _ = prepare(frame, config['max_absolute_daily_return'], now)
+    data, _ = prepare(frame, config['max_absolute_daily_return'], now, symbol=symbol, sources=store.candle_sources(symbol))
     development = data.loc[data.target_time < day(config['development_end_exclusive'])]
     code_hash = training_code_hash()
     config_hash = digest(canonical(config).encode())

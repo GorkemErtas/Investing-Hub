@@ -20,7 +20,7 @@ DEFAULT_CONFIG = {'seed': 42, 'period_days': 180, 'block_days': 14, 'bootstrap_r
 
 
 def code_hash():
-    files = sorted(Path(__file__).parent.glob('*.py')) + [Path(__file__).with_name('queries.sql'), ROOT/'features.py', ROOT/'train.py', ROOT/'forecast.py', ROOT/'common.py', ROOT/'store.py', ROOT.parent/'shared/contracts.ts']
+    files = sorted(Path(__file__).parent.glob('*.py')) + [Path(__file__).with_name('queries.sql'), ROOT/'features.py', ROOT/'train.py', ROOT/'forecast.py', ROOT/'common.py', ROOT/'store.py', ROOT/'anomaly_reviews.py', ROOT/'reviews/historical_price_movements.json', ROOT.parent/'shared/contracts.ts']
     return digest(b''.join(path.name.encode() + path.read_bytes() for path in files))
 
 

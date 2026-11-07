@@ -1,0 +1,216 @@
+{
+  "version": 1,
+  "evidence": {
+    "official-rest-2019-2022": {
+      "interval": "1d",
+      "kind": "rest_klines",
+      "license": "CC BY-NC-SA 4.0 + Vision Dataset Terms",
+      "provider": "Binance",
+      "publisher_sha256": null,
+      "retrieved_at": 1794067267936,
+      "sha256": "ab0d905bb817696624f5088bbb33e90d7f0bad3f041134289eb33d7169fdc1eb",
+      "terms_url": "https://github.com/binance/binance-public-data/blob/master/TERMS_AND_CONDITIONS.md",
+      "timestamp_unit": "normalized_unix_ms",
+      "timezone": "UTC",
+      "url": "https://data-api.binance.vision/api/v3/klines?symbol=DOGEUSDT&interval=1d&timeZone=0&startTime=1562284800000&endTime=1648684799999&limit=1000"
+    },
+    "monthly-2021-01": {
+      "checksum_sidecar_sha256": "2e9d5936c7b08f398c9dedbda1096099c4ece7f36a66e94cf29f0e8293ae98bd",
+      "interval": "1d",
+      "kind": "monthly_archive",
+      "license": "CC BY-NC-SA 4.0 + Vision Dataset Terms",
+      "provider": "Binance",
+      "publisher_sha256": "97eb6a9187e490a280b08b2fecdcd2b77593cf4063ee91f2a9df415ed947a6af",
+      "retrieved_at": 1794067273541,
+      "sha256": "97eb6a9187e490a280b08b2fecdcd2b77593cf4063ee91f2a9df415ed947a6af",
+      "terms_url": "https://github.com/binance/binance-public-data/blob/master/TERMS_AND_CONDITIONS.md",
+      "timestamp_unit": "normalized_unix_ms",
+      "timezone": "UTC",
+      "url": "https://data.binance.vision/data/spot/monthly/klines/DOGEUSDT/1d/DOGEUSDT-1d-2021-01.zip"
+    },
+    "monthly-2021-04": {
+      "checksum_sidecar_sha256": "83c1cc3c147f0fe7cf08927b85dcc5f429419e6e45e019a1c58f4a8448cd2824",
+      "interval": "1d",
+      "kind": "monthly_archive",
+      "license": "CC BY-NC-SA 4.0 + Vision Dataset Terms",
+      "provider": "Binance",
+      "publisher_sha256": "bdad24537d4da2d76e2ec3136a056a1eefa15cecfda1636ecf1ca6e9d11f13e1",
+      "retrieved_at": 1794067274155,
+      "sha256": "bdad24537d4da2d76e2ec3136a056a1eefa15cecfda1636ecf1ca6e9d11f13e1",
+      "terms_url": "https://github.com/binance/binance-public-data/blob/master/TERMS_AND_CONDITIONS.md",
+      "timestamp_unit": "normalized_unix_ms",
+      "timezone": "UTC",
+      "url": "https://data.binance.vision/data/spot/monthly/klines/DOGEUSDT/1d/DOGEUSDT-1d-2021-04.zip"
+    },
+    "daily-2021-01-01": {
+      "checksum_sidecar_sha256": "56723a6e01bd5326fe3977b9686dc4ab72f3e4bcee67a53f54dc91733202b52f",
+      "interval": "1d",
+      "kind": "daily_archive",
+      "license": "CC BY-NC-SA 4.0 + Vision Dataset Terms",
+      "provider": "Binance",
+      "publisher_sha256": "4f4b6c8257961ff9ef03116c6871109ec107731d2884031411345b55bc8b610d",
+      "retrieved_at": 1794067642879,
+      "sha256": "4f4b6c8257961ff9ef03116c6871109ec107731d2884031411345b55bc8b610d",
+      "terms_url": "https://github.com/binance/binance-public-data/blob/master/TERMS_AND_CONDITIONS.md",
+      "timestamp_unit": "normalized_unix_ms",
+      "timezone": "UTC",
+      "url": "https://data.binance.vision/data/spot/daily/klines/DOGEUSDT/1d/DOGEUSDT-1d-2021-01-01.zip"
+    },
+    "daily-2021-01-02": {
+      "checksum_sidecar_sha256": "6dca733908634ccc04593b1e5f1e922252537edf2a96e8fb8b2ffa0592190987",
+      "interval": "1d",
+      "kind": "daily_archive",
+      "license": "CC BY-NC-SA 4.0 + Vision Dataset Terms",
+      "provider": "Binance",
+      "publisher_sha256": "d184baf09fb914aaf76bd2dbe486886cc267a829a9e9c0c62169475c86442233",
+      "retrieved_at": 1794067643562,
+      "sha256": "d184baf09fb914aaf76bd2dbe486886cc267a829a9e9c0c62169475c86442233",
+      "terms_url": "https://github.com/binance/binance-public-data/blob/master/TERMS_AND_CONDITIONS.md",
+      "timestamp_unit": "normalized_unix_ms",
+      "timezone": "UTC",
+      "url": "https://data.binance.vision/data/spot/daily/klines/DOGEUSDT/1d/DOGEUSDT-1d-2021-01-02.zip"
+    },
+    "daily-2021-01-27": {
+      "checksum_sidecar_sha256": "c66c18378fa7979b9b889db00053dfa619934eda87d7c0967afdb1be5d890677",
+      "interval": "1d",
+      "kind": "daily_archive",
+      "license": "CC BY-NC-SA 4.0 + Vision Dataset Terms",
+      "provider": "Binance",
+      "publisher_sha256": "68fe0eda17c3a870f40fd4da23e5fb138d046473a4d1583786ba9b8b58b248ef",
+      "retrieved_at": 1794067644504,
+      "sha256": "68fe0eda17c3a870f40fd4da23e5fb138d046473a4d1583786ba9b8b58b248ef",
+      "terms_url": "https://github.com/binance/binance-public-data/blob/master/TERMS_AND_CONDITIONS.md",
+      "timestamp_unit": "normalized_unix_ms",
+      "timezone": "UTC",
+      "url": "https://data.binance.vision/data/spot/daily/klines/DOGEUSDT/1d/DOGEUSDT-1d-2021-01-27.zip"
+    },
+    "daily-2021-01-28": {
+      "checksum_sidecar_sha256": "a67f75c8c9a3dc0c19f8d0499c37b44da2031c2fe14dcb0b17c38020b1699512",
+      "interval": "1d",
+      "kind": "daily_archive",
+      "license": "CC BY-NC-SA 4.0 + Vision Dataset Terms",
+      "provider": "Binance",
+      "publisher_sha256": "a2075365695188914efa23e1f40f272cf758e0d0bc7fd37cdbf76ea0b2f47e8e",
+      "retrieved_at": 1794067645745,
+      "sha256": "a2075365695188914efa23e1f40f272cf758e0d0bc7fd37cdbf76ea0b2f47e8e",
+      "terms_url": "https://github.com/binance/binance-public-data/blob/master/TERMS_AND_CONDITIONS.md",
+      "timestamp_unit": "normalized_unix_ms",
+      "timezone": "UTC",
+      "url": "https://data.binance.vision/data/spot/daily/klines/DOGEUSDT/1d/DOGEUSDT-1d-2021-01-28.zip"
+    },
+    "daily-2021-04-15": {
+      "checksum_sidecar_sha256": "bc5967f8591874ea381770c730c94e9e6ac16c999392d50a3fae1a51830e9669",
+      "interval": "1d",
+      "kind": "daily_archive",
+      "license": "CC BY-NC-SA 4.0 + Vision Dataset Terms",
+      "provider": "Binance",
+      "publisher_sha256": "6d1e898cdc9e48fbfa36a6ea1826294a9447ede647ccfc616dde3862541ba94c",
+      "retrieved_at": 1794067647111,
+      "sha256": "6d1e898cdc9e48fbfa36a6ea1826294a9447ede647ccfc616dde3862541ba94c",
+      "terms_url": "https://github.com/binance/binance-public-data/blob/master/TERMS_AND_CONDITIONS.md",
+      "timestamp_unit": "normalized_unix_ms",
+      "timezone": "UTC",
+      "url": "https://data.binance.vision/data/spot/daily/klines/DOGEUSDT/1d/DOGEUSDT-1d-2021-04-15.zip"
+    },
+    "daily-2021-04-16": {
+      "checksum_sidecar_sha256": "85b6ed8f268ed7554a6461551b70127a17d1c983042eeae25c4d6038a9d81522",
+      "interval": "1d",
+      "kind": "daily_archive",
+      "license": "CC BY-NC-SA 4.0 + Vision Dataset Terms",
+      "provider": "Binance",
+      "publisher_sha256": "49ca83059f1a073bbb1c19b0ed190230478624c116d0f5b3905a6f22d89cbebe",
+      "retrieved_at": 1794067647812,
+      "sha256": "49ca83059f1a073bbb1c19b0ed190230478624c116d0f5b3905a6f22d89cbebe",
+      "terms_url": "https://github.com/binance/binance-public-data/blob/master/TERMS_AND_CONDITIONS.md",
+      "timestamp_unit": "normalized_unix_ms",
+      "timezone": "UTC",
+      "url": "https://data.binance.vision/data/spot/daily/klines/DOGEUSDT/1d/DOGEUSDT-1d-2021-04-16.zip"
+    }
+  },
+  "reviews": [
+    {
+      "id": "DOGEUSDT/2021-01-02",
+      "symbol": "DOGEUSDT",
+      "utc_date": "2021-01-02",
+      "reviewed_at": "2026-11-07T16:10:21.332390Z",
+      "verification": "publisher_checksum_and_official_rest_exact_row_match",
+      "reason": "Explicit historical-observation review requested by repository owner; Codex independently matched all normalized OHLCV fields in publisher-checksummed monthly/daily archives against official REST. This approves source data only, never a model.",
+      "previous": {
+        "open_time": 1609459200000,
+        "close": "0.0056800",
+        "row_sha256": "9979fc5b2ad15fb6c2ee81d568addd57ae108f7dbbcfd2409645aa9d55b511af",
+        "evidence": [
+          "monthly-2021-01",
+          "daily-2021-01-01",
+          "official-rest-2019-2022"
+        ]
+      },
+      "current": {
+        "open_time": 1609545600000,
+        "close": "0.0105264",
+        "row_sha256": "370da2ff246d6297f7997381c2532ffeff44563d5c59dfb0953194255b435a7f",
+        "evidence": [
+          "monthly-2021-01",
+          "daily-2021-01-02",
+          "official-rest-2019-2022"
+        ]
+      }
+    },
+    {
+      "id": "DOGEUSDT/2021-01-28",
+      "symbol": "DOGEUSDT",
+      "utc_date": "2021-01-28",
+      "reviewed_at": "2026-11-07T16:10:21.388890Z",
+      "verification": "publisher_checksum_and_official_rest_exact_row_match",
+      "reason": "Explicit historical-observation review requested by repository owner; Codex independently matched all normalized OHLCV fields in publisher-checksummed monthly/daily archives against official REST. This approves source data only, never a model.",
+      "previous": {
+        "open_time": 1611705600000,
+        "close": "0.0074124",
+        "row_sha256": "537209e8ba1835bdb4f209d17935ebf5264097888429aa060e409abcb7e7d41e",
+        "evidence": [
+          "monthly-2021-01",
+          "daily-2021-01-27",
+          "official-rest-2019-2022"
+        ]
+      },
+      "current": {
+        "open_time": 1611792000000,
+        "close": "0.0364995",
+        "row_sha256": "ea39c5b833ecc234c42053a2be54484e69179cc0f9f2e59aa8ce2fa21ac1a023",
+        "evidence": [
+          "monthly-2021-01",
+          "daily-2021-01-28",
+          "official-rest-2019-2022"
+        ]
+      }
+    },
+    {
+      "id": "DOGEUSDT/2021-04-16",
+      "symbol": "DOGEUSDT",
+      "utc_date": "2021-04-16",
+      "reviewed_at": "2026-11-07T16:10:21.451139Z",
+      "verification": "publisher_checksum_and_official_rest_exact_row_match",
+      "reason": "Explicit historical-observation review requested by repository owner; Codex independently matched all normalized OHLCV fields in publisher-checksummed monthly/daily archives against official REST. This approves source data only, never a model.",
+      "previous": {
+        "open_time": 1618444800000,
+        "close": "0.1823599",
+        "row_sha256": "2e8d3d416862adab8cf3cb73f83c237096636fc181dda4fe99714dac08671c9e",
+        "evidence": [
+          "monthly-2021-04",
+          "daily-2021-04-15",
+          "official-rest-2019-2022"
+        ]
+      },
+      "current": {
+        "open_time": 1618531200000,
+        "close": "0.3654434",
+        "row_sha256": "fadbad4467db79fe957a8ecda7799d4ee0e3ebde6ea5977ae1252eff20fd65ec",
+        "evidence": [
+          "monthly-2021-04",
+          "daily-2021-04-16",
+          "official-rest-2019-2022"
+        ]
+      }
+    }
+  ]
+}

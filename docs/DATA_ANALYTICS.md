@@ -65,7 +65,7 @@ The existing `FUTURE_ML_DATABASE_PATH` identifies the same source registry; chan
 
 ## 3. Data quality and exploratory statistics
 
-`Store.verified_frame()` verifies dataset/source hashes and metadata, UTC daily completion, positive finite prices, valid OHLC ranges and source provenance. Existing anomaly-review safeguards remain unchanged: moves above the lifecycle's absolute-return integrity threshold require manual source review. Statistical outliers **inside verified data are retained**, never clipped or deleted.
+`Store.verified_frame()` verifies dataset/source hashes and metadata, UTC daily completion, positive finite prices, valid OHLC ranges and source provenance. Moves above the lifecycle's 80% absolute-return threshold require an [exact, independently verified historical observation review](HISTORICAL_ANOMALY_REVIEWS.md). Source-bound approvals are audited and do not remove the observation from statistics or approve a model. Statistical outliers **inside verified data are retained**, never clipped or deleted.
 
 Returns use `close[t]/close[t-1]-1`, only inside contiguous segments. Gaps start new windows; prices are never filled. Coverage, missing days and stale last-completed-candle status remain separate. A stale but verified history is valid for explicitly dated exploration; it is not a current approved forecast. At most 6,000 observations per asset are accepted by this release.
 

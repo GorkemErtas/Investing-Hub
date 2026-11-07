@@ -80,6 +80,8 @@ These rules separate historical development, model selection and new outcomes wi
 
 ## Security and operations
 
+Historical extreme-return handling uses [exact source-bound observation reviews](HISTORICAL_ANOMALY_REVIEWS.md), not a symbol-wide bypass. The 80% unreviewed threshold remains in force. Downloaded/combined frames and stored verification bind the exact symbol/date, both full candle fingerprints and pinned evidence; dataset metadata preserves review IDs and policy hash. Training revalidation propagates the same source context; inference/publication prerequisites use the same verified Store read. No source prices, previous fingerprints, model status or forecast history are rewritten.
+
 Only Binance's documented HTTPS archive and market-data hosts are accepted, with redirects refused. Downloads are bounded to 8 MiB, ZIP members are allowlisted and parsed without extraction, and provider errors have finite retries/timeouts. A missing archive alone permits documented REST fallback. Restrictions/rate limits never invoke synthetic or third-party market data. Existing verified rows survive corruption/outages.
 
 Numeric artifacts contain only supported coefficient/scaler/tree arrays. Bounded sizes, finite values, ordered child indices, feature/version checks and SHA-256 precede numeric interpretation. No arbitrary Python imports, pickle/joblib loading or downloaded ONNX execution occurs. Exported prediction parity is checked against sklearn. Keep local DB ownership/access restricted; an attacker who controls the registry can falsify numeric data even without executing artifact code.
