@@ -1,5 +1,7 @@
 # News Intelligence and Research Lab verification
 
+The Research Lab implementation record below predates the separate Gemini SDK investigation at the end of this document. That investigation was initially delivered unstaged and made no live Gemini requests. The owner subsequently requested commits and a push.
+
 Implementation follow-up: **2026-11-07**, on the existing `main` branch. The implementation was initially delivered unstaged. The owner subsequently requested separate commits and a push. No merge, history rewrite, deployment or scheduler registration is included.
 
 ## Audit and resulting behavior
@@ -85,3 +87,21 @@ Following the owner's explicit commit/push request, related contracts, implement
 1. `feat(news): improve source diagnostics and add official Ethereum releases` — shared v2 additions, backend collection/storage/config and their shared/backend regressions together.
 2. `feat(web): integrate cached news into Research Lab` — React Query client, news UI/styles, accurate Research content and web unit/browser regressions.
 3. `docs(news): record keyless workflow and live Research Lab verification` — configuration example, READMEs, operator/source-policy guide, architecture/security/deployment notes and this evidence record.
+
+## Gemini SDK investigation — 2026-11-07
+
+The owner reported successful official REST model metadata (HTTP 200) and `generateContent` (HTTP 200, one output token). Those live results were supplied by the owner, not executed again in this task. No private credential, provider response or real cached evidence was inspected. The starting tree already contained a local `AQ.` validation fix in `backend/src/config.ts`; it was preserved and extended to bounded opaque auth/legacy syntax.
+
+Audited `provider.ts`, `requests.ts`, `service.ts`, `cli.ts`, `config.ts`, the strict analysis/state contracts and the installed **@google/genai 3.0.0** source. An offline test through the real SDK confirms its unconfigured `generateContent` route is **v1**; a second confirms the adapter now uses the explicit official **v1beta** route with the original configured model and unchanged key header, despite ambient SDK routing variables. No SDK/dependency/model upgrade or alternative model was used.
+
+The previous request transmitted raw `z.toJSONSchema(analysisSchema)` output, including `$schema` and string pattern/length constraints absent from Google's documented JSON-schema subset. The adapter now projects only the supported constraints used by this schema, preserving full strict Zod/evidence validation after generation. The former failure handler discarded HTTP status and all useful context. Version/schema/options mismatch is a **probable request-compatibility cause**, not a proven historical HTTP 400: unsupported schema keywords can be ignored, and the old `PROVIDER` code alone cannot distinguish a request rejection from authentication, access, resource, network or server failures.
+
+Changed files: `backend/src/config.ts`, `news/provider.ts`, `news/requests.ts`, `news/service.ts`, `news/cli.ts`, `news/types.ts`, `news/store.ts`, new `backend/tests/gemini.test.ts`, and the news operator/verification guides. Error output and latest-attempt persistence contain only HTTP status, an allowlisted category, elapsed milliseconds and (in state/status only) attempt time. No raw exception, message, headers, prompt, evidence or key is copied into diagnostics. Old v2 files remain readable with null diagnostics and unchanged usage. Existing source-only reads, snapshots, budgets, quota cooldowns and bounded retry ownership are preserved.
+
+Tests use synthetic keys/content and fully mocked HTTP, including the actual installed SDK serialization and typed API error path. They cover 400, 401, 403, 404, 429, 500/502/503, malformed error JSON, pre-HTTP SDK failures, transport/timeouts, safe key formats, strict output rejection, CLI redaction, old cache compatibility, durable reservations/cooldowns, and valid constrained analysis. The model/source network is never used. The final malformed-5xx refinement preserves bounded retries even if SDK error parsing fails.
+
+Checks executed for this follow-up: root `npm run build`, `npm run typecheck`, `npm test` (**202 passed**: 39 shared, 150 backend, 13 web) and `npm run lint` passed. After the final malformed-5xx refinement, backend build/typecheck/tests were rerun; final backend results are recorded below. Browser/mobile suites were not rerun because this follow-up changes backend analysis only; their earlier results above remain historical. No collection/analyze command was run against real providers or private state, and no Git mutation or deployment was performed.
+
+Final backend verification: `npm run build -w backend`, `npm run typecheck -w backend` and `npm run test -w backend` passed, with **151 backend tests**, including **36 new Gemini cases**. Shared/web implementations are unchanged by that final refinement. `git diff --check` passed. Before the owner's subsequent commit/push request, the index was empty and `HEAD` was at `d7409df` on `main`.
+
+After review, the owner requested commits and a push, and made that the default for future completed tasks in this repository. `AGENTS.md` records this workflow, with explicit task-specific instructions taking precedence. No live Gemini test or deployment is implied by committing the fix.

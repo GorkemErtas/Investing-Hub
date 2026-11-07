@@ -147,6 +147,32 @@ npm run news:status -w backend
 
 The existing pinned Gemini SDK makes normal structured model requests with no grounding, search, URL context or other tools. It receives only accepted headlines and limited metadata. External text is untrusted data; injection patterns are filtered, model output has strict enum-only classifications, evidence IDs and exact headline quotes, and arbitrary narrative/URLs/price targets are rejected. Explanations are assembled from accepted labels and point to the source evidence. All headline analysis has high uncertainty and explicitly says the linked article was not read or fact-checked. A model failure preserves the collected news.
 
+### SDK compatibility and sanitized diagnostics
+
+The pinned `@google/genai` **3.0.0** was inspected and its real request serialization tested offline. With no version configured it sends `generateContent` to **v1**. The news adapter now pins `https://generativelanguage.googleapis.com` and **v1beta** explicitly, overriding ambient Google base URL/API-version/backend settings while preserving the configured `GEMINI_MODEL` and supplied key. The SDK sends the key unchanged in `x-goog-api-key`; no key is put in a URL. Client construction remains lazy, inside the budgeted analysis attempt. No metadata probe or live test is initiated automatically.
+
+Google's [GenerationConfig reference](https://ai.google.dev/api/generate-content#v1beta.GenerationConfig) documents a subset for `responseJsonSchema`. The wire schema now uses supported object/array/type/enum/required/additional-properties constraints, omitting Zod's `$schema`, string `pattern`, `minLength` and `maxLength` keywords. The full strict Zod schema and evidence/quote checks still validate returned classifications locally; removing a wire keyword does not relax local validation. Only `responseJsonSchema` is set with `responseMimeType=application/json`, never both schema options, and no tools/search/grounding are enabled.
+
+The key configuration accepts bounded, header-safe `AQ.` auth-key syntax and legacy key syntax without assuming a fixed provider-specific length. Syntax acceptance does not establish service permissions, quota or the continued usability of a legacy key. See Google's [key-type guidance](https://ai.google.dev/gemini-api/docs/api-key). The existing explicit AI flag and rotation acknowledgement still apply.
+
+An analysis failure now includes a **sanitized** `diagnostics` object in CLI stderr: `httpStatus`, allowlisted `category`, and `elapsedMs`. No exception message/stack, response body, private headers, URL/key, prompt or evidence content is printed. Request status is observed at the transport boundary, including when SDK error-body parsing fails. HTTP status is null when unobserved; elapsed time measures the attempt, not the whole retry sequence, and is null for a locally suppressed request.
+
+| Diagnostic category                     | Meaning                                                                                      |
+| --------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `bad_request` (400)                     | Google rejected the request; check API/schema/options rather than assuming the key is wrong. |
+| `unauthenticated` (401)                 | Authentication was rejected.                                                                 |
+| `permission_denied` (403)               | Access/project/key restrictions were rejected.                                               |
+| `not_found` (404)                       | The requested model/method/resource was not found on that API route.                         |
+| `rate_limited` (429)                    | An actual rate/quota response triggered durable cooldown; no immediate retry.                |
+| `server_error` (5xx)                    | Upstream failure; the existing runner permits at most three budgeted attempts.               |
+| `timeout`, `network_error`, `sdk_error` | Deadline, recognized transport failure, or SDK failure without a usable HTTP result.         |
+| `invalid_response`                      | A successful HTTP response could not be parsed or failed strict local analysis validation.   |
+| `local_cooldown`, `budget_exhausted`    | The attempt was suppressed locally; no new HTTP response is implied.                         |
+
+`news:status` exposes only the latest bounded `lastGeminiAttempt` (the same three fields plus `attemptedAt`). Older v2 state defaults that field to null without a migration write or budget reset. A failure retains collected source metadata and prior valid snapshots; its reservation and safe diagnostics remain durable. A suppressed retry preserves the last actual attempt's status. SDK retries remain disabled (`attempts: 1`), and only the service runner owns bounded retries and request accounting. `Retry-After` is honored without storing headers. The SDK's text getter is avoided because it can log provider-supplied non-text field names.
+
+A minimal REST call succeeding does not validate the structured news request. Request version/options/schema mismatch is a probable explanation for a REST/SDK discrepancy; unsupported schema keywords may be ignored rather than rejected, so neither schema nor version alone proves the historical root cause. The former `PROVIDER` output discarded the necessary HTTP evidence. Inspect the next explicitly initiated analysis result and `news:status` to distinguish bad request, auth/access, unavailable resource, quota, transport and SDK failures. Do not switch models or reset state/budgets to mask the error.
+
 To stop optional analysis in this terminal:
 
 ```powershell
