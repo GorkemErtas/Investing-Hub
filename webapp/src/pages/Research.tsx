@@ -3,6 +3,7 @@ import { ArrowRight, Check, FlaskConical, LockKeyhole } from 'lucide-react';
 import { usePrediction } from '../lib/api';
 import { ErrorState, Notice, Skeleton } from '../components/ui';
 import { utc } from '../lib/format';
+import { NewsIntelligence } from '../components/NewsIntelligence';
 
 export function Research() {
   const [symbol, setSymbol] = useState<'BTCUSDT' | 'ETHUSDT'>('BTCUSDT');
@@ -41,6 +42,7 @@ export function Research() {
           <span>t → t + 1</span>
         </div>
       </div>
+      <NewsIntelligence />
       <div className="research-layout">
         <section className="panel">
           <div className="panel-heading">
@@ -108,7 +110,7 @@ export function Research() {
             [
               '02',
               'Respect the timeline',
-              'Past-only features. Chronological train, validation and held-out test sets with a horizon gap.',
+              'Past-only features with purged chronological development and selection folds. Inspected history through 2026 is development evidence, not an untouched test.',
             ],
             [
               '03',
@@ -118,7 +120,7 @@ export function Research() {
             [
               '04',
               'Report what happened',
-              'MAE, RMSE, directional accuracy and expanding-window results. No cherry-picked backtests.',
+              'Report all candidate/window results, then record real prospective shadow forecasts without backdating. Historical scores alone cannot approve a model.',
             ],
           ].map(([n, title, description]) => (
             <div className="method-step" key={n}>
@@ -132,18 +134,19 @@ export function Research() {
         </section>
       </div>
       <Notice>
-        Offline experiment results are written to versioned local reports. This page does not imply
-        that a trained candidate is deployed. Legacy ONNX models are preserved only as unverified
-        historical artifacts.
+        Historical experiments support development and selection. Future shadow outcomes used for
+        approval are prospective validation; subsequent active forecasts provide continuing forward
+        evaluation. No model is approved for publication here. Legacy ONNX artifacts remain
+        inactive.
       </Notice>
       <section className="panel research-checks">
         <h2>The publication gate</h2>
         <div>
           {[
-            'Beat the naive baseline on validation before opening the final test',
-            'Pass expanding-window evaluation with consistent improvement',
-            'Verify preprocessing, feature order and exported inference parity',
-            'Review held-out results before any manual deployment decision',
+            'Compare frozen candidates with the no-change baseline across historical folds',
+            'Accumulate at least 30 real prospective daily shadow forecasts',
+            'Require 2% return-RMSE improvement and compare shared dates with any incumbent',
+            'Review integrity, freshness and evidence before explicit approval and promotion',
           ].map((text) => (
             <p key={text}>
               <Check size={17} />

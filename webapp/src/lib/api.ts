@@ -7,8 +7,14 @@ import {
   type Interval,
   type Symbol,
 } from '@investing-hub/shared/contracts';
+import { newsInsightResponseSchema, type NewsSymbol } from '@investing-hub/shared/news';
 
-async function get<T>(path: string, schema: z.ZodType<T>, signal: AbortSignal): Promise<T> {
+async function get<T>(
+  path: string,
+  schema: z.ZodType<T>,
+  signal: AbortSignal,
+  service = 'Market',
+): Promise<T> {
   const response = await fetch(`/api${path}`, {
     signal: AbortSignal.any([signal, AbortSignal.timeout(15000)]),
     headers: { Accept: 'application/json' },
@@ -17,7 +23,7 @@ async function get<T>(path: string, schema: z.ZodType<T>, signal: AbortSignal): 
     throw new Error(
       response.status === 429
         ? 'Request limit reached. Please wait a minute.'
-        : 'Market service unavailable. Please try again shortly.',
+        : `${service} service unavailable. Please try again shortly.`,
     );
   const result = schema.safeParse(await response.json());
   if (!result.success) throw new Error('The service returned data we could not validate.');
@@ -45,5 +51,23 @@ export const usePrediction = (symbol: 'BTCUSDT' | 'ETHUSDT') =>
     queryKey: ['prediction', symbol],
     queryFn: ({ signal }) => get(`/predictions/${symbol}`, predictionSchema, signal),
     staleTime: 300000,
+    retry: 1,
+  });
+
+export const getNewsInsight = (symbol: NewsSymbol, signal: AbortSignal) =>
+  get(
+    `/news/insights/${symbol}`,
+    newsInsightResponseSchema.refine((data) => data.symbol === symbol),
+    signal,
+    'News cache',
+  );
+
+export const useNewsInsight = (symbol: NewsSymbol) =>
+  useQuery({
+    queryKey: ['news', symbol],
+    queryFn: ({ signal }) => getNewsInsight(symbol, signal),
+    staleTime: 60000,
+    refetchInterval: 300000,
+    refetchIntervalInBackground: false,
     retry: 1,
   });
