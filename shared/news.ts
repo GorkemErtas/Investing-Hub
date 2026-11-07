@@ -8,6 +8,7 @@ export const newsProviderSchema = z.enum([
   "ethereum_foundation_rss",
   "bitcoin_core_rss",
   "sec_rss",
+  "lighthouse_releases",
 ]);
 export type NewsProviderId = z.infer<typeof newsProviderSchema>;
 export const newsSentimentSchema = z.enum([
@@ -41,7 +42,14 @@ export const newsLinkSchema = z
       ["https:", "http:"].includes(url.protocol) &&
       !url.username &&
       !url.password &&
-      !url.port
+      !url.port &&
+      url.hostname.includes(".") &&
+      !/^[\d.]+$/.test(url.hostname) &&
+      !url.hostname.includes(":") &&
+      !/(?:^|\.)(?:localhost|local|internal|test|invalid)$/.test(
+        url.hostname,
+      ) &&
+      !url.hostname.endsWith(".")
     );
   });
 export const newsEvidenceSchema = z
@@ -162,6 +170,9 @@ export const newsCoverageSchema = z.strictObject({
   rejected: z.number().int().nonnegative(),
   reason: z.string().max(80).nullable(),
   checkedAt: timestamp,
+  // Defaults keep existing v2 cache files readable without rewriting on GET.
+  httpStatus: z.number().int().min(100).max(599).nullable().default(null),
+  elapsedMs: z.number().int().nonnegative().nullable().default(null),
 });
 export type NewsCoverage = z.infer<typeof newsCoverageSchema>;
 export const newsAttributionSchema = z.strictObject({
@@ -191,7 +202,7 @@ export const newsSnapshotSchema = z
     outlook: newsSentimentSchema,
     summary: z.string().max(600).nullable(),
     events: z.array(newsEventSchema).max(8),
-    attribution: z.array(newsAttributionSchema).max(5),
+    attribution: z.array(newsAttributionSchema).max(6),
     coverage: z.array(newsCoverageSchema).max(10),
     limitations: z.array(z.string().max(300)).min(1).max(10),
   })

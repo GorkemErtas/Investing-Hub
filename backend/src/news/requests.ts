@@ -16,14 +16,19 @@ export function requestRunner(
     key: string,
     action: (signal: AbortSignal) => Promise<T>,
   ): Promise<T> {
-    const attempts = key === "gdelt" ? 1 : 3;
+    const attempts = ["gdelt", "lighthouse_releases"].includes(key) ? 1 : 3;
     for (let attempt = 0; attempt < attempts; attempt++) {
       if (
         kind === "gemini"
           ? state.blockedUntil > clock()
           : (state.sourceCooldowns[key] ?? 0) > clock()
       )
-        throw new NewsError(kind === "source" ? "COOLDOWN" : "QUOTA");
+        throw new NewsError(
+          kind === "source" ? "COOLDOWN" : "QUOTA",
+          false,
+          0,
+          { reason: "local_cooldown" },
+        );
       if (kind === "source" && (state.nextSourceAt[key] ?? 0) > clock())
         await pause(state.nextSourceAt[key] - clock());
       const date = new Date(clock()).toISOString().slice(0, 10);
@@ -46,6 +51,7 @@ export function requestRunner(
       await checkpoint();
       const controller = new AbortController();
       let timer: ReturnType<typeof setTimeout> | undefined;
+      const started = performance.now();
       try {
         const result = await Promise.race([
           action(controller.signal),
@@ -79,6 +85,7 @@ export function requestRunner(
         return result;
       } catch (error) {
         const failure = providerFailure(error);
+        failure.details.elapsedMs ??= Math.round(performance.now() - started);
         if (failure.code === "QUOTA") {
           if (kind === "gemini")
             state.blockedUntil =

@@ -13,6 +13,7 @@ import {
   evidenceFingerprint,
   parseGdelt,
   parseOfficialRss,
+  parseReleases,
 } from "./evidence.js";
 import {
   createGeminiProvider,
@@ -80,11 +81,17 @@ export function createNewsService(
       if (Date.parse(state.collection.lastCheckedAt) > clock())
         return unavailable("storage_unavailable");
       const ai = analysisAvailability(config);
-      const data =
+      const cached =
         ai !== "not_analyzed" ||
         state.snapshots[symbol]!.model !== config.GEMINI_MODEL
           ? snapshots(state.collection, ai)[symbol]
           : state.snapshots[symbol]!;
+      const data = {
+        ...cached,
+        coverage: state.lastCoverage.length
+          ? state.lastCoverage
+          : cached.coverage,
+      };
       const stale = Date.parse(data.expiresAt) <= clock();
       return newsInsightResponseSchema.parse({
         symbol,
@@ -167,6 +174,8 @@ export function createNewsService(
           status: "disabled",
           accepted: 0,
           rejected: 0,
+          httpStatus: null,
+          elapsedMs: null,
           reason: source.enabled
             ? null
             : source.provider === "ethereum_foundation_rss"
@@ -181,15 +190,24 @@ export function createNewsService(
             source.provider === "gdelt" ? "gdelt" : source.id,
             (signal) => fetchSource(new URL(source.url), signal),
           );
+          item.httpStatus = result.httpStatus ?? null;
+          item.elapsedMs = result.elapsedMs ?? null;
           const parsed =
             source.provider === "gdelt"
               ? parseGdelt(result.text, source, clock())
-              : parseOfficialRss(
-                  result.text,
-                  source,
-                  clock(),
-                  config.NEWS_LOOKBACK_HOURS,
-                );
+              : source.provider === "lighthouse_releases"
+                ? parseReleases(
+                    result.text,
+                    source,
+                    clock(),
+                    config.NEWS_RELEASE_LOOKBACK_HOURS,
+                  )
+                : parseOfficialRss(
+                    result.text,
+                    source,
+                    clock(),
+                    config.NEWS_LOOKBACK_HOURS,
+                  );
           successes++;
           successfulProviders.add(source.provider);
           records.push(...parsed.evidence);
@@ -200,6 +218,15 @@ export function createNewsService(
               ? "partial"
               : "ok"
             : "empty";
+          item.reason = !item.accepted
+            ? !item.rejected
+              ? "no_matching_articles"
+              : parsed.invalid
+                ? "invalid_records"
+                : "no_relevant_articles"
+            : item.rejected
+              ? "some_records_rejected"
+              : null;
         } catch (error) {
           const failure = providerFailure(error);
           failed.add(source.provider);
@@ -209,7 +236,22 @@ export function createNewsService(
               : failure.code === "COOLDOWN"
                 ? "cooldown"
                 : "unavailable";
-          item.reason = failure.code.toLowerCase();
+          item.httpStatus = failure.details.httpStatus ?? item.httpStatus;
+          item.elapsedMs = failure.details.elapsedMs ?? item.elapsedMs;
+          item.reason =
+            failure.details.reason ??
+            (
+              {
+                TIMEOUT: "request_timeout",
+                QUOTA: "http_rate_limit",
+                COOLDOWN: "local_cooldown",
+                EVIDENCE: "invalid_response",
+                BUDGET: "daily_budget_exhausted",
+              } as Record<string, string>
+            )[failure.code] ??
+            "connection_failed";
+          if (source.provider === "gdelt" && failure.code === "EVIDENCE")
+            state.sourceCooldowns.gdelt = clock() + 300000;
         } finally {
           item.checkedAt = new Date(clock()).toISOString();
         }
@@ -217,6 +259,7 @@ export function createNewsService(
       state.diagnostics = Object.fromEntries(
         coverage.map((c) => [`${c.sourceId}_${c.status}`, c.accepted]),
       );
+      state.lastCoverage = coverage;
       if (!successes) throw new NewsError("PROVIDER");
       // A failing index must not suppress healthy RSS. Retain still-valid old
       // metadata from failed providers, explicitly marked by coverage status.
@@ -225,7 +268,11 @@ export function createNewsService(
         if (
           failed.has(record.provider) &&
           clock() - Date.parse(date) <=
-            (record.provider === "gdelt" ? 72 : config.NEWS_LOOKBACK_HOURS) *
+            (record.provider === "gdelt"
+              ? 72
+              : record.provider === "lighthouse_releases"
+                ? config.NEWS_RELEASE_LOOKBACK_HOURS
+                : config.NEWS_LOOKBACK_HOURS) *
               3600000
         )
           records.push(record);
@@ -348,7 +395,9 @@ export function createNewsService(
       sourceCooldowns: state.sourceCooldowns,
       lastFailure: state.lastFailure,
       collectedAt: state.collection?.generatedAt ?? null,
-      coverage: state.collection?.coverage ?? [],
+      coverage: state.lastCoverage.length
+        ? state.lastCoverage
+        : (state.collection?.coverage ?? []),
       snapshots: Object.fromEntries(
         Object.entries(state.snapshots).map(([symbol, s]) => [
           symbol,

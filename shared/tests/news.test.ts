@@ -3,6 +3,8 @@ import {
   newsEvidenceSchema,
   newsEventSchema,
   newsSnapshotSchema,
+  newsLinkSchema,
+  newsCoverageSchema,
 } from "../news.js";
 const evidence = {
   id: "a".repeat(32),
@@ -54,6 +56,30 @@ const snapshot = {
   limitations: ["Headline metadata only; not fact-checked."],
 };
 describe("free source-only news contracts", () => {
+  it.each([
+    "javascript:alert(1)",
+    "data:text/html,bad",
+    "https://user:secret@example.com/",
+    "http://127.0.0.1/",
+    "http://[::1]/",
+    "https://host.internal/",
+    "https://localhost/",
+  ])("rejects unsafe display links: %s", (url) => {
+    expect(newsLinkSchema.safeParse(url).success).toBe(false);
+  });
+  it("reads older v2 coverage without inventing HTTP status or timing", () => {
+    expect(
+      newsCoverageSchema.parse({
+        sourceId: "gdelt_btc",
+        provider: "gdelt",
+        status: "empty",
+        accepted: 0,
+        rejected: 0,
+        reason: null,
+        checkedAt: "2026-11-06T11:00:00.000Z",
+      }),
+    ).toMatchObject({ httpStatus: null, elapsedMs: null });
+  });
   it("preserves unknown publication time while carrying an index timestamp", () =>
     expect(newsEvidenceSchema.safeParse(evidence).success).toBe(true));
   it("rejects treating index time as publication or independent fact checking", () => {

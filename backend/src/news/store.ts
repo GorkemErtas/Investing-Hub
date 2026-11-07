@@ -26,7 +26,7 @@ export const collectionSchema = z.strictObject({
   expiresAt: z.string().datetime(),
   evidence: z.array(newsEvidenceSchema).max(16),
   coverage: z.array(newsCoverageSchema).max(10),
-  attribution: z.array(newsAttributionSchema).max(5),
+  attribution: z.array(newsAttributionSchema).max(6),
 });
 export const stateSchema = z.strictObject({
   version: z.literal(2),
@@ -43,6 +43,7 @@ export const stateSchema = z.strictObject({
   lastAttempt: z.number().nonnegative(),
   lastFailure: z.string().max(50).nullable(),
   diagnostics: z.record(z.string(), z.number().int().nonnegative()),
+  lastCoverage: z.array(newsCoverageSchema).max(10).default([]),
 });
 export type NewsState = z.infer<typeof stateSchema>;
 export const emptyState = (): NewsState => ({
@@ -65,6 +66,7 @@ export const emptyState = (): NewsState => ({
   lastAttempt: 0,
   lastFailure: null,
   diagnostics: {},
+  lastCoverage: [],
 });
 
 export class NewsStore {

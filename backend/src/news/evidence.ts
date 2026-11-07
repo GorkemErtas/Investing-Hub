@@ -32,6 +32,8 @@ export const unsafeContent = (text: string) =>
 const btc = /\b(bitcoin|btc)\b/i,
   eth = /\b(ethereum|ether|eth|eip-?\d+)\b/i;
 const crypto = /\b(crypto(?:currency|currencies)?|digital assets?)\b/i;
+const filteredRecord = () =>
+  new NewsError("EVIDENCE", false, 0, { reason: "filtered_record" });
 export function categoryFor(title: string): NewsEvidence["category"] {
   if (/\b(hack|exploit|vulnerabilit\w*|security|stolen|breach)\b/i.test(title))
     return "security";
@@ -66,7 +68,13 @@ function relevance(
     )
   )
     return null;
-  if (["ethereum_foundation_rss", "bitcoin_core_rss"].includes(source.provider))
+  if (
+    [
+      "ethereum_foundation_rss",
+      "bitcoin_core_rss",
+      "lighthouse_releases",
+    ].includes(source.provider)
+  )
     return { symbols: source.symbols, scope: "coin_specific" };
   const symbols: NewsSymbol[] = [
     ...(btc.test(title) ? ["BTCUSDT" as const] : []),
@@ -99,7 +107,8 @@ function record(
   const title = normalizeText(titleValue),
     sourceUrl = safeArticleUrl(urlValue);
   const selected = relevance(title, source);
-  if (!selected || unsafeContent(title)) throw new NewsError("EVIDENCE");
+  if (!selected) throw filteredRecord();
+  if (unsafeContent(title)) throw new NewsError("EVIDENCE");
   const official = source.provider !== "gdelt";
   const publisherDomain = new URL(sourceUrl).hostname;
   return newsEvidenceSchema.parse({
@@ -130,7 +139,7 @@ const gdeltArticle = z.object({
 export function parseGdelt(text: string, source: Source, now: number) {
   let rows: unknown[];
   try {
-    const payload = JSON.parse(text);
+    const payload = z.record(z.string(), z.unknown()).parse(JSON.parse(text));
     rows =
       Object.keys(payload).length === 0
         ? []
@@ -140,7 +149,8 @@ export function parseGdelt(text: string, source: Source, now: number) {
     throw new NewsError("EVIDENCE");
   }
   const evidence: NewsEvidence[] = [];
-  let rejected = 0;
+  let rejected = 0,
+    invalid = 0;
   for (const raw of rows) {
     try {
       const row = gdeltArticle.parse(raw),
@@ -157,10 +167,10 @@ export function parseGdelt(text: string, source: Source, now: number) {
       const indexedAt = `${stamp[1]}-${stamp[2]}-${stamp[3]}T${stamp[4]}:${stamp[5]}:${stamp[6]}.000Z`;
       if (
         !z.iso.datetime().safeParse(indexedAt).success ||
-        Date.parse(indexedAt) > now ||
-        now - Date.parse(indexedAt) > 72 * 3600000
+        Date.parse(indexedAt) > now
       )
         throw new NewsError("EVIDENCE");
+      if (now - Date.parse(indexedAt) > 72 * 3600000) throw filteredRecord();
       // DOC ArticleList supplies a seen/indexing date, not verified publication.
       evidence.push(
         record(
@@ -173,11 +183,16 @@ export function parseGdelt(text: string, source: Source, now: number) {
           now,
         ),
       );
-    } catch {
+    } catch (error) {
       rejected++;
+      if (
+        !(error instanceof NewsError) ||
+        error.details.reason !== "filtered_record"
+      )
+        invalid++;
     }
   }
-  return { evidence, rejected };
+  return { evidence, rejected, invalid };
 }
 function rssDate(value: string): string {
   const match =
@@ -237,7 +252,8 @@ export function parseOfficialRss(
   if (!Array.isArray(rows) || rows.length > 250)
     throw new NewsError("EVIDENCE");
   const evidence: NewsEvidence[] = [];
-  let rejected = 0;
+  let rejected = 0,
+    invalid = 0;
   for (const row of rows) {
     try {
       if (
@@ -248,10 +264,11 @@ export function parseOfficialRss(
         publishedAt = rssDate(row.pubDate);
       if (
         !source.hosts.includes(new URL(url).hostname) ||
-        Date.parse(publishedAt) > now ||
-        now - Date.parse(publishedAt) > lookbackHours * 3600000
+        Date.parse(publishedAt) > now
       )
         throw new NewsError("EVIDENCE");
+      if (now - Date.parse(publishedAt) > lookbackHours * 3600000)
+        throw filteredRecord();
       // Deliberately ignore description, content:encoded, images and bodies,
       // even when a feed happens to include a full copyrighted article.
       evidence.push(
@@ -265,11 +282,87 @@ export function parseOfficialRss(
           now,
         ),
       );
-    } catch {
+    } catch (error) {
       rejected++;
+      if (
+        !(error instanceof NewsError) ||
+        error.details.reason !== "filtered_record"
+      )
+        invalid++;
     }
   }
-  return { evidence, rejected };
+  return { evidence, rejected, invalid };
+}
+// Fixed official project release API only. No release bodies, assets, authors,
+// pagination URLs, tag creation dates or download links become news evidence.
+export function parseReleases(
+  text: string,
+  source: Source,
+  now: number,
+  lookbackHours = 720,
+) {
+  let rows: unknown[];
+  try {
+    rows = z.array(z.unknown()).max(10).parse(JSON.parse(text));
+  } catch {
+    throw new NewsError("EVIDENCE");
+  }
+  const evidence: NewsEvidence[] = [];
+  let rejected = 0,
+    invalid = 0;
+  const releaseSchema = z.object({
+    name: z.string().max(200).nullable(),
+    tag_name: z.string().min(1).max(100),
+    html_url: z.string(),
+    published_at: z.iso.datetime({ offset: true }),
+    draft: z.boolean(),
+    prerelease: z.boolean(),
+  });
+  for (const raw of rows) {
+    try {
+      const release = releaseSchema.parse(raw);
+      const url = safeArticleUrl(release.html_url),
+        parsed = new URL(url);
+      if (
+        source.provider !== "lighthouse_releases" ||
+        parsed.origin !== "https://github.com" ||
+        !/^\/sigp\/lighthouse\/releases\/tag\/[^/]+$/.test(parsed.pathname) ||
+        decodeURIComponent(parsed.pathname.split("/").at(-1)!) !==
+          release.tag_name ||
+        parsed.search ||
+        Date.parse(release.published_at) > now
+      )
+        throw new NewsError("EVIDENCE");
+      if (
+        release.draft ||
+        release.prerelease ||
+        now - Date.parse(release.published_at) > lookbackHours * 3600000
+      )
+        throw filteredRecord();
+      evidence.push(
+        record(
+          `Lighthouse release ${release.tag_name}${release.name ? `: ${release.name}` : ""}`,
+          url,
+          source,
+          {
+            publishedAt: new Date(release.published_at).toISOString(),
+            indexedAt: null,
+          },
+          "und",
+          hash(text),
+          now,
+        ),
+      );
+    } catch (error) {
+      rejected++;
+      if (
+        !(error instanceof NewsError) ||
+        error.details.reason !== "filtered_record"
+      )
+        invalid++;
+    }
+  }
+  return { evidence, rejected, invalid };
 }
 export function deduplicate(records: NewsEvidence[]): NewsEvidence[] {
   const result: NewsEvidence[] = [];

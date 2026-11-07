@@ -26,6 +26,11 @@ export class NewsError extends Error {
       | "INVALID_ANALYSIS",
     public transient = false,
     public retryAfterSeconds = 0,
+    public details: {
+      httpStatus?: number;
+      elapsedMs?: number;
+      reason?: string;
+    } = {},
   ) {
     super(code);
   }

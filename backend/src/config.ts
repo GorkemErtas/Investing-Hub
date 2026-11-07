@@ -30,6 +30,13 @@ const schema = z.object({
   NEWS_AI_ANALYSIS_ENABLED: z.enum(["true", "false"]).default("false"),
   NEWS_GDELT_ENABLED: z.enum(["true", "false"]).default("true"),
   NEWS_ETHEREUM_RSS_ENABLED: z.enum(["true", "false"]).default("false"),
+  NEWS_ETHEREUM_RELEASES_ENABLED: z.enum(["true", "false"]).default("true"),
+  NEWS_RELEASE_LOOKBACK_HOURS: z.coerce
+    .number()
+    .int()
+    .min(24)
+    .max(720)
+    .default(720),
   NEWS_GDELT_MIN_INTERVAL_MS: z.coerce
     .number()
     .int()
