@@ -1,5 +1,7 @@
 # Future Analysis verification and readiness
 
+This records the original approved-publication migration. The later feature-branch experimental mode and actual eight-asset results are documented in [experimental verification](EXPERIMENTAL_FORECAST_VERIFICATION.md).
+
 Verified 2026-11-07 on Windows/PowerShell, on `main` after inspecting existing work and fetching `origin/main` (`ec8c030` before this migration). The work continues the existing Python lifecycle and the Gemini SDK compatibility fix. No paid live Gemini request, real-data training, model approval/promotion, forecast publication, scheduler registration, merge or deployment was performed.
 
 ## Verification

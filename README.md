@@ -1,6 +1,6 @@
 # Investing Hub
 
-A modular monolith with a guest React web demo, an Expo mobile app, one TypeScript API, universal contracts/accounting, and an offline Python research pipeline. All trading is simulated. Market quotes are in **USDT**, not USD. Future Analysis publishes only explicitly exported, independently approved ML forecasts; no model is currently ready.
+A modular monolith with a guest React web demo, an Expo mobile app, one TypeScript API, universal contracts/accounting, and an offline Python research pipeline. All trading is simulated. Market quotes are in **USDT**, not USD. Future Analysis defaults to explicitly exported **experimental ML estimates** for all eight assets, with a separate approved forecast view. Experimental estimates do not claim validated accuracy.
 
 | Directory   | Responsibility                                                                                                |
 | ----------- | ------------------------------------------------------------------------------------------------------------- |
@@ -39,7 +39,7 @@ Use `http://10.0.2.2:5000` for the Android emulator, your computer's LAN origin 
 
 ## Future Analysis
 
-Future Analysis combines an ML forecast with a critical Gemini review of that exact evidence and current Google Search context in one report. All eight shared assets are selectable, with direct dashboard links. Python remains the sole numerical authority; chronological residual calibration and existing historical/prospective gates control publication. Missing or unapproved ML stays unavailable. Gemini Search is disabled by default and runs only after explicit user consent, without shared grounded-result caching. No paid live calls, model approvals, publication jobs or deployments were enabled. See [setup, architecture, costs and source presentation](docs/FUTURE_ANALYSIS.md) and [verification/readiness](docs/FUTURE_VERIFICATION.md).
+Future Analysis combines an experimental next-day ML estimate with an optional critical Gemini review of the exact numbers and current Google Search context in one report. All eight assets use existing trained models and immutable shadow predictions. Offline `predict --shadow-all` followed by `export-experimental` selects the lowest historical selection RMSE (ties: model ID); weak scores, zero prospective samples and candidate status do not block display. This ranking does not prove predictive superiority. Essential data integrity, timing and provenance checks remain mandatory. The separate approved publication path keeps its independent gates. Python remains the sole numerical authority, and only genuine model-derived intervals appear. Gemini Search stays disabled by default, requires explicit consent and has no shared grounding cache. See [operation and cost controls](docs/FUTURE_ANALYSIS.md) and [actual eight-asset verification](docs/EXPERIMENTAL_FORECAST_VERIFICATION.md).
 
 ## Analytics Lab
 

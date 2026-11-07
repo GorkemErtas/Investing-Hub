@@ -1,14 +1,37 @@
 # Future Analysis: architecture and operation
 
-One report combines an independently validated next UTC daily close forecast with a critical Gemini review of that exact forecast and current Google Search context. BTC, ETH, SOL, BNB, XRP, ADA, DOGE and LINK come from `shared/contracts.ts`; Python reads the bounded literal catalog rather than maintaining another list. The dashboard links each asset to `/future-analysis?symbol=...`. `/research` opens the same report for existing navigation.
+One report combines a next UTC daily close ML estimate with an optional critical Gemini review of that exact forecast and current Google Search context. The web report defaults to **Experimental / Not validated**; the mode selector retains the separate approved publication view. BTC, ETH, SOL, BNB, XRP, ADA, DOGE and LINK come from `shared/contracts.ts`; Python reads the bounded literal catalog rather than maintaining another list. The dashboard links each asset to `/future-analysis?symbol=...`. `/research` opens the same report for existing navigation.
 
-## Authority and publication
+## Experimental estimates without promotion
+
+Experimental generation and display require **none** of the historical/prospective performance gates: no 2% baseline improvement, 3/4 fold wins, 30 forward observations, or approved/active status. Losing, candidate-status models with zero forward observations can supply point estimates. Existing algorithms, features, daily frequency, model expiry and independent approval thresholds remain unchanged. Performance metrics stay available in Analytics Lab and the report's evidence details; they do not establish validated accuracy.
+
+Use the existing offline generation command and the separate read-only export:
+
+```powershell
+.\.venv\Scripts\python.exe ml/pipeline.py predict --shadow-all
+.\.venv\Scripts\python.exe ml/pipeline.py export-experimental
+```
+
+These commands reuse immutable current forecasts on repeated runs. They do not train or promote models. `predict --shadow-all` also checks the active path and may record `disabled_unvalidated` for assets without an active model; this does not prevent candidate forecasts or experimental export. If data is stale, explicitly synchronize the completed daily candles before prediction. Never use `weekly` as an export prerequisite: it includes training. Generation/export are offline operator commands, with no Python invocation in API handlers or automatic background training. Regenerate/export after the next UTC day; an expired forecast is unavailable until current, verified data and a genuine new forecast exist.
+
+`export-experimental` opens the existing SQLite database read-only and writes `ml/data/experimental-forecasts.json` atomically. Missing databases are not created. It checks all eight symbols and exports an explicit unavailable state when essential checks fail. The optional `--db` and `--output` paths must identify the same operator-owned registry and its separate JSON snapshot; configure `FUTURE_ML_DATABASE_PATH` and `FUTURE_EXPERIMENTAL_EXPORT_PATH` accordingly. This operation does not modify model statuses, predictions, events, datasets or approval evidence. Rollback-journal SQLite locking holds the read snapshot through checksum/stamp capture and atomic replacement; WAL is rejected because main-file stamps cannot represent WAL changes.
+
+The deterministic display rule is `lowest_selection_return_rmse_then_model_id_v1`: among existing current pending forecasts from compatible, unexpired candidate/approved/active models, choose the lowest finite historical selection **return** RMSE, breaking exact ties by ascending model ID. Rejected/archived models are excluded. No minimum improvement or successful-fold count applies. The report exposes the selected model/algorithm/history window, eligible candidate count, selection dates/samples, RMSE and baseline, fold wins, and forward sample count. Eligible historical windows may have different selection dates; this is a transparent display ranking, not an equal-period scientific comparison or proof of predictive superiority. Selection bias and reuse of development history remain limitations.
+
+Essential checks remain mandatory: verified Binance rows and reviewed anomaly policy, current dataset fingerprint, completed latest UTC daily candle, gap-free history, model/artifact feature compatibility and checksums, source retrieval before forecast generation, training/evaluation labels available by the source close, source < generation <= export time < target, model expiry, exact forecast identity, reference closing price and return/price parity. The exporter never runs inference, clips prices, edits ledger rows or backdates predictions. It displays the original stored model-derived interval only when valid; absent/invalid interval evidence becomes `null` without blocking the point estimate. No range or confidence percentage is invented.
+
+`GET /api/future-analysis/:symbol?mode=experimental` reads the bounded checksum/schema/registry-stamped snapshot and returns `mode: experimental`, `ml.status: experimental` and `validation.status: experimental_not_validated`. Ordinary GETs never call Gemini or persist anything. The default API request without a mode remains the approved contract. The web defaults to experimental explicitly and includes that mode in consented review POSTs (`{allowPaid:true,requestId:<uuid>,mode:"experimental"}`). Both mode and selected evidence bind the fingerprint, including unavailable states. Changing coin/mode clears the in-memory review and consent. Gemini receives the exact original numeric evidence and experimental status; it may critique the ranking and risks, but cannot change values, approve a model or invent an interval. Existing consent, request/cost controls, sources and no-shared-grounding-cache behavior apply unchanged.
+
+See [actual eight-asset verification](EXPERIMENTAL_FORECAST_VERIFICATION.md). UI support does not guarantee every future day has a fresh usable dataset/model/forecast.
+
+## Authority and approved publication
 
 Python alone produces reference/predicted prices in USDT, expected return, sign-derived direction, and the interval. No inference or training runs in Express. The existing immutable SQLite datasets, source hashes, candidate registry, independent Ridge/Random Forest/Gradient Boosting fits, chronological purging, prospective forecasts, approval, promotion and rollback remain authoritative. Inspected history through 2026 is development/selection evidence, never a new untouched test.
 
 The interval uses absolute **out-of-sample** return residuals from development folds. A finite-sample rank `ceil((n+1)*0.9)` fixes its radius before the final selection fold. That later fold measures coverage; below 90% is experimental and withheld. Price bounds are reference times `(1 + predictedReturn ± radiusReturn)`; impossible/nonpositive bounds are withheld rather than clipped. Calibration samples, dates, empirical coverage and method are frozen with the model and original forecast. This is historical empirical coverage, not a guarantee or a calibrated future probability. Reconciliation records subsequent interval outcomes without changing the original bounds.
 
-Publication additionally requires current, gap-free verified data, an unexpired active model, the historical gates and at least 30 genuinely prospective outcomes meeting configured baseline thresholds. A candidate-origin shadow remains withheld after promotion; wait for the next active-origin forecast. Models without interval evidence must undergo a new independently reviewed lifecycle; no old ledger entry is repaired or relabeled automatically.
+Approved publication additionally requires current, gap-free verified data, an unexpired active model, the historical gates and at least 30 genuinely prospective outcomes meeting configured baseline thresholds. A candidate-origin shadow remains withheld after promotion; wait for the next active-origin forecast. For approved publication, models without interval evidence must undergo a new independently reviewed lifecycle; no old ledger entry is repaired or relabeled automatically.
 
 From the repository root, follow [ML setup and review gates](../ml/README.md). After independently reviewing/approving a model and generating a current active forecast, explicitly export:
 
@@ -20,7 +43,7 @@ From the repository root, follow [ML setup and review gates](../ml/README.md). A
 
 Export does not train, promote or activate forecasts. It emits all eight assets, including explicit unavailable reasons. A SQLite writer lock covers evidence reads and atomic JSON publication, without writing evaluation events. The envelope checksum detects corruption; the backend also verifies the database size/mtime before and after every read. Any subsequent database change revokes the export until a new export. A checksum is not a signature: both files must remain operator-owned on persistent local disk, outside cloud/network sync. Do not restore/copy a live database or enable WAL/replace the database outside this lifecycle. Registry/model/evaluation hashes and dates remain visible in the report.
 
-`GET /api/future-analysis/:symbol` validates this file and returns ML plus research readiness only. It never writes, calls Gemini, or returns somebody else's grounded review. ML publication is fresh for six hours by default; a still-current forecast may be marked stale thereafter, with expiry checked separately. Missing, expired, tampered or revoked files yield explicit unavailable data. The original `/api/predictions/:symbol` stays disabled and preserves mobile compatibility.
+`GET /api/future-analysis/:symbol` without a mode validates this approved file and returns ML plus research readiness only. It never writes, calls Gemini, or returns somebody else's grounded review. ML publication is fresh for six hours by default; a still-current forecast may be marked stale thereafter, with expiry checked separately. Missing, expired, tampered or revoked files yield explicit unavailable data. The original `/api/predictions/:symbol` stays disabled and preserves mobile compatibility.
 
 ## Critical review and deterministic gate
 
@@ -52,6 +75,7 @@ Defaults need no key and make no paid calls. Node reads only the process environ
 | `GEMINI_API_KEY` / `GEMINI_KEY_ROTATED`                               | Private fresh credential / `false` acknowledgement; both required         |
 | `GEMINI_MODEL`                                                        | `gemini-3.5-flash-lite`; another model stays unverified/disabled          |
 | `FUTURE_ML_EXPORT_PATH`                                               | `ml/data/future-forecasts.json`                                           |
+| `FUTURE_EXPERIMENTAL_EXPORT_PATH`                                     | `ml/data/experimental-forecasts.json`; separate candidate snapshot        |
 | `FUTURE_ML_DATABASE_PATH`                                             | `ml/data/lifecycle.sqlite3`; same registry used by export                 |
 | `FUTURE_STORAGE_PATH`                                                 | `backend/.future-data`; counters only, persistent owned local directory   |
 | `FUTURE_REVIEW_TTL_SECONDS`                                           | 900; initiating view discards expired review                              |

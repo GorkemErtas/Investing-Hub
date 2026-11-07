@@ -2,7 +2,7 @@
 
 The separate `python ml/pipeline.py analytics` command opens the existing database read-only, reuses its verification/features/chronological split plan, and writes ignored analytical JSON/CSV runs. It computes EDA, circular block inference, direction/rare-event classifiers, observed anomalies, SQL summaries and frozen registry monitoring. It never creates a database, writes registry events, promotes models, reconciles outcomes or calls Gemini. Its prespecified research configuration is recorded independently of production training configuration. All eight assets are checked; absent/short/gapped histories remain explicit. See [Analytics Lab methods, local UI, exports and exercises](../docs/DATA_ANALYTICS.md).
 
-Python 3.13; no Python API, GPU, database service, Gemini call or deployment. The legacy Express prediction response remains disabled. The separate Future Analysis endpoint accepts only an explicit eligible ML publication. No scheduler is registered by this repository.
+Python 3.13; no Python API, GPU, database service, Gemini call or deployment. The legacy Express prediction response remains disabled. Future Analysis reads explicit offline experimental or approved snapshots; no inference runs in HTTP handlers. Experimental candidates need no performance threshold or promotion. No scheduler is registered by this repository.
 
 The independent CLI syncs completed spot daily candles for every asset in `shared/contracts.ts`, validates provenance, trains reproducible candidates, records shadow forecasts, reconciles actuals, and supports explicit approval/promotion/rollback. SQLite is built into Python; no new Python dependencies were added.
 
@@ -57,6 +57,7 @@ Set the same variable for every command, or pass `--db <absolute-path>` **after*
 | `status`                                          | Dataset freshness, quality, registry, forecast counts, rolling performance snapshots, recent events                                |
 | `daily`                                           | Sync, reconcile, active/shadow forecasts; never train/promote                                                                      |
 | `weekly`                                          | Sync, reconcile, train, active/shadow forecasts; never approve/promote                                                             |
+| `export-experimental --output PATH`               | Read-only all-asset candidate snapshot; deterministic selection RMSE ranking, no performance/approval gate                         |
 | `export-analysis --output PATH`                   | Explicit atomic all-asset publication; only current active-origin, approved, prospectively validated, calibrated forecasts qualify |
 | `backup --output PATH`                            | SQLite consistent backup to a new destination; refuses overwrites                                                                  |
 
@@ -74,7 +75,7 @@ $modelId = 'copy-an-ID-from-status'
 .\.venv\Scripts\python.exe ml/pipeline.py backup --output ml/data/reviewed-backup.sqlite3
 ```
 
-These commands change only the local registry. Publication remains a separate explicit `export-analysis` operation with all gates rechecked; see [Future Analysis operation](../docs/FUTURE_ANALYSIS.md). Candidate-origin forecasts are never trusted client-facing predictions, even after promotion.
+These commands change only the local registry. Publication remains a separate explicit `export-analysis` operation with all gates rechecked; see [Future Analysis operation](../docs/FUTURE_ANALYSIS.md). Candidate-origin forecasts are never relabeled as approved, even after promotion. They can be displayed separately as **Experimental / Not validated** through `predict --shadow-all` then `export-experimental`, irrespective of historical performance or forward sample count.
 
 ## Data integrity and provenance
 
@@ -125,6 +126,6 @@ For a deployment-friendly host, use two finite systemd timers/cron jobs on a sin
 
 Binance's [Vision Dataset Terms](https://github.com/binance/binance-public-data/blob/master/TERMS_AND_CONDITIONS.md) reviewed 2026-11-06 identify CC BY-NC-SA 4.0 and restrict commercial dataset/derivative use. The public-data repository's MIT code license does not grant commercial data redistribution rights. Keep raw data/models private and ignored; review API terms and obtain the required written license before commercial use or redistribution. Published derived research must carry attribution and applicable share-alike licensing. Access restrictions never trigger synthetic or alternate-provider substitution.
 
-`shared/future-analysis.ts` replaces the provisional hybrid and news contracts with one report: ML-only numeric forecast/evaluation/calibration evidence plus a critical Gemini interpretation bound to the exact model/forecast fingerprint. `export-analysis` holds the SQLite writer lock through checksum/stamp capture and atomic JSON replacement, without changing registry/evaluation records. The backend rejects changed registry exports, bad parity, timing, gates or units. Gemini cannot modify numeric values, approve models or create missing forecasts. Historical residual coverage is not a guarantee; prospective coverage accumulates against original bounds. No real model was trained, promoted or exported by this implementation. See [architecture, privacy, provider costs and setup](../docs/FUTURE_ANALYSIS.md).
+`shared/future-analysis.ts` replaces the provisional hybrid and news contracts with one report: ML-only numeric forecast/evaluation/calibration evidence plus a critical Gemini interpretation bound to the exact model/forecast fingerprint. `export-analysis` holds the SQLite writer lock through checksum/stamp capture and atomic JSON replacement, without changing registry/evaluation records. The backend rejects changed registry exports, bad parity, timing or units; only the approved publication additionally requires the historical/prospective gates. Gemini cannot modify numeric values, approve models or create missing forecasts. Historical residual coverage is not a guarantee; prospective coverage accumulates against original bounds. No model was retrained or promoted for experimental display. Existing immutable predictions were exported and verified for all eight assets; see [actual experimental verification](../docs/EXPERIMENTAL_FORECAST_VERIFICATION.md). See [architecture, privacy, provider costs and setup](../docs/FUTURE_ANALYSIS.md).
 
 See [audit and architecture](../docs/ML_LIFECYCLE.md), [verification report](../docs/ML_VERIFICATION.md), and the preserved [historical experiment](reports/RESULTS.md). Legacy historical metrics are development evidence and do not represent this lifecycle's unseen performance.
