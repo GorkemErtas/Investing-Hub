@@ -154,8 +154,8 @@ test('learning quiz and disabled forecast presentation', async ({ page }) => {
   await page.getByRole('button', { name: /C Keep the final chronological/ }).click();
   await page.getByRole('button', { name: 'See results' }).click();
   await expect(page.getByRole('heading', { name: '3 of 3 correct' })).toBeVisible();
-  await page.getByRole('link', { name: /Research lab/ }).click();
-  await expect(page.getByRole('heading', { name: 'No published forecast' })).toBeVisible();
+  await page.getByRole('link', { name: /Future Analysis/ }).click();
+  await expect(page.getByRole('heading', { name: 'No validated ML forecast' })).toBeVisible();
 });
 
 test('mobile navigation, responsive layout and provider outage', async ({ page }) => {

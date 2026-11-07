@@ -117,10 +117,10 @@ export function Dashboard({
               Honest forecasts.
             </h2>
             <p>
-              Explore our prediction methodology, baselines, and the evidence behind each model.
+              Explore an ML outlook, critical grounded review, scenarios and the evidence behind it.
             </p>
-            <Link to="/research">
-              Inside the research lab <ArrowRight size={16} />
+            <Link to={`/future-analysis?symbol=${symbol}`}>
+              Open Future Analysis <ArrowRight size={16} />
             </Link>
             <div className="teaser-grid" aria-hidden="true" />
           </section>

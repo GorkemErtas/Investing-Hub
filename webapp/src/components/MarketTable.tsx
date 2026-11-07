@@ -3,6 +3,7 @@ import { ArrowDownUp, Search, Star } from 'lucide-react';
 import { assets, type Market, type Symbol } from '@investing-hub/shared/contracts';
 import { money } from '../lib/format';
 import { Change, Coin } from './ui';
+import { Link } from 'react-router-dom';
 
 export function MarketTable({
   data,
@@ -142,9 +143,9 @@ export function MarketTable({
                     </div>
                   </td>
                   <td>
-                    <button className="text-button" onClick={() => onSelect(m.symbol)}>
-                      Explore <span aria-hidden="true">↗</span>
-                    </button>
+                    <Link className="text-button" to={`/future-analysis?symbol=${m.symbol}`}>
+                      Future Analysis <span aria-hidden="true">↗</span>
+                    </Link>
                   </td>
                 </tr>
               );

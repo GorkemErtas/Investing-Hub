@@ -13,6 +13,7 @@ dist-web-test/
 ml/data/
 ml/artifacts/
 backend/.news-data/
+backend/.future-data/
 **/build/
 **/.gradle/
 **/local.properties

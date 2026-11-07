@@ -4,15 +4,10 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./news": {
-      "types": "./news.ts",
-      "react-native": "./dist/news.js",
-      "default": "./dist/news.js"
-    },
-    "./hybrid": {
-      "types": "./hybrid.ts",
-      "react-native": "./dist/hybrid.js",
-      "default": "./dist/hybrid.js"
+    "./future-analysis": {
+      "types": "./future-analysis.ts",
+      "react-native": "./dist/future-analysis.js",
+      "default": "./dist/future-analysis.js"
     },
     "./contracts": {
       "types": "./contracts.ts",

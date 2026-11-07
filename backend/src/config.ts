@@ -26,24 +26,71 @@ const schema = z.object({
   ),
   FIREBASE_ENABLED: z.enum(["true", "false"]).default("false"),
   PRICE_ALERTS_ENABLED: z.enum(["true", "false"]).default("false"),
-  NEWS_INTELLIGENCE_ENABLED: z.enum(["true", "false"]).default("false"),
-  NEWS_AI_ANALYSIS_ENABLED: z.enum(["true", "false"]).default("false"),
-  NEWS_GDELT_ENABLED: z.enum(["true", "false"]).default("true"),
-  NEWS_ETHEREUM_RSS_ENABLED: z.enum(["true", "false"]).default("false"),
-  NEWS_ETHEREUM_RELEASES_ENABLED: z.enum(["true", "false"]).default("true"),
-  NEWS_RELEASE_LOOKBACK_HOURS: z.coerce
+  FUTURE_GEMINI_SEARCH_ENABLED: z.enum(["true", "false"]).default("false"),
+  FUTURE_REVIEW_TTL_SECONDS: z.coerce
     .number()
     .int()
-    .min(24)
-    .max(720)
-    .default(720),
-  NEWS_GDELT_MIN_INTERVAL_MS: z.coerce
+    .min(60)
+    .max(1800)
+    .default(900),
+  FUTURE_CACHE_TTL_SECONDS: z.coerce
     .number()
     .int()
-    .min(6000)
+    .min(300)
+    .max(86400)
+    .default(21600),
+  FUTURE_STALE_SECONDS: z.coerce
+    .number()
+    .int()
+    .min(3600)
+    .max(172800)
+    .default(86400),
+  FUTURE_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .min(1000)
     .max(60000)
-    .default(6000),
-  NEWS_LOOKBACK_HOURS: z.coerce.number().int().min(24).max(720).default(336),
+    .default(30000),
+  FUTURE_MAX_DAILY_REQUESTS: z.coerce.number().int().min(1).max(100).default(8),
+  FUTURE_MAX_MONTHLY_REQUESTS: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(1000)
+    .default(64),
+  FUTURE_MAX_DAILY_ESTIMATED_USD: z.coerce
+    .number()
+    .min(0.01)
+    .max(100)
+    .default(1),
+  FUTURE_MAX_MONTHLY_ESTIMATED_USD: z.coerce
+    .number()
+    .min(0.01)
+    .max(1000)
+    .default(10),
+  FUTURE_STORAGE_PATH: z
+    .string()
+    .min(1)
+    .max(1024)
+    .default(fileURLToPath(new URL("../.future-data", import.meta.url))),
+  FUTURE_ML_EXPORT_PATH: z
+    .string()
+    .min(1)
+    .max(1024)
+    .default(
+      fileURLToPath(
+        new URL("../../ml/data/future-forecasts.json", import.meta.url),
+      ),
+    ),
+  FUTURE_ML_DATABASE_PATH: z
+    .string()
+    .min(1)
+    .max(1024)
+    .default(
+      fileURLToPath(
+        new URL("../../ml/data/lifecycle.sqlite3", import.meta.url),
+      ),
+    ),
   GEMINI_API_KEY: z.preprocess(
     (v) => (v === "" ? undefined : v),
     z
@@ -56,37 +103,11 @@ const schema = z.object({
       .optional(),
   ),
   GEMINI_KEY_ROTATED: z.enum(["true", "false"]).default("false"),
-  NEWS_MAX_DAILY_SOURCE_REQUESTS: z.coerce
-    .number()
-    .int()
-    .min(1)
-    .max(200)
-    .default(48),
-  NEWS_RETENTION_HOURS: z.coerce.number().int().min(24).max(168).default(72),
   GEMINI_MODEL: z
     .string()
     .regex(/^gemini-[a-z0-9.-]+$/)
     .max(100)
     .default("gemini-3.5-flash-lite"),
-  NEWS_CACHE_TTL_SECONDS: z.coerce
-    .number()
-    .int()
-    .min(14400)
-    .max(21600)
-    .default(21600),
-  NEWS_MAX_DAILY_REQUESTS: z.coerce.number().int().min(1).max(100).default(16),
-  NEWS_PROVIDER_TIMEOUT_MS: z.coerce
-    .number()
-    .int()
-    .min(1000)
-    .max(60000)
-    .default(20000),
-  NEWS_STORAGE_PATH: z
-    .string()
-    .min(1)
-    .max(1024)
-    .refine((p) => !/[\x00-\x1f]/.test(p) && !p.includes("://"))
-    .default(fileURLToPath(new URL("../.news-data", import.meta.url))),
 });
 export function parseConfig(env: NodeJS.ProcessEnv) {
   const c = schema.parse(env);

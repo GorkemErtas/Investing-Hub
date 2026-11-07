@@ -25,13 +25,15 @@ import { Notice, Skeleton } from './components/ui';
 
 const Dashboard = lazy(() => import('./pages/Dashboard').then((m) => ({ default: m.Dashboard })));
 const Portfolio = lazy(() => import('./pages/Portfolio').then((m) => ({ default: m.Portfolio })));
-const Research = lazy(() => import('./pages/Research').then((m) => ({ default: m.Research })));
+const FutureAnalysis = lazy(() =>
+  import('./pages/FutureAnalysis').then((m) => ({ default: m.FutureAnalysis })),
+);
 const Learn = lazy(() => import('./pages/Learn').then((m) => ({ default: m.Learn })));
 
 const nav = [
   { to: '/', label: 'Overview', icon: LayoutDashboard },
   { to: '/portfolio', label: 'Portfolio', icon: Wallet },
-  { to: '/research', label: 'Research lab', icon: FlaskConical },
+  { to: '/future-analysis', label: 'Future Analysis', icon: FlaskConical },
   { to: '/learn', label: 'Learning Hub', icon: BookOpen },
 ];
 function validatePortfolios(value: unknown) {
@@ -55,7 +57,10 @@ export default function App() {
   const [menu, setMenu] = useState(false);
   const sidebar = useRef<HTMLElement>(null);
   const location = useLocation();
-  const active = nav.find((item) => item.to === location.pathname);
+  const active = nav.find(
+    (item) =>
+      item.to === (location.pathname === '/research' ? '/future-analysis' : location.pathname),
+  );
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
@@ -143,7 +148,7 @@ export default function App() {
             >
               <item.icon size={19} />
               {item.label}
-              {item.to === '/research' && <span className="nav-beta">LAB</span>}
+              {item.to === '/future-analysis' && <span className="nav-beta">LAB</span>}
             </NavLink>
           ))}
         </nav>
@@ -238,7 +243,8 @@ export default function App() {
                   />
                 }
               />
-              <Route path="/research" element={<Research />} />
+              <Route path="/future-analysis" element={<FutureAnalysis />} />
+              <Route path="/research" element={<FutureAnalysis />} />
               <Route path="/learn" element={<Learn />} />
               <Route path="/learning-hub" element={<Learn />} />
               <Route

@@ -12,10 +12,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "start": "node dist/server.js",
     "test": "vitest run",
-    "news:collect": "tsx src/news/cli.ts collect",
-    "news:analyze": "tsx src/news/cli.ts analyze",
-    "news:status": "tsx src/news/cli.ts status",
-    "news:prune": "tsx src/news/cli.ts prune"
+    "future:status": "tsx src/future/cli.ts status"
   },
   "dependencies": {
     "@google/genai": "3.0.0",
@@ -25,7 +22,6 @@
     "decimal.js": "^10.6.0",
     "express": "^5.1.0",
     "express-rate-limit": "^8.2.0",
-    "fast-xml-parser": "5.12.0",
     "firebase-admin": "^14.5.0",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",

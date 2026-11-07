@@ -46,16 +46,7 @@ export const assets = [
     glyph: "⬡",
   },
 ] as const;
-export const symbolSchema = z.enum([
-  "BTCUSDT",
-  "ETHUSDT",
-  "SOLUSDT",
-  "BNBUSDT",
-  "XRPUSDT",
-  "ADAUSDT",
-  "DOGEUSDT",
-  "LINKUSDT",
-]);
+export const symbolSchema = z.enum(assets.map((asset) => asset.symbol));
 export type Symbol = z.infer<typeof symbolSchema>;
 export const intervalSchema = z.enum(["15m", "1h", "4h", "1d", "1w", "1M"]);
 export type Interval = z.infer<typeof intervalSchema>;
