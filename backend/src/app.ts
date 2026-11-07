@@ -10,12 +10,19 @@ import { createMarketService, type MarketService } from "./market/service.js";
 import { predictionStatus } from "./predictions/service.js";
 import { createMobileRouter, type MobileModule } from "./mobile/routes.js";
 import { createFutureService, type FutureReader } from "./future/service.js";
+import {
+  createAnalyticsReader,
+  localAddress,
+  localHost,
+  type AnalyticsReader,
+} from "./analytics/reader.js";
 
 export function createApp(
   config: Config,
   market: MarketService = createMarketService(config),
   mobile?: MobileModule,
   future: FutureReader = createFutureService(config),
+  analytics: AnalyticsReader = createAnalyticsReader(config),
 ) {
   const app = express();
   app.disable("x-powered-by");
@@ -80,6 +87,29 @@ export function createApp(
   app.get("/api/future-analysis/:symbol", async (req, res) => {
     z.strictObject({}).parse(req.query);
     res.json(await future.read(symbolSchema.parse(req.params.symbol)));
+  });
+  app.get("/api/analytics/:symbol", async (req, res) => {
+    z.strictObject({}).parse(req.query);
+    const symbol = symbolSchema.parse(req.params.symbol);
+    const origin = req.get("Origin");
+    const localOrigin = !origin || localHost(new URL(origin).hostname);
+    if (
+      config.NODE_ENV === "production" ||
+      config.ANALYTICS_LAB_ENABLED !== "true" ||
+      !localAddress(req.socket.remoteAddress) ||
+      !localHost(req.hostname) ||
+      !localOrigin
+    ) {
+      res.json({
+        symbol,
+        status: "disabled",
+        reason: "local_analytics_disabled",
+        report: null,
+      });
+      return;
+    }
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json(await analytics.read(symbol));
   });
   app.post(
     "/api/future-analysis/:symbol/review",

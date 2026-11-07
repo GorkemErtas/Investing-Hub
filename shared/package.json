@@ -4,6 +4,11 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./analytics": {
+      "types": "./analytics.ts",
+      "react-native": "./dist/analytics.js",
+      "default": "./dist/analytics.js"
+    },
     "./future-analysis": {
       "types": "./future-analysis.ts",
       "react-native": "./dist/future-analysis.js",

@@ -29,11 +29,15 @@ const FutureAnalysis = lazy(() =>
   import('./pages/FutureAnalysis').then((m) => ({ default: m.FutureAnalysis })),
 );
 const Learn = lazy(() => import('./pages/Learn').then((m) => ({ default: m.Learn })));
+const AnalyticsLab = lazy(() =>
+  import('./pages/AnalyticsLab').then((m) => ({ default: m.AnalyticsLab })),
+);
 
 const nav = [
   { to: '/', label: 'Overview', icon: LayoutDashboard },
   { to: '/portfolio', label: 'Portfolio', icon: Wallet },
   { to: '/future-analysis', label: 'Future Analysis', icon: FlaskConical },
+  { to: '/analytics', label: 'Analytics Lab', icon: ChartNoAxesCombined },
   { to: '/learn', label: 'Learning Hub', icon: BookOpen },
 ];
 function validatePortfolios(value: unknown) {
@@ -244,6 +248,7 @@ export default function App() {
                 }
               />
               <Route path="/future-analysis" element={<FutureAnalysis />} />
+              <Route path="/analytics" element={<AnalyticsLab />} />
               <Route path="/research" element={<FutureAnalysis />} />
               <Route path="/learn" element={<Learn />} />
               <Route path="/learning-hub" element={<Learn />} />

@@ -26,6 +26,16 @@ const schema = z.object({
   ),
   FIREBASE_ENABLED: z.enum(["true", "false"]).default("false"),
   PRICE_ALERTS_ENABLED: z.enum(["true", "false"]).default("false"),
+  ANALYTICS_LAB_ENABLED: z.enum(["true", "false"]).default("false"),
+  ANALYTICS_EXPORT_PATH: z
+    .string()
+    .min(1)
+    .max(1024)
+    .default(
+      fileURLToPath(
+        new URL("../../ml/data/analytics/latest.json", import.meta.url),
+      ),
+    ),
   FUTURE_GEMINI_SEARCH_ENABLED: z.enum(["true", "false"]).default("false"),
   FUTURE_REVIEW_TTL_SECONDS: z.coerce
     .number()
