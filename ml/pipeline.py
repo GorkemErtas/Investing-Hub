@@ -21,12 +21,15 @@ def parser():
     result = argparse.ArgumentParser(description=__doc__)
     commands = result.add_subparsers(dest='command', required=True)
     for name in ('sync', 'validate', 'train', 'evaluate', 'approve', 'promote', 'reject',
-                 'rollback', 'predict', 'reconcile', 'status', 'inspect-model', 'daily', 'weekly', 'backup', 'export-analysis'):
+                 'rollback', 'predict', 'reconcile', 'status', 'inspect-model', 'daily', 'weekly', 'backup', 'export-analysis', 'analytics'):
         command = commands.add_parser(name)
         command.add_argument('--db', type=Path, default=Path(os.environ.get(
             'INVESTING_HUB_ML_DB', ROOT / 'data' / 'lifecycle.sqlite3')))
-        command.add_argument('--config', type=Path, default=ROOT / 'config.json')
-        command.add_argument('--symbol', choices=SYMBOLS)
+        if name != 'analytics':
+            command.add_argument('--config', type=Path, default=ROOT / 'config.json')
+            command.add_argument('--symbol', choices=SYMBOLS)
+        else:
+            command.add_argument('--output', type=Path, default=ROOT / 'data' / 'analytics')
         if name in ('sync', 'daily', 'weekly'):
             command.add_argument('--start', help='UTC YYYY-MM-DD; defaults to configured history start')
             command.add_argument('--legacy-dir', type=Path, default=ROOT / 'data')
@@ -162,6 +165,10 @@ def main(argv=None):
     logging.basicConfig(level=logging.INFO, format='%(levelname)s %(name)s: %(message)s')
     store = None
     try:
+        if args.command == 'analytics':
+            from analytics.cli import run as run_analytics
+            print(json.dumps(run_analytics(args.db, args.output, utc_ms()), indent=2, allow_nan=False))
+            return 0
         config = load_config(args.config)
         store = Store(args.db)
         now = utc_ms()

@@ -65,6 +65,18 @@ def fingerprint(frame: pd.DataFrame) -> str:
 
 
 class Store:
+    @classmethod
+    def readonly(cls, path: Path | str):
+        """Reuse verification/query methods without schema writes or file creation."""
+        instance = cls.__new__(cls)
+        instance.db = sqlite3.connect(Path(path).resolve().as_uri() + '?mode=ro', uri=True, timeout=5)
+        instance.db.row_factory = sqlite3.Row
+        instance.db.execute('PRAGMA query_only=ON')
+        if instance.db.execute('PRAGMA user_version').fetchone()[0] != 1:
+            instance.close()
+            raise ValueError('Unsupported analytics database schema')
+        return instance
+
     def __init__(self, path: Path | str):
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)

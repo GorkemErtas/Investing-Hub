@@ -50,11 +50,17 @@ def training_slice(data, evaluation_start, days, mode, anchor, minimum):
     return result
 
 
-def walk_forward(data, config, algorithm, days):
+def evaluation_splits(data, config):
+    """Shared chronological origin plan for regression and research classifiers."""
     splitter = TimeSeriesSplit(n_splits=config['walk_forward_splits'], gap=1,
                               test_size=config['fold_days'] + 1)
     splits = list(splitter.split(data))
     anchor = int(data.iloc[splits[0][1][0]].source_time)
+    return splits, anchor
+
+
+def walk_forward(data, config, algorithm, days):
+    splits, anchor = evaluation_splits(data, config)
     folds, residuals = [], []
     for number, (_, validation_idx) in enumerate(splits):
         # Reserve one feature origin between evaluation blocks as well, so
