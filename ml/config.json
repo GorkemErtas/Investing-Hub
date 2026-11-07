@@ -1,6 +1,6 @@
 {
   "version": "daily-lifecycle-v2",
-  "symbols": ["BTCUSDT", "ETHUSDT"],
+  "symbols": "shared",
   "start_date": "2017-08-17",
   "seed": 42,
   "development_end_exclusive": "2027-01-01",

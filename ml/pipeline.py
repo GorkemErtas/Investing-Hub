@@ -8,7 +8,7 @@ import os
 import sys
 from pathlib import Path
 
-from common import ROOT, canonical, day, latest_open, load_config, utc_ms
+from common import ROOT, SYMBOLS, canonical, day, latest_open, load_config, utc_ms
 from forecast import generate, reconcile
 from ingestion import import_legacy, sync
 from provider import Binance
@@ -21,12 +21,12 @@ def parser():
     result = argparse.ArgumentParser(description=__doc__)
     commands = result.add_subparsers(dest='command', required=True)
     for name in ('sync', 'validate', 'train', 'evaluate', 'approve', 'promote', 'reject',
-                 'rollback', 'predict', 'reconcile', 'status', 'inspect-model', 'daily', 'weekly', 'backup'):
+                 'rollback', 'predict', 'reconcile', 'status', 'inspect-model', 'daily', 'weekly', 'backup', 'export-analysis'):
         command = commands.add_parser(name)
         command.add_argument('--db', type=Path, default=Path(os.environ.get(
             'INVESTING_HUB_ML_DB', ROOT / 'data' / 'lifecycle.sqlite3')))
         command.add_argument('--config', type=Path, default=ROOT / 'config.json')
-        command.add_argument('--symbol', choices=('BTCUSDT', 'ETHUSDT'))
+        command.add_argument('--symbol', choices=SYMBOLS)
         if name in ('sync', 'daily', 'weekly'):
             command.add_argument('--start', help='UTC YYYY-MM-DD; defaults to configured history start')
             command.add_argument('--legacy-dir', type=Path, default=ROOT / 'data')
@@ -40,6 +40,8 @@ def parser():
             choice.add_argument('--shadow-all', action='store_true', help='Forecast all nonexpired candidate/approved models')
         if name == 'backup':
             command.add_argument('--output', type=Path, required=True)
+        if name == 'export-analysis':
+            command.add_argument('--output', type=Path, default=ROOT / 'data' / 'future-forecasts.json')
     return result
 
 
@@ -68,7 +70,7 @@ def inspect_status(store, symbols, config, now):
     events = [dict(r) for r in store.db.execute('SELECT * FROM events ORDER BY id DESC LIMIT 10')]
     return {'as_of': now, 'datasets': datasets, 'models': models, 'predictions': counts,
             'recent_performance': performance, 'recent_events': events,
-            'public_forecast_status': 'disabled_unvalidated; API is independent of local registry'}
+            'public_forecast_status': 'legacy route disabled; Future Analysis requires explicit eligible export-analysis'}
 
 
 def forecasts(store, symbols, config, now, model_id=None, shadow_all=False):
@@ -92,6 +94,9 @@ def forecasts(store, symbols, config, now, model_id=None, shadow_all=False):
 def run(args, store, config, now):
     symbols = [args.symbol] if args.symbol else config['symbols']
     command = args.command
+    if command == 'export-analysis':
+        from publication import export_analysis
+        return export_analysis(store, args.db, args.output, config, now)
     if command == 'inspect-model':
         model = store.model(args.model_id)
         return {'id': model['id'], 'status': model['status'], 'artifact_checksum': model['checksum'],

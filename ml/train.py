@@ -16,6 +16,7 @@ from sklearn.preprocessing import StandardScaler
 from artifact import export_model, predict as numeric_predict
 from common import DAY_MS, ROOT, canonical, day, digest, latest_open
 from features import FEATURES, FEATURE_VERSION, prepare
+from calibration import fit_interval
 
 
 def metrics(target, predicted, close):
@@ -54,7 +55,7 @@ def walk_forward(data, config, algorithm, days):
                               test_size=config['fold_days'] + 1)
     splits = list(splitter.split(data))
     anchor = int(data.iloc[splits[0][1][0]].source_time)
-    folds = []
+    folds, residuals = [], []
     for number, (_, validation_idx) in enumerate(splits):
         # Reserve one feature origin between evaluation blocks as well, so
         # development labels cannot touch the first selection feature origin.
@@ -67,20 +68,28 @@ def walk_forward(data, config, algorithm, days):
         prediction = model.predict(validation[FEATURES])
         score = metrics(validation.target, prediction, validation.close)
         baseline = metrics(validation.target, np.zeros(len(validation)), validation.close)
-        folds.append({'fold': number + 1, 'role': 'selection' if number == len(splits) - 1 else 'development',
+        fold = {'fold': number + 1, 'role': 'selection' if number == len(splits) - 1 else 'development',
                       'train_samples': len(training), 'train_source_start': int(training.source_time.min()),
                       'train_target_end': int(training.target_time.max()),
                       'evaluation_source_start': evaluation_start,
                       'evaluation_target_end': int(validation.target_time.max()),
                       'metrics': score, 'no_change': baseline,
                       'historical_mean': metrics(validation.target,
-                           np.full(len(validation), training.target.mean()), validation.close)})
+                           np.full(len(validation), training.target.mean()), validation.close)}
+        if number < len(splits) - 1:
+            residuals.extend((validation.target.to_numpy() - prediction).tolist())
+        else:
+            fold['interval_calibration'] = fit_interval(residuals,
+                folds[-1]['evaluation_target_end'], evaluation_start,
+                validation.target.to_numpy(), prediction, int(validation.target_time.max()) + 1)
+        folds.append(fold)
     return folds, anchor
 
 
 def training_code_hash():
     return digest(b''.join((ROOT / name).read_bytes() for name in
-                          ('train.py', 'features.py', 'artifact.py', 'common.py')))
+                          ('train.py', 'features.py', 'artifact.py', 'common.py', 'calibration.py')) +
+                  (ROOT.parent / 'shared' / 'contracts.ts').read_bytes())
 
 
 def train_models(store, symbol, config, now):
@@ -136,6 +145,7 @@ def train_models(store, symbol, config, now):
                                          'samples': len(final_training)},
                       'window_days': days, 'window_mode': 'expanding' if days is None else config['window_mode'],
                       'hyperparameters': parameters, 'walk_forward': folds,
+                      'interval_calibration': folds[-1]['interval_calibration'],
                       'validation_metrics': selection['metrics'], 'baseline_metrics': selection['no_change'],
                       'walk_forward_wins': wins, 'historical_pass': historical_pass,
                       'parity_max_absolute_error': delta, 'artifact_checksum': digest(artifact_text.encode()),

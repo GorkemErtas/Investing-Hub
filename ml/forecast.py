@@ -9,6 +9,7 @@ from artifact import predict
 from common import DAY_MS, canonical, digest, latest_open
 from features import FEATURES, FEATURE_VERSION, feature_frame
 from train import metrics
+from calibration import price_interval
 
 
 def generate(store, symbol, config, now, model_id=None):
@@ -61,7 +62,8 @@ def generate(store, symbol, config, now, model_id=None):
     details = {'dataset_fingerprint': dataset['fingerprint'], 'reason': reason,
                'model_status_at_generation': model['status'],
                'usage': 'offline_research_only' if model['status'] == 'active' else 'shadow_unvalidated',
-               'calibration': None}
+               'calibration': price_interval(report.get('interval_calibration'), reference, predicted_return)
+                              if predicted_return is not None else None}
     store.db.execute('INSERT INTO predictions VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
                      (prediction_id, symbol, model['id'], now, source_time, target_time, reference,
                       predicted_return, predicted_price, None, None, None, status, canonical(details)))
@@ -117,6 +119,11 @@ def reconcile(store, symbol, now):
             report = {'model': score_rows(observations), 'no_change': baseline_rows(observations),
                       'as_of': now, 'first_target': observations[0]['target_time'],
                       'last_target': observations[-1]['target_time']}
+            intervals = [(r, json.loads(r['details']).get('calibration')) for r in observations]
+            intervals = [(r, interval) for r, interval in intervals if interval]
+            report['prospective_interval_samples'] = len(intervals)
+            report['prospective_interval_coverage'] = (sum(interval['lowerPrice'] <= r['actual_price'] <= interval['upperPrice']
+                for r, interval in intervals) / len(intervals)) if intervals else None
             store.db.execute('INSERT OR REPLACE INTO performance VALUES(?,?,?)',
                              (row[0], observations[-1]['target_time'], canonical(report)))
     store.event('reconcile', {'symbol': symbol, 'reconciled': reconciled}, now)

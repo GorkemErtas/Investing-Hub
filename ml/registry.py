@@ -18,7 +18,7 @@ def check_usable(model, config, now):
         raise ValueError('Model training timestamp invalid or expired')
 
 
-def evaluate(store, model_id, config, now):
+def evaluate(store, model_id, config, now, record=True):
     model = store.model(model_id)
     check_usable(model, config, now)
     report = model['metadata']
@@ -59,7 +59,8 @@ def evaluate(store, model_id, config, now):
               'active_model_id': active['id'] if active else None, 'evaluated_at': now}
     # Evaluation records evidence without destroying a candidate that is still
     # accumulating forward observations, or changing the active model.
-    store.event('evaluation', result, now)
+    if record:
+        store.event('evaluation', result, now)
     return result
 
 

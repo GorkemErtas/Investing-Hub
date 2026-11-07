@@ -70,6 +70,14 @@ def sync(store: Store, provider, symbol: str, start: int, now: int, max_return=0
         old = store.frame(symbol)
         if not old.empty:
             old, _, _ = store.verified_frame(symbol, now)
+        previous = store.dataset(symbol)
+        boundary = previous.get('history_boundary') if previous else None
+        if boundary is None and hasattr(provider, 'first_available') and (old.empty or start < int(old.open_time.min())):
+            boundary = provider.first_available(symbol, end)
+            if boundary['first_open'] % DAY_MS or boundary['first_open'] > end:
+                raise ValueError('Invalid evidenced listing boundary')
+        if boundary:
+            start = max(start, boundary['first_open'])
         known = set(int(t) for t in old.open_time)
         missing = sorted(set(range(start, end + DAY_MS, DAY_MS)) - known)
         if not missing:
@@ -120,6 +128,6 @@ def sync(store: Store, provider, symbol: str, start: int, now: int, max_return=0
         unresolved = set(range(start, end + DAY_MS, DAY_MS)) - set(combined.open_time)
         if unresolved:
             raise ValueError(f'{symbol}: missing {len(unresolved)} requested daily candles; nothing committed')
-        meta = store.save_candles(symbol, combined, sources, source_for_open, now)
+        meta = store.save_candles(symbol, combined, sources, source_for_open, now, boundary)
         store.event('sync', {'symbol': symbol, 'added': len(missing), 'fingerprint': meta['fingerprint']}, now)
         return {'symbol': symbol, 'added': len(missing), 'dataset': meta}

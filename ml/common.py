@@ -3,12 +3,26 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 DAY_MS = 86_400_000
-SYMBOLS = ('BTCUSDT', 'ETHUSDT')
+# Read the bounded literal catalog, never execute JavaScript or maintain a
+# second Python asset list. A changed declaration fails closed.
+def supported_symbols():
+    text = (ROOT.parent / 'shared' / 'contracts.ts').read_text(encoding='utf-8')
+    match = re.search(r'export const assets = \[(.*?)\] as const;', text, re.S)
+    if not match:
+        raise ValueError('Shared asset catalog declaration missing')
+    symbols = tuple(re.findall(r'symbol:\s*"([A-Z0-9]+USDT)"', match[1]))
+    if not symbols or len(symbols) != len(set(symbols)):
+        raise ValueError('Invalid shared asset catalog')
+    return symbols
+
+
+SYMBOLS = supported_symbols()
 COLUMNS = ['open_time', 'open', 'high', 'low', 'close', 'volume', 'close_time']
 TERMS = 'https://github.com/binance/binance-public-data/blob/master/TERMS_AND_CONDITIONS.md'
 
@@ -46,6 +60,8 @@ def symbol_check(symbol: str) -> str:
 
 def load_config(path: Path | None = None) -> dict:
     config = json.loads((path or ROOT / 'config.json').read_text(encoding='utf-8'))
+    if config['symbols'] == 'shared':
+        config['symbols'] = list(SYMBOLS)
     if not config['symbols'] or not set(config['symbols']).issubset(SYMBOLS):
         raise ValueError('Invalid configured symbols')
     if config['window_mode'] not in ('rolling', 'expanding'):

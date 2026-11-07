@@ -124,10 +124,16 @@ class Store:
                 raise ValueError('Source symbol/retrieval metadata mismatch')
         if sorted(r['id'] for r in sources) != meta['source_ids']:
             raise ValueError('Dataset source manifest mismatch')
+        boundary = meta.get('history_boundary')
+        if boundary and (boundary['first_open'] % 86400000 or boundary['first_open'] > int(frame.open_time.min()) or
+                         boundary['source']['kind'] != 'listing_boundary' or
+                         not boundary['source']['url'].startswith('https://data-api.binance.vision/api/v3/klines?') or
+                         len(boundary['source']['sha256']) != 64):
+            raise ValueError('Invalid evidenced history boundary')
         return frame, meta, quality
 
     def save_candles(self, symbol: str, frame: pd.DataFrame, sources: list[dict],
-                     source_for_open: dict[int, str], now: int):
+                     source_for_open: dict[int, str], now: int, history_boundary=None):
         """Caller holds transaction; never overwrite a conflicting verified row."""
         for source in sources:
             content = canonical(source)
@@ -155,6 +161,10 @@ class Store:
                 'rows': len(complete), 'start': int(complete.open_time.min()),
                 'end': int(complete.close_time.max()), 'created_at': now, 'source_ids': source_ids,
                 'parent': previous['fingerprint'] if previous else None}
+        if history_boundary:
+            meta['history_boundary'] = history_boundary
+        elif previous and previous.get('history_boundary'):
+            meta['history_boundary'] = previous['history_boundary']
         payload = canonical(meta)
         self.db.execute('INSERT OR REPLACE INTO datasets VALUES(?,?,?)', (symbol, checksum, payload))
         self.db.execute('INSERT OR IGNORE INTO dataset_versions VALUES(?,?,?)', (symbol, checksum, payload))

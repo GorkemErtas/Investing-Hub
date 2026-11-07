@@ -156,3 +156,20 @@ class Binance:
         if ((frame.open_time < start) | (frame.open_time > end)).any():
             raise ProviderError('REST returned candles outside requested range')
         return frame, self.provenance(url, payload, 'rest_klines')
+
+    def first_available(self, symbol: str, end: int):
+        """Official earliest spot daily kline, not a guessed listing date."""
+        symbol_check(symbol)
+        query = urllib.parse.urlencode({'symbol': symbol, 'interval': '1d', 'timeZone': '0',
+                                        'startTime': 0, 'endTime': end + DAY_MS - 1, 'limit': 1})
+        url = 'https://data-api.binance.vision/api/v3/klines?' + query
+        payload = self.download(url)
+        rows = json.loads(payload)
+        if not isinstance(rows, list) or len(rows) != 1:
+            raise ProviderError('No evidenced listing boundary available')
+        from features import validate_candles
+        frame, _ = validate_candles(self.parse_rows(rows), now_ms=self.clock())
+        opening = int(frame.open_time.iloc[0])
+        if opening > end:
+            raise ProviderError('Listing boundary after requested history')
+        return {'first_open': opening, 'source': self.provenance(url, payload, 'listing_boundary')}
