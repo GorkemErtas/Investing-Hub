@@ -19,6 +19,8 @@ Docker Desktop was unavailable during verification: Compose syntax validation is
 
 Optional finite news workers use `node backend/dist/news/cli.js collect`, `analyze`, `status` and `prune`. Collection requires only intentional `NEWS_INTELLIGENCE_ENABLED=true`, not a key. AI analysis is separately disabled by default. No timer is registered. A future timer can collect every 4-6 hours and prune at least daily, sharing `NEWS_STORAGE_PATH` on a persistent local volume with the API; an independent analyze job is optional. The default container filesystem is ephemeral and may be unwritable under the unprivileged runtime user. Configure an owned persistent directory before enabling collection. Multiple hosts/network filesystems need separately reviewed coordination. Existing guest Compose is unchanged. See [news operations](NEWS_INTELLIGENCE.md).
 
+The web Research Lab requires the API to use the same enabled news configuration and persistent `NEWS_STORAGE_PATH` as the finite collector. Lighthouse release metadata is keyless; Ethereum Foundation RSS stays disabled. Page loads and “Check cache” only read stored state. No new worker, timer or deployment is activated by the UI integration.
+
 ## Optional accounts
 
 Use an existing secured Mongo database by setting the backend process environment. Keep its original database/collections; no automatic data migration runs. Never point a fresh empty database at the app while assuming existing users were migrated. SMTP is optional for existing logins but required for new verified registrations. For Firebase, use Application Default Credentials from a private external path; no credential is copied into an image.

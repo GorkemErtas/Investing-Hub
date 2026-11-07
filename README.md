@@ -2,14 +2,14 @@
 
 A modular monolith with a guest React web demo, an Expo mobile app, one TypeScript API, universal contracts/accounting, and an offline Python research pipeline. All trading is simulated. Market quotes are in **USDT**, not USD. No forecast is published.
 
-| Directory   | Responsibility                                                                                              |
-| ----------- | ----------------------------------------------------------------------------------------------------------- |
-| `webapp`    | Modern responsive dashboard, charts, guest portfolios, Learning Hub and research status                     |
-| `mobileapp` | Expo Router screens, native app/assets, secure session and storage adapters                                 |
-| `backend`   | Public cached market API and optional authenticated mobile services                                         |
-| `shared`    | Zod contracts, Decimal chronological ledger, analysis and typed HTTP client; no React/platform dependencies |
+| Directory   | Responsibility                                                                                                |
+| ----------- | ------------------------------------------------------------------------------------------------------------- |
+| `webapp`    | Modern responsive dashboard, charts, guest portfolios, Learning Hub and research status                       |
+| `mobileapp` | Expo Router screens, native app/assets, secure session and storage adapters                                   |
+| `backend`   | Public cached market API and optional authenticated mobile services                                           |
+| `shared`    | Zod contracts, Decimal chronological ledger, analysis and typed HTTP client; no React/platform dependencies   |
 | `ml`        | Incremental daily datasets, offline training/registry, prospective forecast history and a quarantined archive |
-| `docs`      | Audit, architecture, endpoint migration, security and actual verification results                           |
+| `docs`      | Audit, architecture, endpoint migration, security and actual verification results                             |
 
 ## Web and public API
 
@@ -39,7 +39,7 @@ Use `http://10.0.2.2:5000` for the Android emulator, your computer's LAN origin 
 
 ## News intelligence
 
-Free news collection uses the GDELT Project DOC 2.0 API and reviewed official RSS feeds without an API key. Enable collection intentionally, then run `npm run news:collect -w backend`. `GET /api/news/insights/:symbol` reads stored source metadata without provider calls. Gemini analysis is a separate optional `news:analyze` command, disabled by default; missing keys never block collection. See [keyless Windows setup, source terms and limitations](docs/NEWS_INTELLIGENCE.md). ML forecasts remain disabled. No Search Grounding, article crawling, paid news subscription or scheduler is introduced.
+The web Research Lab displays cached BTC/ETH headlines, original source links, publication/indexing times, freshness and provider coverage. Free collection uses GDELT DOC 2.0, reviewed official RSS and Lighthouse's public GitHub release metadata without an API key. Enable collection intentionally, then run `npm run news:collect -w backend`; page loads and “Check cache” only read `GET /api/news/insights/:symbol`. Gemini analysis is a separate optional `news:analyze` command, disabled by default. See [keyless Windows setup, source terms and limitations](docs/NEWS_INTELLIGENCE.md) and [actual live/test results](docs/NEWS_VERIFICATION.md). ML forecasts remain disabled; inspected history through 2026 is development evidence. No article crawling, paid news subscription or scheduler is introduced.
 
 ## Optional mobile accounts
 
