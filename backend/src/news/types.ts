@@ -10,6 +10,28 @@ import {
 } from "@investing-hub/shared/news";
 export const hash = (text: string) =>
   createHash("sha256").update(text).digest("hex");
+export const providerCategorySchema = z.enum([
+  "success",
+  "bad_request",
+  "unauthenticated",
+  "permission_denied",
+  "not_found",
+  "rate_limited",
+  "server_error",
+  "http_error",
+  "timeout",
+  "network_error",
+  "sdk_error",
+  "invalid_response",
+  "local_cooldown",
+  "budget_exhausted",
+]);
+export const providerDiagnosticSchema = z.strictObject({
+  httpStatus: z.number().int().min(100).max(599).nullable(),
+  category: providerCategorySchema,
+  elapsedMs: z.number().int().nonnegative().nullable(),
+});
+export type ProviderDiagnostic = z.infer<typeof providerDiagnosticSchema>;
 export class NewsError extends Error {
   constructor(
     public code:
@@ -30,10 +52,30 @@ export class NewsError extends Error {
       httpStatus?: number;
       elapsedMs?: number;
       reason?: string;
+      category?: ProviderDiagnostic["category"];
     } = {},
   ) {
     super(code);
   }
+}
+// Pick only bounded numbers and an allowlisted category, never serialize details
+// or the original exception (which can contain prompts, headers and credentials).
+export function safeProviderDiagnostic(
+  error: NewsError,
+): ProviderDiagnostic | null {
+  const category = providerCategorySchema.safeParse(error.details.category);
+  if (!category.success) return null;
+  return {
+    category: category.data,
+    httpStatus:
+      providerDiagnosticSchema.shape.httpStatus.safeParse(
+        error.details.httpStatus,
+      ).data ?? null,
+    elapsedMs:
+      providerDiagnosticSchema.shape.elapsedMs.safeParse(
+        error.details.elapsedMs,
+      ).data ?? null,
+  };
 }
 export type Evidence = NewsEvidence;
 export const analysisSchema = z.strictObject({

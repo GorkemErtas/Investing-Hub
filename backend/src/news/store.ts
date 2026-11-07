@@ -9,7 +9,7 @@ import {
   newsCoverageSchema,
   newsAttributionSchema,
 } from "@investing-hub/shared/news";
-import { hash, NewsError } from "./types.js";
+import { hash, NewsError, providerDiagnosticSchema } from "./types.js";
 
 const usageSchema = z.strictObject({
   day: z.string(),
@@ -44,6 +44,12 @@ export const stateSchema = z.strictObject({
   lastFailure: z.string().max(50).nullable(),
   diagnostics: z.record(z.string(), z.number().int().nonnegative()),
   lastCoverage: z.array(newsCoverageSchema).max(10).default([]),
+  lastGeminiAttempt: providerDiagnosticSchema
+    .extend({
+      attemptedAt: z.string().datetime(),
+    })
+    .nullable()
+    .default(null),
 });
 export type NewsState = z.infer<typeof stateSchema>;
 export const emptyState = (): NewsState => ({
@@ -67,6 +73,7 @@ export const emptyState = (): NewsState => ({
   lastFailure: null,
   diagnostics: {},
   lastCoverage: [],
+  lastGeminiAttempt: null,
 });
 
 export class NewsStore {

@@ -1,7 +1,7 @@
 import { pathToFileURL } from "node:url";
 import { parseConfig } from "../config.js";
 import { createNewsService } from "./service.js";
-import { NewsError } from "./types.js";
+import { NewsError, safeProviderDiagnostic } from "./types.js";
 
 export async function main(
   args = process.argv.slice(2),
@@ -33,12 +33,17 @@ export async function main(
     );
     return 0;
   } catch (error) {
+    const diagnostics =
+      args[0] === "analyze" && error instanceof NewsError
+        ? safeProviderDiagnostic(error)
+        : null;
     // Never print SDK exception strings, configuration values, keys or source text.
     console.error(
       JSON.stringify({
         status: "failed",
         code:
           error instanceof NewsError ? error.code : "CONFIGURATION_OR_STORAGE",
+        ...(diagnostics ? { diagnostics } : {}),
       }),
     );
     return 1;

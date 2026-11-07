@@ -362,18 +362,30 @@ export function createNewsService(
       const response = await call("gemini", "gemini", (signal) =>
         provider.analyze(state.collection!.evidence, signal),
       );
-      const results = analyzeEvents(
-        response.text ?? "",
-        state.collection.evidence,
-        clock(),
-      );
-      state.snapshots = snapshots(
-        state.collection,
-        "analyzed",
-        config.GEMINI_MODEL,
-        results,
-        new Date(clock()).toISOString(),
-      );
+      try {
+        // Avoid the SDK .text getter's logging of untrusted non-text field names.
+        const text =
+          response.candidates?.[0]?.content?.parts
+            ?.filter((part) => typeof part.text === "string" && !part.thought)
+            .map((part) => part.text)
+            .join("") ?? "";
+        const results = analyzeEvents(text, state.collection.evidence, clock());
+        state.snapshots = snapshots(
+          state.collection,
+          "analyzed",
+          config.GEMINI_MODEL,
+          results,
+          new Date(clock()).toISOString(),
+        );
+      } catch {
+        const diagnostic = state.lastGeminiAttempt!;
+        diagnostic.category = "invalid_response";
+        throw new NewsError("INVALID_ANALYSIS", false, 0, {
+          category: diagnostic.category,
+          httpStatus: diagnostic.httpStatus ?? undefined,
+          elapsedMs: diagnostic.elapsedMs ?? undefined,
+        });
+      }
       return { status: "analyzed", usage: state.usage };
     });
   }
@@ -394,6 +406,7 @@ export function createNewsService(
       blockedUntil: state.blockedUntil,
       sourceCooldowns: state.sourceCooldowns,
       lastFailure: state.lastFailure,
+      lastGeminiAttempt: state.lastGeminiAttempt,
       collectedAt: state.collection?.generatedAt ?? null,
       coverage: state.lastCoverage.length
         ? state.lastCoverage

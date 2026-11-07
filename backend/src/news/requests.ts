@@ -1,8 +1,8 @@
 import type { GenerateContentResponse } from "@google/genai";
 import type { Config } from "../config.js";
 import { emptyState, type NewsState } from "./store.js";
-import { providerFailure } from "./provider.js";
-import { NewsError } from "./types.js";
+import { providerFailure, type NewsProviderResponse } from "./provider.js";
+import { NewsError, safeProviderDiagnostic } from "./types.js";
 
 export function requestRunner(
   config: Config,
@@ -22,13 +22,13 @@ export function requestRunner(
         kind === "gemini"
           ? state.blockedUntil > clock()
           : (state.sourceCooldowns[key] ?? 0) > clock()
-      )
-        throw new NewsError(
-          kind === "source" ? "COOLDOWN" : "QUOTA",
-          false,
-          0,
-          { reason: "local_cooldown" },
-        );
+      ) {
+        if (kind === "gemini")
+          throw new NewsError("QUOTA", false, 0, {
+            category: "local_cooldown",
+          });
+        throw new NewsError("COOLDOWN", false, 0, { reason: "local_cooldown" });
+      }
       if (kind === "source" && (state.nextSourceAt[key] ?? 0) > clock())
         await pause(state.nextSourceAt[key] - clock());
       const date = new Date(clock()).toISOString().slice(0, 10);
@@ -44,7 +44,12 @@ export function requestRunner(
           ? config.NEWS_MAX_DAILY_SOURCE_REQUESTS
           : config.NEWS_MAX_DAILY_REQUESTS)
       )
-        throw new NewsError("BUDGET");
+        throw new NewsError(
+          "BUDGET",
+          false,
+          0,
+          kind === "gemini" ? { category: "budget_exhausted" } : {},
+        );
       state.usage[counter]++;
       if (kind === "gemini") state.usage.unknownCostRequests++;
       state.lastAttempt = clock();
@@ -63,6 +68,14 @@ export function requestRunner(
           }),
         ]);
         if (kind === "gemini") {
+          state.lastGeminiAttempt = {
+            attemptedAt: new Date(state.lastAttempt).toISOString(),
+            ...((result as NewsProviderResponse).newsDiagnostic ?? {
+              category: "success",
+              httpStatus: null,
+              elapsedMs: Math.round(performance.now() - started),
+            }),
+          };
           const usage = (result as GenerateContentResponse).usageMetadata;
           if (
             usage?.promptTokenCount !== undefined &&
@@ -86,6 +99,18 @@ export function requestRunner(
       } catch (error) {
         const failure = providerFailure(error);
         failure.details.elapsedMs ??= Math.round(performance.now() - started);
+        if (kind === "gemini") {
+          failure.details.category ??=
+            failure.code === "TIMEOUT" ? "timeout" : "sdk_error";
+          state.lastGeminiAttempt = {
+            attemptedAt: new Date(state.lastAttempt).toISOString(),
+            ...(safeProviderDiagnostic(failure) ?? {
+              category: "sdk_error",
+              httpStatus: null,
+              elapsedMs: Math.round(performance.now() - started),
+            }),
+          };
+        }
         if (failure.code === "QUOTA") {
           if (kind === "gemini")
             state.blockedUntil =

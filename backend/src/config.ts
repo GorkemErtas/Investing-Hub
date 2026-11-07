@@ -48,7 +48,11 @@ const schema = z.object({
     (v) => (v === "" ? undefined : v),
     z
       .string()
-      .regex(/^[A-Za-z0-9_-]{20,200}$/)
+      // Header-safe opaque credentials: current AQ. auth keys and legacy keys.
+      // Authentication/permissions are checked by Google, not by a fixed length.
+      .min(20)
+      .max(2048)
+      .regex(/^(?:AQ\.[A-Za-z0-9_-]+|[A-Za-z0-9_-]+)$/)
       .optional(),
   ),
   GEMINI_KEY_ROTATED: z.enum(["true", "false"]).default("false"),
