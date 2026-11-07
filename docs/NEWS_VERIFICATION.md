@@ -1,5 +1,7 @@
 # News Intelligence and Research Lab verification
 
+> Archived implementation record. Standalone News Intelligence was retired by [Future Analysis](FUTURE_ANALYSIS.md). The commands, routes and tests below describe earlier versions; use [current verification](FUTURE_VERIFICATION.md).
+
 The Research Lab implementation record below predates the separate Gemini SDK investigation at the end of this document. That investigation was initially delivered unstaged and made no live Gemini requests. The owner subsequently requested commits and a push.
 
 Implementation follow-up: **2026-11-07**, on the existing `main` branch. The implementation was initially delivered unstaged. The owner subsequently requested separate commits and a push. No merge, history rewrite, deployment or scheduler registration is included.

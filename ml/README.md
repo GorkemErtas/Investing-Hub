@@ -1,8 +1,8 @@
 # Local daily ML lifecycle
 
-Python 3.13; no Python API, GPU, database service, Gemini call or deployment. The Express public forecast response remains disabled. Local registry activation enables offline research inference only. No scheduler is registered by this repository.
+Python 3.13; no Python API, GPU, database service, Gemini call or deployment. The legacy Express prediction response remains disabled. The separate Future Analysis endpoint accepts only an explicit eligible ML publication. No scheduler is registered by this repository.
 
-The independent CLI syncs completed BTCUSDT/ETHUSDT spot daily candles, validates provenance, trains reproducible candidates, records shadow forecasts, reconciles actuals, and supports explicit approval/promotion/rollback. SQLite is built into Python; no new Python dependencies were added.
+The independent CLI syncs completed spot daily candles for every asset in `shared/contracts.ts`, validates provenance, trains reproducible candidates, records shadow forecasts, reconciles actuals, and supports explicit approval/promotion/rollback. SQLite is built into Python; no new Python dependencies were added.
 
 ## Windows / PowerShell
 
@@ -22,7 +22,7 @@ py -3.13 -m venv .venv
 .\.venv\Scripts\python.exe ml/pipeline.py reconcile
 ```
 
-`sync` initially downloads history from 2017-08-17 through yesterday UTC; subsequent runs fetch only missing observations. `reconcile` needs a later sync after targets have completed. There is no mechanism to fast-forward prospective evaluation or backdate a forecast. On Linux/macOS use `.venv/bin/python` and a Python 3.13 virtual environment.
+`sync` initially requests history from 2017-08-17 through yesterday UTC, bounded by the official earliest daily kline for each symbol (including newer listings); subsequent runs fetch only missing observations. `reconcile` needs a later sync after targets have completed. There is no mechanism to fast-forward prospective evaluation or backdate a forecast. On Linux/macOS use `.venv/bin/python` and a Python 3.13 virtual environment.
 
 The default database is ignored `ml/data/lifecycle.sqlite3`. **For scheduled operation use a local disk path outside OneDrive/network/cloud-sync folders**, for example:
 
@@ -37,25 +37,26 @@ Set the same variable for every command, or pass `--db <absolute-path>` **after*
 
 ## Commands and review gates
 
-| Command | Effect |
-| --- | --- |
-| `sync` | Atomic incremental ingestion per symbol; optionally import verified legacy CSVs first |
-| `validate` | Check stored candle values, gaps, dataset hash and source manifest; nonzero on invalid data |
-| `train` | Register each algorithm/window as `candidate`; never approve or activate |
-| `inspect-model --model-id ID` | Full reproducibility, training, validation and artifact metadata |
-| `evaluate --model-id ID` | Record historical and prospective quality evidence; does not change model status |
-| `approve --model-id ID` | Mark approved only if all quality gates currently pass |
-| `promote --model-id ID` | Recheck gates and atomically replace the local active model; requires approval |
-| `reject --model-id ID --reason 'review reason'` | Retain candidate/approved model with rejected status |
-| `rollback --model-id ID --reason 'review reason'` | Restore an intact, unexpired archived model with prior activation evidence |
-| `predict` | Active local model only; records disabled event if none |
-| `predict --model-id ID` | Explicit, visibly unvalidated shadow forecast of a candidate |
-| `predict --shadow-all` | Active model plus nonexpired candidate/approved shadow models |
-| `reconcile` | Resolve pending forecasts whose exact daily target has completed and been ingested |
-| `status` | Dataset freshness, quality, registry, forecast counts, rolling performance snapshots, recent events |
-| `daily` | Sync, reconcile, active/shadow forecasts; never train/promote |
-| `weekly` | Sync, reconcile, train, active/shadow forecasts; never approve/promote |
-| `backup --output PATH` | SQLite consistent backup to a new destination; refuses overwrites |
+| Command                                           | Effect                                                                                                                             |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `sync`                                            | Atomic incremental ingestion per symbol; optionally import verified legacy CSVs first                                              |
+| `validate`                                        | Check stored candle values, gaps, dataset hash and source manifest; nonzero on invalid data                                        |
+| `train`                                           | Register each algorithm/window as `candidate`; never approve or activate                                                           |
+| `inspect-model --model-id ID`                     | Full reproducibility, training, validation and artifact metadata                                                                   |
+| `evaluate --model-id ID`                          | Record historical and prospective quality evidence; does not change model status                                                   |
+| `approve --model-id ID`                           | Mark approved only if all quality gates currently pass                                                                             |
+| `promote --model-id ID`                           | Recheck gates and atomically replace the local active model; requires approval                                                     |
+| `reject --model-id ID --reason 'review reason'`   | Retain candidate/approved model with rejected status                                                                               |
+| `rollback --model-id ID --reason 'review reason'` | Restore an intact, unexpired archived model with prior activation evidence                                                         |
+| `predict`                                         | Active local model only; records disabled event if none                                                                            |
+| `predict --model-id ID`                           | Explicit, visibly unvalidated shadow forecast of a candidate                                                                       |
+| `predict --shadow-all`                            | Active model plus nonexpired candidate/approved shadow models                                                                      |
+| `reconcile`                                       | Resolve pending forecasts whose exact daily target has completed and been ingested                                                 |
+| `status`                                          | Dataset freshness, quality, registry, forecast counts, rolling performance snapshots, recent events                                |
+| `daily`                                           | Sync, reconcile, active/shadow forecasts; never train/promote                                                                      |
+| `weekly`                                          | Sync, reconcile, train, active/shadow forecasts; never approve/promote                                                             |
+| `export-analysis --output PATH`                   | Explicit atomic all-asset publication; only current active-origin, approved, prospectively validated, calibrated forecasts qualify |
+| `backup --output PATH`                            | SQLite consistent backup to a new destination; refuses overwrites                                                                  |
 
 Exit codes: `0` completed (including a quality result from `evaluate`), `1` command/provider/data failure, `2` denied approval/promotion or failed/rejected inference. Inspect `eligible` and `reasons` in evaluation JSON. All failures are logged; command failures also enter the audit event table when the store is available. No failed quality check replaces an active model.
 
@@ -71,7 +72,7 @@ $modelId = 'copy-an-ID-from-status'
 .\.venv\Scripts\python.exe ml/pipeline.py backup --output ml/data/reviewed-backup.sqlite3
 ```
 
-These commands change only the local research registry. Publishing forecasts still requires a separately reviewed integration. Candidate forecasts are never a trusted client-facing prediction.
+These commands change only the local registry. Publication remains a separate explicit `export-analysis` operation with all gates rechecked; see [Future Analysis operation](../docs/FUTURE_ANALYSIS.md). Candidate-origin forecasts are never trusted client-facing predictions, even after promotion.
 
 ## Data integrity and provenance
 
@@ -101,7 +102,7 @@ Forward shadow observations used in promotion are prospective validation. Subseq
 
 The registry stores IDs derived from dataset/config/training-code/environment fingerprints, full config/parameters, training range/time, feature version/order, walk-forward metrics, artifact checksum, parity result and status. Repeated identical training reuses existing IDs. Numeric JSON encodes only linear coefficients/scaler values or bounded tree arrays; inference checks feature contracts and checksums and cannot execute pickle code. Export parity against sklearn must be within `1e-12`. Package versions remain pinned in `requirements.txt`. Reproducibility is scoped to the recorded Python/numeric environment; cross-platform BLAS differences remain possible.
 
-Forecast identity is `(symbol, model ID, target close time)`. Records include generation/source/target timestamps, reference price, predicted return/price, model status at generation, dataset fingerprint, calibration `null`, actual close/return, signed price error (`predicted - actual`) and evaluation state. Failures/rejections remain auditable. Reconciliation only consumes completed, subsequently ingested target candles and never changes original prediction values. Cumulative performance snapshots track return/price MAE/RMSE, direction and baseline over time.
+Forecast identity is `(symbol, model ID, target close time)`. Records include generation/source/target timestamps, reference price, predicted return/price, model status at generation, dataset fingerprint, frozen historical OOS residual interval evidence (or `null` when unavailable), actual close/return, signed price error (`predicted - actual`) and evaluation state. Failures/rejections remain auditable. Reconciliation only consumes completed, subsequently ingested target candles and never changes original prediction values. Cumulative performance snapshots track return/price MAE/RMSE, direction and baseline over time.
 
 ## Scheduling without an open terminal
 
@@ -118,10 +119,10 @@ Optional Task Scheduler setup is an **operator action**, not performed here. Set
 
 For a deployment-friendly host, use two finite systemd timers/cron jobs on a single persistent local volume: daily `python ml/pipeline.py daily`, Sunday `python ml/pipeline.py weekly`, absolute Python/DB/config paths, UTC schedule, no overlap and captured stderr/exit alerts. No remote job or deployment configuration is enabled. A daemon is unnecessary for one candle a day. Back up with the CLI, restore only while all jobs are stopped, and validate the restored file before use. Do not copy a live SQLite file or concurrently cloud-sync it. Log rotation, backup retention, disk monitoring and clock synchronization are operator responsibilities.
 
-## Source usage and future hybrid integration
+## Source usage and Future Analysis
 
 Binance's [Vision Dataset Terms](https://github.com/binance/binance-public-data/blob/master/TERMS_AND_CONDITIONS.md) reviewed 2026-11-06 identify CC BY-NC-SA 4.0 and restrict commercial dataset/derivative use. The public-data repository's MIT code license does not grant commercial data redistribution rights. Keep raw data/models private and ignored; review API terms and obtain the required written license before commercial use or redistribution. Published derived research must carry attribution and applicable share-alike licensing. Access restrictions never trigger synthetic or alternate-provider substitution.
 
-`shared/hybrid.ts` defines a future hybrid contract for validated ML values or explicit null/unavailable values, UTC target/horizon, sourced news/social observations with publication/observation times, sentiment/uncertainty, explanation and evidence references. Numeric forecasts are derived only from ML. Calibration requires explicit evidence and is currently absent. A schema can validate shape/timing/references but cannot prove sources true or detect fabricated prose: a future adapter must retrieve/verify evidence, separate numerical inference from LLM explanation, and control publication. No Gemini integration or new API endpoint exists.
+`shared/future-analysis.ts` replaces the provisional hybrid and news contracts with one report: ML-only numeric forecast/evaluation/calibration evidence plus a critical Gemini interpretation bound to the exact model/forecast fingerprint. `export-analysis` holds the SQLite writer lock through checksum/stamp capture and atomic JSON replacement, without changing registry/evaluation records. The backend rejects changed registry exports, bad parity, timing, gates or units. Gemini cannot modify numeric values, approve models or create missing forecasts. Historical residual coverage is not a guarantee; prospective coverage accumulates against original bounds. No real model was trained, promoted or exported by this implementation. See [architecture, privacy, provider costs and setup](../docs/FUTURE_ANALYSIS.md).
 
 See [audit and architecture](../docs/ML_LIFECYCLE.md), [verification report](../docs/ML_VERIFICATION.md), and the preserved [historical experiment](reports/RESULTS.md). Legacy historical metrics are development evidence and do not represent this lifecycle's unseen performance.

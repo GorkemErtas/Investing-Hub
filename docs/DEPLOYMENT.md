@@ -15,11 +15,9 @@ This builds `backend/Dockerfile` and `webapp/Dockerfile` with the root context. 
 
 Docker Desktop was unavailable during verification: Compose syntax validation is distinct from actual image build/container startup. Consult VERIFICATION for actual results.
 
-## Optional news worker
+## Optional Future Analysis
 
-Optional finite news workers use `node backend/dist/news/cli.js collect`, `analyze`, `status` and `prune`. Collection requires only intentional `NEWS_INTELLIGENCE_ENABLED=true`, not a key. AI analysis is separately disabled by default. No timer is registered. A future timer can collect every 4-6 hours and prune at least daily, sharing `NEWS_STORAGE_PATH` on a persistent local volume with the API; an independent analyze job is optional. The default container filesystem is ephemeral and may be unwritable under the unprivileged runtime user. Configure an owned persistent directory before enabling collection. Multiple hosts/network filesystems need separately reviewed coordination. Existing guest Compose is unchanged. See [news operations](NEWS_INTELLIGENCE.md).
-
-The web Research Lab requires the API to use the same enabled news configuration and persistent `NEWS_STORAGE_PATH` as the finite collector. Lighthouse release metadata is keyless; Ethereum Foundation RSS stays disabled. Page loads and “Check cache” only read stored state. No new worker, timer or deployment is activated by the UI integration.
+Default Compose enables neither paid Search nor ML publication. Python runs separately on persistent local disk. Configure read-only mounts for an explicitly generated ML JSON export and its matching SQLite database; registry changes revoke that export. If paid review is intentionally enabled, provide server-only credentials, project quotas/billing controls and an owned persistent accounting directory shared by one API host. Grounded reports are never mounted, persisted or redistributed. Nginx permits the backend's bounded review timeout; normal page loads make no paid calls. A crashed accounting lock requires verified operator recovery, without deleting usage counters. See [configuration and operational boundaries](FUTURE_ANALYSIS.md). No timer, provider spending or deployment was enabled here.
 
 ## Optional accounts
 

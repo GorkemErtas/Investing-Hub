@@ -1,8 +1,8 @@
 # Shared API
 
-Optional free news collection uses GDELT DOC 2.0, reviewed official RSS and the public Lighthouse releases API. Enable `NEWS_INTELLIGENCE_ENABLED=true` and run `npm run news:collect -w backend`; no keys are needed. `news:analyze` is separate and requires explicit AI enablement plus a new private Gemini key. `news:status` and `news:prune` are finite local operations. The React Research Lab reads `GET /api/news/insights/BTCUSDT` and `/ETHUSDT`; GETs perform no network calls or writes. Source-only results have unknown sentiment/impact and null AI summaries. Coverage includes distinct timeout/rate-limit/local-cooldown/filter reasons, HTTP status and elapsed time when measured; latest failed checks survive a complete outage. See [operations and source terms](../docs/NEWS_INTELLIGENCE.md). ML prediction routes remain unchanged.
+Future Analysis uses `GET /api/future-analysis/:symbol` for read-only validated ML publication and `POST /api/future-analysis/:symbol/review` for an explicit opt-in paid critical review. All eight shared assets are supported. No training runs in API handlers. Gemini reviews structured ML/evaluation evidence with Google Search; numeric values remain ML-only. Grounded results are returned only to the initiating request and never persisted or shared. `npm run future:status -w backend` reads counters and safe diagnostics. Search is disabled by default. The obsolete news collectors, routes and scripts were removed. See [configuration, publication and cost boundaries](../docs/FUTURE_ANALYSIS.md).
 
-Express 5 / TypeScript modular monolith. `src/app.ts` composes public market/status routes and optional private mobile routes. `src/server.ts` owns network/database/mail/Firebase lifecycle. There is one active backend.
+Express 5 / TypeScript modular monolith. `src/app.ts` composes public market/Future Analysis/status routes and optional private mobile routes. `src/server.ts` owns network/database/mail/Firebase lifecycle. There is one active backend.
 
 ```powershell
 # From repository root

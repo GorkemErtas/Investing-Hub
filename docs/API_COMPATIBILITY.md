@@ -38,3 +38,5 @@ Inventory verified against every `app.get/post/put/delete` in the initial `backe
 | GET `/predict/cnn_reg/:symbol/:interval`                    | TradePage                                                    | Same disabled contract                                                                                        |
 
 Public `/api/health`, `/api/markets`, `/api/candles/:symbol`, `/api/predictions/:symbol` preserve the modern web API. `/api/me` adds authenticated profile inspection/session validation. Features that require Mongo, SMTP or Firebase return explicit service-unavailable errors when their adapter is disabled; public market routes remain available.
+
+Future Analysis adds GET `/api/future-analysis/:symbol` and consented POST `/api/future-analysis/:symbol/review` for all shared assets. It preserves legacy mobile prediction, market, account and portfolio contracts. Standalone `/api/news/insights/:symbol` is retired (404). See [Future Analysis](FUTURE_ANALYSIS.md).

@@ -1,12 +1,12 @@
 # Investing Hub
 
-A modular monolith with a guest React web demo, an Expo mobile app, one TypeScript API, universal contracts/accounting, and an offline Python research pipeline. All trading is simulated. Market quotes are in **USDT**, not USD. No forecast is published.
+A modular monolith with a guest React web demo, an Expo mobile app, one TypeScript API, universal contracts/accounting, and an offline Python research pipeline. All trading is simulated. Market quotes are in **USDT**, not USD. Future Analysis publishes only explicitly exported, independently approved ML forecasts; no model is currently ready.
 
 | Directory   | Responsibility                                                                                                |
 | ----------- | ------------------------------------------------------------------------------------------------------------- |
-| `webapp`    | Modern responsive dashboard, charts, guest portfolios, Learning Hub and research status                       |
+| `webapp`    | Modern responsive dashboard, charts, guest portfolios, Learning Hub and one Future Analysis report            |
 | `mobileapp` | Expo Router screens, native app/assets, secure session and storage adapters                                   |
-| `backend`   | Public cached market API and optional authenticated mobile services                                           |
+| `backend`   | Public market/Future Analysis API and optional authenticated mobile services                                  |
 | `shared`    | Zod contracts, Decimal chronological ledger, analysis and typed HTTP client; no React/platform dependencies   |
 | `ml`        | Incremental daily datasets, offline training/registry, prospective forecast history and a quarantined archive |
 | `docs`      | Audit, architecture, endpoint migration, security and actual verification results                             |
@@ -37,9 +37,9 @@ npm --prefix mobileapp start
 
 Use `http://10.0.2.2:5000` for the Android emulator, your computer's LAN origin for a physical device, and HTTPS for a production build. The app validates the URL. Run a native development build with `npm --prefix mobileapp run android`; Firebase native modules require a development build rather than Expo Go. Public mobile market/learning screens work without account services. See [mobile setup](mobileapp/README.md) for account, EAS, native and notification requirements.
 
-## News intelligence
+## Future Analysis
 
-The web Research Lab displays cached BTC/ETH headlines, original source links, publication/indexing times, freshness and provider coverage. Free collection uses GDELT DOC 2.0, reviewed official RSS and Lighthouse's public GitHub release metadata without an API key. Enable collection intentionally, then run `npm run news:collect -w backend`; page loads and “Check cache” only read `GET /api/news/insights/:symbol`. Gemini analysis is a separate optional `news:analyze` command, disabled by default. See [keyless Windows setup, source terms and limitations](docs/NEWS_INTELLIGENCE.md) and [actual live/test results](docs/NEWS_VERIFICATION.md). ML forecasts remain disabled; inspected history through 2026 is development evidence. No article crawling, paid news subscription or scheduler is introduced.
+Future Analysis combines an ML forecast with a critical Gemini review of that exact evidence and current Google Search context in one report. All eight shared assets are selectable, with direct dashboard links. Python remains the sole numerical authority; chronological residual calibration and existing historical/prospective gates control publication. Missing or unapproved ML stays unavailable. Gemini Search is disabled by default and runs only after explicit user consent, without shared grounded-result caching. No paid live calls, model approvals, publication jobs or deployments were enabled. See [setup, architecture, costs and source presentation](docs/FUTURE_ANALYSIS.md) and [verification/readiness](docs/FUTURE_VERIFICATION.md).
 
 ## Optional mobile accounts
 
@@ -60,6 +60,6 @@ npm --prefix mobileapp test
 npm --prefix mobileapp run doctor
 ```
 
-Python setup, incremental sync, manual/weekly training, explicit model review, rollback and Windows scheduling are in [ml/README.md](ml/README.md). This local lifecycle does not enable public forecasts or register jobs. See its [architecture audit](docs/ML_LIFECYCLE.md) and [actual verification](docs/ML_VERIFICATION.md). Docker files use the root build context; `docker compose up --build` serves the guest web app on loopback port 8080 without Mongo. See [deployment](docs/DEPLOYMENT.md) before enabling mobile services or exposing a host publicly.
+Python setup, incremental sync, manual/weekly training, explicit model review, rollback and Windows scheduling are in [ml/README.md](ml/README.md). The lifecycle never automatically approves, exports or registers jobs; explicit eligible publication is consumed by Future Analysis, while the legacy mobile prediction route stays disabled. See its [architecture audit](docs/ML_LIFECYCLE.md) and [actual verification](docs/ML_VERIFICATION.md). Docker files use the root build context; `docker compose up --build` serves the guest web app on loopback port 8080 without Mongo. See [deployment](docs/DEPLOYMENT.md) before enabling mobile services or exposing a host publicly.
 
 Read [audit/plan](docs/MIGRATION_AUDIT.md), [architecture](docs/ARCHITECTURE.md), [every legacy endpoint](docs/API_COMPATIBILITY.md), [security](docs/SECURITY.md), [verification and remaining limitations](docs/VERIFICATION.md), and [review/staging groups](docs/REVIEW_GUIDE.md). Historical web-only reports are labeled under `docs/historical-web`.
