@@ -5,7 +5,7 @@ Existing secrets must be treated as compromised even though their code paths hav
 Owner actions, in order:
 
 1. Revoke the embedded Gemini/Google API key and every Gemini key stored in old environment files using Google AI Studio / the Google Cloud credential console. Review usage and billing. The demo does not need a replacement.
-2. Rotate `CRYPTOPANIC_TOKEN` at CryptoPanic; remove access if unused. The demo does not need this integration.
+2. Revoke removed legacy news-provider credentials; current free news collection requires no source token.
 3. Revoke/rotate `EMAIL_PASS` (including any Gmail app password), review the sender account's security activity, and remove unused email integration permissions. Do not publish `EMAIL_USER` unnecessarily.
 4. Rotate database credentials embedded in `MONGO_URI`, restrict database network access, and review access to existing account/portfolio records. This demo does not connect to or migrate that database.
 5. If any real JWT secret was used outside this checkout, rotate it and invalidate old sessions. The old fallback signing secret must never be used again. Registration, login, verification and JWT access have been removed from this demo.

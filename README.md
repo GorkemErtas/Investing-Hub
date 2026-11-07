@@ -39,7 +39,7 @@ Use `http://10.0.2.2:5000` for the Android emulator, your computer's LAN origin 
 
 ## News intelligence
 
-Source-supported news runs independently of ML forecasts. A finite worker collects CryptoPanic public API records and approved official RSS feeds; Gemini classifies only those excerpts. `GET /api/news/insights/:symbol` reads the durable cache without calling a provider. The feature defaults to disabled and requires a newly issued private Gemini key; CryptoPanic is optional. See [news setup, costs and source terms](docs/NEWS_INTELLIGENCE.md). No Search Grounding, article crawling, X/Twitter integration or scheduler is enabled.
+Free news collection uses the GDELT Project DOC 2.0 API and reviewed official RSS feeds without an API key. Enable collection intentionally, then run `npm run news:collect -w backend`. `GET /api/news/insights/:symbol` reads stored source metadata without provider calls. Gemini analysis is a separate optional `news:analyze` command, disabled by default; missing keys never block collection. See [keyless Windows setup, source terms and limitations](docs/NEWS_INTELLIGENCE.md). ML forecasts remain disabled. No Search Grounding, article crawling, paid news subscription or scheduler is introduced.
 
 ## Optional mobile accounts
 

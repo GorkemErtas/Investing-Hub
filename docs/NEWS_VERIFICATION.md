@@ -1,98 +1,77 @@
-# News intelligence implementation and verification
+# Free news verification
 
-Date: 2026-11-06. Environment: Windows/PowerShell, Node 26.13.0, npm 11.20.0. The current `main` commit was checked against remote `main` at the start; no other branch was inspected. Initial implementation and verification left the changes unstaged. Separate commits and push follow the repository owner's subsequent explicit request. No merge, deployment or scheduled-job registration was performed.
+Verification date: **2026-11-06**. Work stays on the existing `main` branch. On **2026-11-07**, the owner requested separate commits and a push. No merge, scheduler registration or deployment is included.
 
-The user's accepted scope is **CryptoPanic API + permitted official RSS, with Gemini used only for analysis**. Google Search Grounding is absent. The previous ML lifecycle, prediction endpoint, web/mobile implementation, shared accounting and existing hybrid schema remain unchanged.
+## Change inventory
 
-## Decisions and implementation
+| Files                                                                                                                                   | Result                                                                                                                                                                                                                            |
+| --------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `backend/src/news/sources.ts`, `evidence.ts`                                                                                            | Keyless GDELT DOC 2.0 ArticleList, fixed reviewed official RSS adapters, metadata-only parsing, publisher/index attribution, distinct publication/index/retrieval times, filtering, deduplication and bounded balanced selection. |
+| `backend/src/news/service.ts`, `analysis.ts`, `provider.ts`, `types.ts`, new `requests.ts`                                              | Independent collection and optional model-only analysis, source-only snapshots, provenance-bound structured analysis, per-provider fallback, durable separate budgets and courteous GDELT pacing/cooldowns.                       |
+| `backend/src/news/store.ts`                                                                                                             | Bounded version-2 collection/snapshots, persisted source pacing, legacy snapshot invalidation with validated budget preservation; existing checksum, atomic publication and exclusive lock retained.                              |
+| `shared/news.ts`, `shared/tests/news.test.ts`                                                                                           | News-only v2 schemas and source-only/unknown publication contract checks.                                                                                                                                                         |
+| `backend/tests/news.test.ts`, `backend/package.json`                                                                                    | Deterministic provider/service/API regressions and separate finite collect/analyze/status/prune commands.                                                                                                                         |
+| `backend/src/config.ts`, root/backend `.env.example`                                                                                    | Free collection with no source secret, independent AI opt-in, RSS permission gate and bounded operational settings.                                                                                                               |
+| Root/backend READMEs, `docs/NEWS_INTELLIGENCE.md`, this file, architecture/deployment/security docs and historical audit/security notes | Current setup, source conditions, keyless Windows workflow, limitations and removal of obsolete paid-source configuration references.                                                                                             |
 
-- Keep the existing TypeScript/Express backend. A finite worker collects fixed public sources; public GETs read a validated local snapshot and cannot trigger providers or training.
-- Use CryptoPanic's documented v2 public mode, actual plan, BTC/ETH filter and one page; do not follow pagination URLs or request full article content. The optional token is confined to the outbound request.
-- Use the official Federal Reserve all-press and monetary-policy RSS endpoints. Its Board-information reuse/attribution terms were checked. CFTC RSS was excluded because its official page says feeds are temporarily disabled.
-- Validate API/RSS publication metadata, not model-authored dates/links. Reject missing/future/stale/invalid dates, source-domain inconsistencies, unsafe links, social posts and detectable injection. Record source-response hashes and separate publication/observation times. Deduplicate normalized URLs/content and syndicated headlines/excerpts.
-- Use pinned official `@google/genai@3.0.0`, default `gemini-3.5-flash-lite`, bounded tools-free structured analysis. Model IDs and provider format were researched against current official docs and compiled SDK types. No Search, URL Context, tools, generated URLs, prices, probabilities or invented prose enter the public result. Exact quote/source/scope checks follow schema validation; provider metadata is not factual proof.
-- Store only the latest pair of snapshots, short source excerpts/metadata, counters and sanitized diagnostics in bounded local JSON. Sync/rename publishes both snapshots atomically; checksums detect accidental corruption. Durable per-attempt budgets, cooldowns and an exclusive cross-process lock constrain cost and races. Expired retention data is hidden on read and physically removed by finite pruning.
-- Use an additive focused shared news contract. Future hybrid composition remains separate from numeric ML inference and its approval rules.
+No dependencies were added and `package-lock.json` is unchanged. The existing pinned XML parser remains necessary for RSS, and the existing pinned Gemini SDK remains necessary for explicit optional analysis. ML code/artifacts, `shared/hybrid.ts`, financial logic, numeric prediction endpoints, web/mobile implementations and backend server scheduling are untouched.
 
-## Changed files
+## Deterministic checks
 
-Added:
+Synthetic, explicitly marked fixtures test realistic ArticleList shapes and official RSS records; they are never a production news fallback. Coverage includes:
 
-- `backend/src/news/types.ts`: evidence and strict analysis types, hashes and sanitized error codes.
-- `backend/src/news/sources.ts`: exact API/RSS destination allowlist, bounded HTTP, safe display URLs and rate-limit behavior.
-- `backend/src/news/evidence.ts`: CryptoPanic/RSS parsing, provenance/date checks, injection rejection and deduplication.
-- `backend/src/news/provider.ts`: isolated official Gemini SDK adapter and sanitized error classification.
-- `backend/src/news/analysis.ts`: exact-quote, source/symbol/status checks and source-derived events/outlook.
-- `backend/src/news/store.ts`: bounded/checksummed state, atomic file publication and exclusive refresh lock.
-- `backend/src/news/service.ts`: cache reads, finite refresh/prune, separate durable source/Gemini budgets, retained UTC-day usage and cost estimates.
-- `backend/src/news/cli.ts`: `refresh`, `status`, `prune`, sanitized output and exit codes.
-- `backend/tests/news.test.ts`: 62 deterministic source/security/cache/provider/API/CLI tests.
-- `shared/news.ts`, `shared/tests/news.test.ts`: focused shared contracts and four tests.
-- `docs/NEWS_INTELLIGENCE.md`, `docs/NEWS_VERIFICATION.md`: setup, architecture, sources/terms, operations, limitations and actual verification.
+- Nullable publication time versus GDELT first-seen time, invalid/missing/future dates and original publisher attribution.
+- Empty/index-error/throttling payloads, official BTC/ETH/SEC/Fed parsing and rejection of article bodies, external entities, unsafe links and injection headlines.
+- Keyless collection and cached HTTP responses with zero Gemini calls; configured collection also never invokes Gemini.
+- Separate optional analysis, evidence/quote validation, high uncertainty, no search/tools or invented numerical forecasts.
+- BTC/ETH balancing with skewed inputs and market-wide records counted against both eight-event limits; event deduplication.
+- Provider failure fallback, retained evidence, stale/expired behavior, source/Gemini budgets, 429 versus local cooldown, persistent GDELT pacing and timeout handling.
+- Checksums, atomic publication failure, mutual exclusion, version-1 invalidation without budget reset and existing API compatibility.
 
-Modified:
+Final checks passed:
 
-- `backend/src/app.ts`: additive read-only `/api/news/insights/:symbol` route and reader injection; existing policies and routes preserved.
-- `backend/src/config.ts`: validated private credentials, model, source plan, TTL, budgets, timeout, retention, storage and new-key acknowledgement.
-- `backend/package.json`, `package-lock.json`: pinned SDK/XML parser and news scripts. No mobile lockfile or Python dependency changes.
-- `shared/package.json`: additive `./news` export; hybrid/financial exports remain intact.
-- `.gitignore`, `.dockerignore`: exclude runtime news cache from Git and build context.
-- `.env.example`, `backend/.env.example`: disabled defaults and safe configuration references, no credentials.
-- Root/backend README, `docs/ARCHITECTURE.md`, `docs/DEPLOYMENT.md`, `docs/SECURITY.md`: new module boundary, private setup, persistence and operational requirements.
+| Command                | Result                                                                                                    |
+| ---------------------- | --------------------------------------------------------------------------------------------------------- |
+| `npm run build`        | Shared, backend and production web builds passed.                                                         |
+| `npm run typecheck`    | Shared, backend and web type checks passed.                                                               |
+| `npm test`             | **140 passed**: 31 shared, 107 backend (62 news + 45 existing), 2 web.                                    |
+| `npm run lint`         | Passed.                                                                                                   |
+| `npm run test:browser` | **4 passed**: dashboard, portfolio accounting/history, Learning Hub and responsive/provider-outage flows. |
+| `npm run check:mobile` | Mobile type check passed.                                                                                 |
+| `npm run test:mobile`  | **3 passed**.                                                                                             |
 
-No tracked files were removed. No `ml/`, web/mobile implementation, original shared financial implementation, `shared/hybrid.ts` or ML prediction-service change was required.
+Live source checks are separate from these tests. The final backend/shared selection and cooldown refinements were covered by the final unit/build/type checks; the browser/lint checks had already passed and those refinements do not change web implementation.
 
-## Commands and configuration
+Before committing on **2026-11-07**, `npm run build`, `npm run typecheck` and `npm test` were rerun successfully; all **140 tests** passed again.
 
-From the repository root after building shared/backend:
+## Live read-only provider smoke
 
-```powershell
-npm run news:refresh -w backend
-npm run news:status -w backend
-npm run news:prune -w backend
-```
+These were actual HTTP GETs and an actual source-only collection, not mocked network responses. No original article or image URLs were requested. No Gemini key was used and no live model analysis was attempted.
 
-Compiled equivalents: `node backend/dist/news/cli.js refresh|status|prune`. `GET /api/news/insights/BTCUSDT` and `/ETHUSDT` return explicit unavailable/fresh/stale/insufficient states. Refresh is not an HTTP operation.
+| Source                            | Observed result                                                                                                                                                                                                                                                                                                                                                                                   |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bitcoin Core RSS                  | HTTP 200 `text/xml`, 119 feed items; seven accepted by the collector's fourteen-day/date/relevance rules, 112 rejected.                                                                                                                                                                                                                                                                           |
+| Federal Reserve all releases      | Successful collection; one accepted, 19 rejected.                                                                                                                                                                                                                                                                                                                                                 |
+| Federal Reserve monetary releases | Successful collection; one accepted, 14 rejected. The overlapping announcement is deduplicated.                                                                                                                                                                                                                                                                                                   |
+| SEC press-release RSS             | HTTP 200 `application/rss+xml`; collection parsed 25 items, none passed the crypto/date relevance filter. Reachable does not imply relevant current coverage.                                                                                                                                                                                                                                     |
+| Ethereum Foundation Blog          | Old `/feed.xml` returned 301; verified direct `/en/feed.xml` returned 200 XML. The feed declares all rights reserved and site terms restrict automated access. It was inspected for access/terms verification, but excluded from routine collection by the default permission gate.                                                                                                               |
+| GDELT Project DOC 2.0             | Direct metadata GET and the collector's first query timed out at the bounded 20-second limit. Subsequent queries in the collector were suppressed by local cooldown. **No successful live ArticleList JSON retrieval was observed.** Parsing, empty responses and rate-limit behavior passed deterministic tests; this does not establish live index availability. No live HTTP 429 was observed. |
 
-Key variables are `NEWS_INTELLIGENCE_ENABLED`, `GEMINI_API_KEY`, `GEMINI_KEY_ROTATED`, `GEMINI_MODEL`, optional `CRYPTOPANIC_API_KEY`, `CRYPTOPANIC_PLAN`, `NEWS_CACHE_TTL_SECONDS`, `NEWS_MAX_DAILY_REQUESTS`, `NEWS_MAX_DAILY_SOURCE_REQUESTS`, `NEWS_PROVIDER_TIMEOUT_MS`, `NEWS_RETENTION_HOURS`, and `NEWS_STORAGE_PATH`. Defaults and Windows private-key instructions are in [the operator guide](NEWS_INTELLIGENCE.md).
+The real collection completed with **6 BTCUSDT events and 1 ETHUSDT event**, five source requests and **zero Gemini requests/tokens/cost**. Both cached responses were available, with `analysisStatus=not_configured`, null model/summary and unknown sentiment/impact. ETH's available item was market-wide macro evidence, not independent Ethereum-specific coverage. The model dependency was instrumented to fail if called; it was never called. A subsequent `analyze` reported `not_configured` and made zero model requests.
 
-## Actual test results
+The final compiled API was also checked through local HTTP against that real stored state: both BTC/ETH routes returned HTTP 200 with the same 6/1 source-only event counts and fresh status. Instrumented source/model call counts remained zero and the state file was byte-for-byte unchanged after both GETs.
 
-| Executed command/check | Actual result |
-| --- | --- |
-| `npm run build` | Passed shared/backend/web production build; final backend refinements also compiled successfully with `npm run build -w backend` |
-| `npm run typecheck` | Passed shared/backend/web; final backend refinements separately typechecked successfully |
-| `npm test` | **140 passed**: shared **31**, backend **107**, web **2** |
-| `npm run lint` | Passed existing web lint |
-| `npm run test:browser` | **4 passed**, including disabled forecasts and provider-outage behavior |
-| `npm --prefix mobileapp run typecheck` | Passed |
-| `npm --prefix mobileapp test` | **3 passed** |
-| `node backend/dist/news/cli.js status` | Passed; availability `disabled`, zero provider attempts, no snapshots |
-| `node backend/dist/news/cli.js refresh` with default config | Correctly returned sanitized `DISABLED`, exit **1**, without provider calls |
-| Live official RSS metadata smoke | Both fixed feeds returned valid XML and were parsed successfully; **no Gemini call** |
-| Dependency install/audit report | **0 known vulnerabilities** in the root workspace dependency audit at install time |
-| `git diff --check` | Passed; no whitespace errors |
+The smoke state lives only in ignored `backend/.news-data/free-smoke-2026-11-06`, separate from normal state. Early smoke output used the older generic rate-limit label for suppressed queries; final code explicitly distinguishes local `cooldown` from an actual provider `rate_limited` response. Do not interpret the smoke as a successful GDELT response or as any independent fact-checking.
 
-New deterministic tests cover genuine API/RSS links, absent/fabricated citations/URLs, original-domain validation, missing/future/old/invalid timestamps, publication vs observation, duplicate/syndicated records, XML external entities, unsupported sources/social posts, bounded bodies, unsafe URLs, exact evidence quotes, strict labels/extra numeric fields, scope/coin isolation, primary-vs-opinion uncertainty, injection attempts, provider timeout/transient/quota behavior, separate durable budgets, UTC rollover/usage history, unchanged-evidence analysis reuse, cache miss/hit/expiry, stale preservation during partial outage, retention/prune, atomic write failures, checksum corruption, cross-instance refresh prevention, disabled setup, HTTP/CLI secret isolation and preservation of existing APIs. All Gemini/CryptoPanic responses in automated tests are explicitly synthetic fixtures, never actual market news.
+## Remaining limits
 
-## Integration status and limits
+GDELT availability remains a live validation gap. Its failure does not block healthy RSS. Ethereum automated ingestion remains default-off pending suitable permission/terms review, and SEC relevance/access varies. Balanced selection cannot supply absent evidence, and source-only outputs intentionally have no AI conclusions. All accepted content is headline metadata, not verified article content. Fourteen-day RSS windows include infrequent older Core announcements; cache freshness does not mean recent publication.
 
-The only live data-source test used the public Federal Reserve feeds. At the smoke-test time, all-press contained **1 accepted recent record and 19 excluded records**; monetary-policy contained **0 accepted recent records and 15 excluded records**. Exclusion uses the configured parser's date/content rules and the fixed 72-hour evidence window. No live sentiment or market conclusion was generated or persisted from these observations.
+No private Gemini key was available for live analysis validation. Deterministic SDK request/response, gating, budgets and failure tests passed; they do not establish a particular key's permissions, quota or billing. Local persistence assumes a single host and persistent disk; distributed/ephemeral deployments need a different storage/locking strategy. Public reads never trigger collection or analysis.
 
-No valid private `GEMINI_API_KEY` or `CRYPTOPANIC_API_KEY` was present in the process environment. Therefore **live Gemini and authenticated CryptoPanic integration remain untested**. Their adapters were checked against current official documentation, SDK types and deterministic tests; no successful private-provider call is invented. Legacy exposed keys were neither read nor reused. No real source snapshot was populated with mock news.
+## Conventional Commit groups
 
-Windows sandbox restrictions initially prevented Vite/esbuild/tsx process spawning (`EPERM`). The full build/tests/browser suite passed outside that restriction. Compiled CLI commands also ran directly without the tsx subprocess requirement. Early test runs caught an out-of-date shared build and a shared mock-fixture mutation; rebuilding shared and isolating mock implementations resolved those failures. These initial failed runs are not counted as passing evidence.
+The owner requested separate commits and a push. The breaking v2 contracts, backend implementation and regression tests stay together so each commit remains executable.
 
-The ML Python suite was not rerun because neither the validated ML implementation/config/data nor Python dependencies changed. Existing browser/mobile and API regressions passed. No Docker deployment, container persistence trial, native device build or scheduler activation was performed.
-
-Before production, issue private keys, select/review the actual CryptoPanic plan and linked-content rights, perform real provider smoke tests, review representative classifications and false-positive/negative behavior, configure persistent local storage/ownership, spending limits, retention-aware backups, finite refresh/prune timers and exit alerts. Crash lock recovery requires confirming the recorded process has stopped; no automatic lock stealing or distributed coordination is claimed. Ephemeral storage resets request budgets as well as the cache. Source provenance is not fact-checking, sentiment is not a forecast, and coverage is selective.
-
-## Suggested Conventional Commit groups
-
-The implementation was initially delivered unstaged. The owner subsequently requested separate commits and push. Review groups, in dependency order:
-
-1. `feat(shared): add source-supported news insight contracts` — shared schema/export and tests.
-2. `feat(news): add CryptoPanic RSS and cached Gemini insights` — source transport, evidence validation/deduplication, SDK adapter, constrained analysis, persistence, orchestration, CLI, config/API wiring, runtime exclusions and complete backend tests/dependencies.
-3. `docs(news): document private setup source terms and verification` — configuration examples, README/architecture/security/deployment and verification documents.
-
-The dependent backend implementation and its tests stay together so intermediate commits remain executable. Commit and push operations follow the owner's explicit request; no deployment or scheduled job is enabled.
+1. `feat(news): add keyless collection and separate optional analysis` — v2 shared contracts, GDELT/reviewed RSS adapters, metadata validation, balanced selection, storage migration, independent collection/analysis, request budgets/pacing, configuration, CLI and shared/backend regression tests.
+2. `docs(news): document free source terms and keyless operation` — setup examples, READMEs, architecture/security/deployment notes and live verification results with explicit limitations.

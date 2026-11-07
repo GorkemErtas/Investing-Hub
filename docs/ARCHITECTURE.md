@@ -11,8 +11,9 @@ flowchart LR
   API --> Shared
   API --> Market[Binance public data]
   API --> NewsCache[(Optional local news JSON snapshot)]
-  NewsCLI[Finite news refresh CLI] --> Sources[CryptoPanic public API / official RSS]
-  NewsCLI --> Gemini[Gemini: classify validated excerpts only]
+  NewsCLI[Finite keyless news collect CLI] --> Sources[GDELT Project DOC 2.0 / reviewed official RSS]
+  Analyze[Separate optional news analyze CLI] --> Gemini[Gemini: headline-only classification]
+  Analyze --> NewsCache
   NewsCLI --> NewsCache
   API -. optional .-> Mongo[(Existing MongoDB)]
   API -. optional .-> Mail[SMTP verification]
@@ -28,7 +29,7 @@ flowchart LR
 - `backend/src/market` is the retained modern provider/cache/service implementation. The provider hostname is fixed, symbols/intervals allowlisted, candle UTC boundaries validated, and publication/fetch times distinguished. Cache TTL, stale limit, request deduplication, cold-failure backoff, provider concurrency/rate cooldown and request budgets bound costs.
 - `backend/src/mobile` contains authenticated account, owned portfolio, settings, Mongo and notification services. Repository injection makes HTTP/service authorization and failure behavior testable without Mongo. Queries carry both owner and resource ID. Full-history validation and Mongo version predicates protect trade updates. Public routes do not read Mongo or send mail/push.
 - `backend/src/app.ts` owns HTTP policy, validation and sanitized errors. `server.ts` owns environment composition and lifecycle. No active `server.js`, nested backend, ONNX runtime or public force-refresh endpoint remains.
-- `backend/src/news` separates fixed-source collection, evidence validation/deduplication, a tools-free Gemini adapter, constrained analysis, atomic local persistence and finite orchestration. Public GETs read the cache and never refresh it. Source/API keys remain server-side; global HTTP policy applies. The focused additive `shared/news.ts` contract leaves existing hybrid and financial contracts intact. See [news intelligence](NEWS_INTELLIGENCE.md).
+- `backend/src/news` separates keyless GDELT/official RSS collection from optional model-only Gemini analysis. `collect` cannot call Gemini; `analyze` reads existing fresh metadata and cannot fetch sources. Version 2 news contracts distinguish nullable publication, indexing and retrieval timestamps, source-only status, headline-only limits and provider coverage. Atomic local persistence and durable request budgets remain isolated from ML/account services. Public GETs read snapshots without network or writes; existing hybrid/financial contracts are untouched. See [news intelligence](NEWS_INTELLIGENCE.md).
 - `webapp` retains its UI, Query cache and browser adapters. Guest transaction data never leaves the browser. Existing storage keys and format remain valid. It consumes shared contracts/accounting without any mobile infrastructure requirement.
 - `mobileapp` owns navigation, native assets, platform APIs and secure-token/preferences adapters. One settings context replaces overlapping context requests. Its typed client validates response schemas, deduplicates only public data, and never caches a private response across sessions. Focus-aware polling ignores late responses and pauses background/hidden screens. Shared candle data feeds line/candle/analysis views.
 - `ml` owns incremental completed UTC daily datasets, offline training, a transactional model registry and prospective forecast history in local SQLite. Manual and finite daily/weekly commands are independent of Express. Approval/promotion is explicit and requires prospective evidence as well as historical selection checks. Data-only numeric artifacts avoid executable model deserialization. Current publication is disabled with null predictions on both clients, including after local activation. `shared/hybrid.ts` prepares a future composition contract without LLM calls. Historical binaries/scalers remain under `ml/archive/legacy-models`, excluded from runtime contexts. See [ML boundaries and migration audit](ML_LIFECYCLE.md).

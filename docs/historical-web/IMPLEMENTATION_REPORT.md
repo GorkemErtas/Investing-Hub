@@ -28,7 +28,7 @@ Both select the no-change baseline for the held-out evaluation. Its test price M
 
 ## Owner actions and known limits
 
-Rotate exposed Google/Gemini, CryptoPanic, mail and any database/JWT credentials; review old logs/deployments. Manually untrack `.env`, `.env.production` and `backend/.env` after private backup/review. Exact provider-specific actions and the owner-only `git rm --cached` command are documented in [SECURITY.md](SECURITY.md). Current ignore rules do not erase earlier commits or stop tracking existing files.
+Rotate exposed Google/Gemini, removed legacy news-provider, mail and any database/JWT credentials; review old logs/deployments. Manually untrack `.env`, `.env.production` and `backend/.env` after private backup/review. Exact provider-specific actions and the owner-only `git rm --cached` command are documented in [SECURITY.md](SECURITY.md). Current ignore rules do not erase earlier commits or stop tracking existing files.
 
 The demo depends on one geographically restricted public-data provider. Guest state is browser-local and has no multi-device synchronization or authenticated owner. Existing Mongo account/portfolio records are not migrated. No model qualified; no news/paid AI is enabled. Docker runtime and Node 24 execution remain unverified on this Windows host; Node 26 development/production processes passed. Deployment/TLS and secret rotation remain owner work, not silently completed actions. Original contributors and legacy model artifacts remain credited/preserved.
 

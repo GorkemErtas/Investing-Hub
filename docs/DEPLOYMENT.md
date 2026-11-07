@@ -17,7 +17,7 @@ Docker Desktop was unavailable during verification: Compose syntax validation is
 
 ## Optional news worker
 
-Optional news workers use the same backend build: `node backend/dist/news/cli.js refresh` and `... prune` are finite commands. No timer is registered. A future timer should run refresh every 4-6 hours and prune at least daily, sharing `NEWS_STORAGE_PATH` on a persistent local volume with the API. The default directory inside a container is ephemeral and may be unwritable under the unprivileged runtime user. Mount/configure an owned writable persistent directory explicitly before enabling news. Multiple replicas/hosts and network filesystems need a separately reviewed coordination/storage design. Existing guest Compose remains disabled and unchanged. See [news operations](NEWS_INTELLIGENCE.md).
+Optional finite news workers use `node backend/dist/news/cli.js collect`, `analyze`, `status` and `prune`. Collection requires only intentional `NEWS_INTELLIGENCE_ENABLED=true`, not a key. AI analysis is separately disabled by default. No timer is registered. A future timer can collect every 4-6 hours and prune at least daily, sharing `NEWS_STORAGE_PATH` on a persistent local volume with the API; an independent analyze job is optional. The default container filesystem is ephemeral and may be unwritable under the unprivileged runtime user. Configure an owned persistent directory before enabling collection. Multiple hosts/network filesystems need separately reviewed coordination. Existing guest Compose is unchanged. See [news operations](NEWS_INTELLIGENCE.md).
 
 ## Optional accounts
 
