@@ -21,7 +21,7 @@ def parser():
     result = argparse.ArgumentParser(description=__doc__)
     commands = result.add_subparsers(dest='command', required=True)
     for name in ('sync', 'validate', 'train', 'evaluate', 'approve', 'promote', 'reject',
-                 'rollback', 'predict', 'reconcile', 'status', 'inspect-model', 'daily', 'weekly', 'backup', 'export-analysis', 'analytics'):
+                 'rollback', 'predict', 'reconcile', 'status', 'inspect-model', 'daily', 'weekly', 'backup', 'export-analysis', 'export-experimental', 'analytics'):
         command = commands.add_parser(name)
         command.add_argument('--db', type=Path, default=Path(os.environ.get(
             'INVESTING_HUB_ML_DB', ROOT / 'data' / 'lifecycle.sqlite3')))
@@ -45,6 +45,8 @@ def parser():
             command.add_argument('--output', type=Path, required=True)
         if name == 'export-analysis':
             command.add_argument('--output', type=Path, default=ROOT / 'data' / 'future-forecasts.json')
+        if name == 'export-experimental':
+            command.add_argument('--output', type=Path, default=ROOT / 'data' / 'experimental-forecasts.json')
     return result
 
 
@@ -170,6 +172,10 @@ def main(argv=None):
             print(json.dumps(run_analytics(args.db, args.output, utc_ms()), indent=2, allow_nan=False))
             return 0
         config = load_config(args.config)
+        if args.command == 'export-experimental':
+            from experimental_publication import export_experimental
+            print(json.dumps(export_experimental(args.db, args.output, config, utc_ms()), indent=2, allow_nan=False))
+            return 0
         store = Store(args.db)
         now = utc_ms()
         result = run(args, store, config, now)
