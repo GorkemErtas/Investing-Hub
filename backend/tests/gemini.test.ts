@@ -201,7 +201,8 @@ describe("actual pinned SDK request serialization, without network", () => {
     const body = JSON.parse(init!.body as string);
     expect(body.generationConfig.responseMimeType).toBe("application/json");
     const wireSchema = body.generationConfig.responseJsonSchema;
-    expect(wireSchema.properties.analyses.maxItems).toBe(16);
+    expect(wireSchema.properties.analyses).not.toHaveProperty("maxItems");
+expect(JSON.stringify(wireSchema)).not.toMatch(/"minItems"|"maxItems"/);
     expect(wireSchema.properties.analyses.items.additionalProperties).toBe(
       false,
     );

@@ -101,8 +101,6 @@ function geminiSchema(
     "enum",
     "required",
     "additionalProperties",
-    "minItems",
-    "maxItems",
   ])
     if (schema[key] !== undefined) result[key] = schema[key];
   if (schema.properties)
