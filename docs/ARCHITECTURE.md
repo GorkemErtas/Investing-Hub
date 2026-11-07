@@ -37,6 +37,8 @@ flowchart LR
 
 ## Package/build strategy
 
+Analytics Lab adds an offline research path without another database/registry: `ml/analytics` reads the existing SQLite via `Store.readonly()`, reuses features and the shared chronological split plan, and emits ignored immutable analytical JSON/CSVs. A bounded checksum/schema/registry-stamp reader in `backend/src/analytics` serves only aggregate report data on localhost in explicitly enabled development mode; production denies access. `shared/analytics.ts` validates semantic counts, chronology, availability and limits. `/analytics` is a separate React page; Future Analysis/Gemini behavior remains independent. See [analytics architecture and scientific methods](DATA_ANALYTICS.md).
+
 Root npm workspaces are `shared`, `backend`, `webapp`. A single root lock resolves those packages. Mobile has its own npm manifest/lock to preserve Expo SDK 53's supported React 19.0 version without duplicating React inside the native bundle. Shared has no React dependency. Node, Vite and Metro consume the same built ESM files; TypeScript uses source type declarations. Build shared before importing it at runtime. Expo's resolver could not map Node-style relative `.js` specifiers back to source `.ts`, so native source exports were replaced by the common compiled artifact.
 
 Root build order is shared, backend, web. Root dev starts API and Vite, while mobile starts separately. Native Gradle paths resolve from the retained mobile project with Node. EAS runs from mobileapp, uploads the monorepo context and builds shared through the post-install hook. Web Docker and API Docker use the root context and exclude mobile/ML.

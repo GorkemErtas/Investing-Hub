@@ -1,5 +1,7 @@
 # Legacy mobile endpoint compatibility matrix
 
+Analytics Lab adds only an explicitly enabled loopback development GET `/api/analytics/:symbol`. Production returns a disabled analytical response. It does not replace any market, account, mobile or Future Analysis contract, and exposes no training/CSV mutation route. See [Analytics Lab](DATA_ANALYTICS.md).
+
 Inventory verified against every `app.get/post/put/delete` in the initial `backend/server.js` and every mobile HTTP caller. New clients use `/api`; insecure legacy URLs are retired, not aliased. Private identity always comes from a verified bearer token, never a path/query/body user ID.
 
 | Legacy method/path                                          | Mobile caller / purpose                                      | Replacement / decision                                                                                        |

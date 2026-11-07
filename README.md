@@ -41,6 +41,10 @@ Use `http://10.0.2.2:5000` for the Android emulator, your computer's LAN origin 
 
 Future Analysis combines an ML forecast with a critical Gemini review of that exact evidence and current Google Search context in one report. All eight shared assets are selectable, with direct dashboard links. Python remains the sole numerical authority; chronological residual calibration and existing historical/prospective gates control publication. Missing or unapproved ML stays unavailable. Gemini Search is disabled by default and runs only after explicit user consent, without shared grounded-result caching. No paid live calls, model approvals, publication jobs or deployments were enabled. See [setup, architecture, costs and source presentation](docs/FUTURE_ANALYSIS.md) and [verification/readiness](docs/FUTURE_VERIFICATION.md).
 
+## Analytics Lab
+
+The separate `/analytics` workspace provides deterministic historical EDA, dependence-aware hypothesis tests, trained direction/rare-event classification, observed anomaly detection, registry comparisons and offline CSV exports for Excel/Power BI. It reuses verified SQLite history and existing feature/fold contracts, independently of production model approval. Run `.\.venv\Scripts\python.exe ml/pipeline.py analytics`; enable `ANALYTICS_LAB_ENABLED=true` only for a local development API. Production always disables this endpoint. Reports/data stay ignored; no Gemini call, scheduler, model approval or forecast mutation occurs. See [architecture, methods, setup and exercises](docs/DATA_ANALYTICS.md) and [actual results and verification](docs/DATA_ANALYTICS_VERIFICATION.md).
+
 ## Optional mobile accounts
 
 Set a private `MONGO_URI` and a strong `JWT_SECRET` of at least 32 random bytes in the backend process environment. Nothing loads historical `.env` files automatically. Use [backend configuration](backend/README.md) and its safe example. Registration additionally requires SMTP; existing verified users can log in without it. Firebase delivery and price-alert polling are separately opt-in.

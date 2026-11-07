@@ -17,6 +17,8 @@ Docker Desktop was unavailable during verification: Compose syntax validation is
 
 ## Optional Future Analysis
 
+Analytics Lab is a separate local/development-only workflow and is always disabled under `NODE_ENV=production`, even if its enable flag is true. No production mount, analytics service or scheduler was added. Generate private offline reports on the research machine; do not place CSV/raw datasets in web assets or Docker build contexts. See [Analytics Lab local setup](DATA_ANALYTICS.md).
+
 Default Compose enables neither paid Search nor ML publication. Python runs separately on persistent local disk. Configure read-only mounts for an explicitly generated ML JSON export and its matching SQLite database; registry changes revoke that export. If paid review is intentionally enabled, provide server-only credentials, project quotas/billing controls and an owned persistent accounting directory shared by one API host. Grounded reports are never mounted, persisted or redistributed. Nginx permits the backend's bounded review timeout; normal page loads make no paid calls. A crashed accounting lock requires verified operator recovery, without deleting usage counters. See [configuration and operational boundaries](FUTURE_ANALYSIS.md). No timer, provider spending or deployment was enabled here.
 
 ## Optional accounts

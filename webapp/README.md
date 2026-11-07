@@ -1,5 +1,7 @@
 # Investing Hub web
 
+Analytics Lab is a separate `/analytics` navigation destination for local, deterministic historical research. Its asset/fold/target/method filters, accessible plots, model tables, confusion matrices and dated provenance consume validated aggregate exports. All eight assets have explicit missing-data states; a disabled or invalid report never generates placeholder metrics. It makes no Gemini request and preserves Future Analysis as the forecasting experience. See [local setup and exercises](../docs/DATA_ANALYTICS.md).
+
 Guest-only React + TypeScript application. Run `npm ci` from the repository root, then `npm run dev` to start this Vite app and the single root backend. To run only the frontend use `npm run dev:web`; the backend must be available on port 5000 for live data.
 
 The dashboard, search/watchlist, actual OHLCV charts, technical analysis, simulated portfolio editor/export, Learning Hub and themes are retained. Future Analysis replaces standalone News Intelligence with one report for every shared asset. Portfolios/preferences keep their existing browser storage keys; no account, MongoDB or Firebase is required. USDT is the quote currency. Fees enter weighted-average cost basis and realized P/L through `@investing-hub/shared/portfolio`.

@@ -1,5 +1,7 @@
 # Shared API
 
+Analytics Lab adds `GET /api/analytics/:symbol` behind `ANALYTICS_LAB_ENABLED=false` by default, non-production mode and loopback socket/Host/Origin checks. It reads a bounded, checksum-validated Python report tied to the unchanged existing registry; no computation/training, writes or provider calls run in the handler. Production always disables it. Configure `ANALYTICS_EXPORT_PATH` only for a custom local output; the existing `FUTURE_ML_DATABASE_PATH` must identify that report's source database. See [Analytics Lab setup and methods](../docs/DATA_ANALYTICS.md).
+
 Future Analysis uses `GET /api/future-analysis/:symbol` for read-only validated ML publication and `POST /api/future-analysis/:symbol/review` for an explicit opt-in paid critical review. All eight shared assets are supported. No training runs in API handlers. Gemini reviews structured ML/evaluation evidence with Google Search; numeric values remain ML-only. Grounded results are returned only to the initiating request and never persisted or shared. `npm run future:status -w backend` reads counters and safe diagnostics. Search is disabled by default. The obsolete news collectors, routes and scripts were removed. See [configuration, publication and cost boundaries](../docs/FUTURE_ANALYSIS.md).
 
 Express 5 / TypeScript modular monolith. `src/app.ts` composes public market/Future Analysis/status routes and optional private mobile routes. `src/server.ts` owns network/database/mail/Firebase lifecycle. There is one active backend.

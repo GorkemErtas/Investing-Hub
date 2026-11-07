@@ -1,5 +1,7 @@
 # Local daily ML lifecycle
 
+The separate `python ml/pipeline.py analytics` command opens the existing database read-only, reuses its verification/features/chronological split plan, and writes ignored analytical JSON/CSV runs. It computes EDA, circular block inference, direction/rare-event classifiers, observed anomalies, SQL summaries and frozen registry monitoring. It never creates a database, writes registry events, promotes models, reconciles outcomes or calls Gemini. Its prespecified research configuration is recorded independently of production training configuration. All eight assets are checked; absent/short/gapped histories remain explicit. See [Analytics Lab methods, local UI, exports and exercises](../docs/DATA_ANALYTICS.md).
+
 Python 3.13; no Python API, GPU, database service, Gemini call or deployment. The legacy Express prediction response remains disabled. The separate Future Analysis endpoint accepts only an explicit eligible ML publication. No scheduler is registered by this repository.
 
 The independent CLI syncs completed spot daily candles for every asset in `shared/contracts.ts`, validates provenance, trains reproducible candidates, records shadow forecasts, reconciles actuals, and supports explicit approval/promotion/rollback. SQLite is built into Python; no new Python dependencies were added.
