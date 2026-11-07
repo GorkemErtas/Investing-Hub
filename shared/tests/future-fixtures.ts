@@ -3,6 +3,8 @@ import { assets, type Symbol } from "../contracts.js";
 import {
   numericForecastSchema,
   mlResultSchema,
+  experimentalResultSchema,
+  type AnalysisMlResult,
   groundedReportSchema,
   futureAnalysisSchema,
   type NumericForecast,
@@ -93,17 +95,57 @@ export function mlFixture(
   });
 }
 export function fixtureFingerprint(
-  ml: MlResult,
+  ml: AnalysisMlResult,
   freshness: "fresh" | "stale" | "unavailable" = ml.data
     ? "fresh"
     : "unavailable",
+  mode: "approved" | "experimental" = "approved",
 ) {
   return createHash("sha256")
-    .update(JSON.stringify({ ml, freshness }))
+    .update(
+      JSON.stringify({
+        ml,
+        freshness,
+        ...(mode === "experimental" ? { mode } : {}),
+      }),
+    )
     .digest("hex");
 }
+export function experimentalFixture(
+  symbol: Symbol = assets[0].symbol,
+  now = testNow,
+  interval = false,
+) {
+  const approved = numericFixture(symbol, now);
+  return experimentalResultSchema.parse({
+    symbol,
+    status: "experimental",
+    reason: null,
+    data: {
+      ...approved,
+      interval: interval ? approved.interval : null,
+      validation: {
+        status: "experimental_not_validated",
+        algorithm: "ridge",
+        trainingWindow: "full",
+        historicalReference: "ml:TEST-FIXTURE-historical",
+        selectionRule: "lowest_selection_return_rmse_then_model_id_v1",
+        eligibleCandidates: 12,
+        selectionReturnRmse: 0.011,
+        baselineReturnRmse: 0.01,
+        selectionSamples: 90,
+        selectionStart: iso(Date.parse(approved.trainedAt) - 91 * 86400000),
+        selectionEnd: iso(Date.parse(approved.trainedAt) - 86400000),
+        foldWins: 1,
+        foldCount: 4,
+        historicalGatePassed: false,
+        forwardSamples: 0,
+      },
+    },
+  });
+}
 export function reviewFixture(
-  ml: MlResult,
+  ml: AnalysisMlResult,
   fingerprint = fixtureFingerprint(ml),
   now = testNow,
   status: ReviewContent["reviewStatus"] = ml.data

@@ -55,12 +55,20 @@ export const usePrediction = (symbol: Symbol) =>
     retry: 1,
   });
 
-export async function requestFutureReview(symbol: Symbol, signal: AbortSignal) {
+export async function requestFutureReview(
+  symbol: Symbol,
+  signal: AbortSignal,
+  mode: 'approved' | 'experimental' = 'approved',
+) {
   const response = await fetch(`/api/future-analysis/${symbol}/review`, {
     method: 'POST',
     signal: AbortSignal.any([signal, AbortSignal.timeout(65000)]),
     headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-    body: JSON.stringify({ allowPaid: true, requestId: crypto.randomUUID() }),
+    body: JSON.stringify({
+      allowPaid: true,
+      requestId: crypto.randomUUID(),
+      ...(mode === 'experimental' ? { mode } : {}),
+    }),
     cache: 'no-store',
   });
   if (!response.ok)
@@ -70,19 +78,19 @@ export async function requestFutureReview(symbol: Symbol, signal: AbortSignal) {
         : 'The review service is unavailable. Your ML forecast remains unchanged.',
     );
   const parsed = futureAnalysisSchema.safeParse(await response.json());
-  if (!parsed.success || parsed.data.symbol !== symbol)
+  if (!parsed.success || parsed.data.symbol !== symbol || parsed.data.mode !== mode)
     throw new Error('The review did not pass validation. Your ML forecast remains unchanged.');
   return parsed.data;
 }
 
-export const useFutureAnalysis = (symbol: Symbol) =>
+export const useFutureAnalysis = (symbol: Symbol, mode: 'approved' | 'experimental' = 'approved') =>
   useQuery({
-    queryKey: ['future-analysis', symbol],
+    queryKey: ['future-analysis', symbol, mode],
     queryFn: ({ signal }) =>
       get(
-        `/future-analysis/${symbol}`,
+        `/future-analysis/${symbol}${mode === 'experimental' ? '?mode=experimental' : ''}`,
         futureAnalysisSchema.refine(
-          (value) => value.symbol === symbol && value.research.data === null,
+          (value) => value.symbol === symbol && value.mode === mode && value.research.data === null,
         ),
         signal,
         'Future Analysis',

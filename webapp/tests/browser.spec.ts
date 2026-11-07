@@ -1,4 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
+import { analysisFixture } from '../../shared/tests/future-fixtures';
+import type { Symbol } from '../../shared/contracts';
 
 // Synthetic fixtures belong only in tests, never in application/provider code.
 const symbols = [
@@ -12,6 +14,12 @@ const symbols = [
   'LINKUSDT',
 ];
 async function fixtures(page: Page) {
+  await page.route('**/api/future-analysis/**', (route) => {
+    const url = new URL(route.request().url());
+    const result = analysisFixture(url.pathname.split('/')[3] as Symbol, Date.now(), false);
+    result.mode = url.searchParams.get('mode') === 'approved' ? 'approved' : 'experimental';
+    return route.fulfill({ json: result });
+  });
   const now = new Date().toISOString();
   const meta = {
     provider: 'Binance public market data',
@@ -155,7 +163,9 @@ test('learning quiz and disabled forecast presentation', async ({ page }) => {
   await page.getByRole('button', { name: 'See results' }).click();
   await expect(page.getByRole('heading', { name: '3 of 3 correct' })).toBeVisible();
   await page.getByRole('link', { name: /Future Analysis/ }).click();
-  await expect(page.getByRole('heading', { name: 'No validated ML forecast' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'No current experimental forecast' }),
+  ).toBeVisible();
 });
 
 test('mobile navigation, responsive layout and provider outage', async ({ page }) => {

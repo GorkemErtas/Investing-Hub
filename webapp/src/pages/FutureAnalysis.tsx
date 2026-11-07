@@ -13,6 +13,8 @@ import { assets, symbolSchema, type Symbol } from '@investing-hub/shared/contrac
 import type {
   FutureAnalysis as Analysis,
   NumericForecast,
+  ExperimentalForecast,
+  ForecastMode,
   ReviewContent,
 } from '@investing-hub/shared/future-analysis';
 import { requestFutureReview, useFutureAnalysis, useMarkets } from '../lib/api';
@@ -20,6 +22,10 @@ import { Coin, ErrorState, Notice, Skeleton } from '../components/ui';
 import { money, percent, utc } from '../lib/format';
 
 const reasons: Record<string, string> = {
+  no_experimental_publication:
+    'No experimental forecast has been made available for this coin yet.',
+  no_current_valid_shadow_forecast:
+    'No current experimental estimate passed the data integrity and timing checks for this coin.',
   no_ml_publication: 'No approved forecast has been exported for this asset.',
   no_dataset: 'Validated historical data has not been synchronized for this asset.',
   dataset_stale_or_gapped: 'The local dataset needs a completed daily candle update or gap repair.',
@@ -54,10 +60,11 @@ const reasonText = (reason: string | null) =>
 const reviewLabel = (status?: ReviewContent['reviewStatus']) =>
   status ? status.replaceAll('_', ' ') : 'NOT REVIEWED';
 
-function PriceForecast({ forecast }: { forecast: NumericForecast }) {
+function PriceForecast({ forecast }: { forecast: NumericForecast | ExperimentalForecast }) {
   const interval = forecast.interval,
-    minimum = Math.min(interval.lowerPrice, forecast.referencePrice),
-    maximum = Math.max(interval.upperPrice, forecast.referencePrice);
+    minimum = Math.min(interval?.lowerPrice ?? forecast.referencePrice, forecast.referencePrice),
+    maximum = Math.max(interval?.upperPrice ?? forecast.referencePrice, forecast.referencePrice);
+  const validation = forecast.validation;
   const position = (price: number) => `${((price - minimum) / (maximum - minimum || 1)) * 100}%`;
   return (
     <>
@@ -69,52 +76,68 @@ function PriceForecast({ forecast }: { forecast: NumericForecast }) {
             ML reference {money(forecast.referencePrice)} USDT ·{' '}
             {percent(forecast.predictedReturn * 100)} expected return
           </p>
+          <p className="future-caption">
+            Model:{' '}
+            {validation.status === 'experimental_not_validated'
+              ? `${validation.algorithm.replaceAll('_', ' ')} · ${validation.trainingWindow} history`
+              : forecast.modelId}
+          </p>
         </div>
         <span className={`future-direction future-direction-${forecast.direction.toLowerCase()}`}>
           {forecast.direction}
         </span>
       </div>
-      <div
-        className="future-interval"
-        role="img"
-        aria-label={`Calibrated interval: lower ${money(interval.lowerPrice)}, reference ${money(forecast.referencePrice)}, upper ${money(interval.upperPrice)} USDT`}
-      >
-        <div className="future-interval-track">
-          <span
-            style={{
-              left: position(interval.lowerPrice),
-              right: `${100 - parseFloat(position(interval.upperPrice))}%`,
-            }}
-          />
-          <i
-            className="future-reference-marker"
-            style={{ left: position(forecast.referencePrice) }}
-          />
-          <i
-            className="future-prediction-marker"
-            style={{ left: position(forecast.predictedPrice) }}
-          />
-        </div>
-        <div className="future-interval-values">
-          <div>
-            <span>Lower bound</span>
-            <strong>{money(interval.lowerPrice)}</strong>
+      {interval ? (
+        <>
+          <div
+            className="future-interval"
+            role="img"
+            aria-label={`Calibrated interval: lower ${money(interval.lowerPrice)}, reference ${money(forecast.referencePrice)}, upper ${money(interval.upperPrice)} USDT`}
+          >
+            <div className="future-interval-track">
+              <span
+                style={{
+                  left: position(interval.lowerPrice),
+                  right: `${100 - parseFloat(position(interval.upperPrice))}%`,
+                }}
+              />
+              <i
+                className="future-reference-marker"
+                style={{ left: position(forecast.referencePrice) }}
+              />
+              <i
+                className="future-prediction-marker"
+                style={{ left: position(forecast.predictedPrice) }}
+              />
+            </div>
+            <div className="future-interval-values">
+              <div>
+                <span>Lower bound</span>
+                <strong>{money(interval.lowerPrice)}</strong>
+              </div>
+              <div>
+                <span>Reference</span>
+                <strong>{money(forecast.referencePrice)}</strong>
+              </div>
+              <div>
+                <span>Upper bound</span>
+                <strong>{money(interval.upperPrice)}</strong>
+              </div>
+            </div>
           </div>
-          <div>
-            <span>Reference</span>
-            <strong>{money(forecast.referencePrice)}</strong>
-          </div>
-          <div>
-            <span>Upper bound</span>
-            <strong>{money(interval.upperPrice)}</strong>
-          </div>
-        </div>
-      </div>
-      <p className="future-caption">
-        Nominal interval level {interval.nominalCoverage * 100}%. Chronological selection coverage{' '}
-        {(interval.empiricalCoverage * 100).toFixed(1)}% across {interval.validationSamples}{' '}
-        observations. This is empirical coverage, not a guaranteed outcome probability.
-      </p>
+          <p className="future-caption">
+            Nominal interval level {interval.nominalCoverage * 100}%. Chronological selection
+            coverage {(interval.empiricalCoverage * 100).toFixed(1)}% across{' '}
+            {interval.validationSamples} observations. This is empirical coverage, not a guaranteed
+            outcome probability.
+          </p>
+        </>
+      ) : (
+        <p className="future-caption">
+          No valid model-derived interval is available. No numeric range or confidence percentage is
+          supplied.
+        </p>
+      )}
       <dl className="future-timing">
         <div>
           <dt>Source candle closed</dt>
@@ -136,43 +159,97 @@ function PriceForecast({ forecast }: { forecast: NumericForecast }) {
             <dt>Model version</dt>
             <dd>{forecast.modelId}</dd>
           </div>
-          <div>
-            <dt>Historical selection return RMSE</dt>
-            <dd>{forecast.validation.metrics.selectionReturnRmse.toFixed(6)}</dd>
-          </div>
-          <div>
-            <dt>No-change baseline RMSE</dt>
-            <dd>{forecast.validation.metrics.baselineReturnRmse.toFixed(6)}</dd>
-          </div>
-          <div>
-            <dt>Prospective observations</dt>
-            <dd>{forecast.validation.forwardSamples}</dd>
-          </div>
-          <div>
-            <dt>Prospective return RMSE / baseline</dt>
-            <dd>
-              {forecast.validation.metrics.prospectiveReturnRmse.toFixed(6)} /{' '}
-              {forecast.validation.metrics.prospectiveBaselineReturnRmse.toFixed(6)}
-            </dd>
-          </div>
+          {validation.status === 'approved_prospective' ? (
+            <>
+              <div>
+                <dt>Historical selection return RMSE</dt>
+                <dd>{validation.metrics.selectionReturnRmse.toFixed(6)}</dd>
+              </div>
+              <div>
+                <dt>No-change baseline RMSE</dt>
+                <dd>{validation.metrics.baselineReturnRmse.toFixed(6)}</dd>
+              </div>
+              <div>
+                <dt>Prospective observations</dt>
+                <dd>{validation.forwardSamples}</dd>
+              </div>
+              <div>
+                <dt>Prospective return RMSE / baseline</dt>
+                <dd>
+                  {validation.metrics.prospectiveReturnRmse.toFixed(6)} /{' '}
+                  {validation.metrics.prospectiveBaselineReturnRmse.toFixed(6)}
+                </dd>
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <dt>Algorithm / training history</dt>
+                <dd>
+                  {validation.algorithm} / {validation.trainingWindow}
+                </dd>
+              </div>
+              <div>
+                <dt>Historical selection return RMSE / no-change baseline</dt>
+                <dd>
+                  {validation.selectionReturnRmse.toFixed(6)} /{' '}
+                  {validation.baselineReturnRmse.toFixed(6)}
+                </dd>
+              </div>
+              <div>
+                <dt>Selection observations / dates</dt>
+                <dd>
+                  {validation.selectionSamples} / {utc(validation.selectionStart)} –{' '}
+                  {utc(validation.selectionEnd)}
+                </dd>
+              </div>
+              <div>
+                <dt>Chronological fold wins</dt>
+                <dd>
+                  {validation.foldWins} / {validation.foldCount}
+                </dd>
+              </div>
+              <div>
+                <dt>Historical approval gate</dt>
+                <dd>
+                  {validation.historicalGatePassed ? 'Passed historical gate only' : 'Not passed'}
+                </dd>
+              </div>
+              <div>
+                <dt>Prospective observations</dt>
+                <dd>{validation.forwardSamples} (not required for experimental display)</dd>
+              </div>
+              <div>
+                <dt>Candidate selection</dt>
+                <dd>
+                  Lowest historical selection return RMSE among {validation.eligibleCandidates}{' '}
+                  valid current candidates; ties use model ID in ascending order.
+                </dd>
+              </div>
+            </>
+          )}
           <div>
             <dt>Verified daily candles / gaps</dt>
             <dd>
               {forecast.dataQuality.rows} / {forecast.dataQuality.missingDays}
             </dd>
           </div>
-          <div>
-            <dt>Calibration residuals</dt>
-            <dd>{interval.calibrationSamples} out-of-sample observations</dd>
-          </div>
+          {interval && (
+            <div>
+              <dt>Calibration residuals</dt>
+              <dd>{interval.calibrationSamples} out-of-sample observations</dd>
+            </div>
+          )}
           <div>
             <dt>Historical evaluation</dt>
             <dd>{forecast.validation.historicalReference}</dd>
           </div>
-          <div>
-            <dt>Forward evaluation</dt>
-            <dd>{forecast.validation.forwardReference}</dd>
-          </div>
+          {validation.status === 'approved_prospective' && (
+            <div>
+              <dt>Forward evaluation</dt>
+              <dd>{validation.forwardReference}</dd>
+            </div>
+          )}
         </dl>
         <p>
           Past-only features, purged chronological development and selection, three candidate
@@ -188,8 +265,9 @@ function PriceForecast({ forecast }: { forecast: NumericForecast }) {
 export function FutureAnalysis() {
   const [params, setParams] = useSearchParams();
   const symbol = symbolSchema.safeParse(params.get('symbol')).data ?? assets[0].symbol;
+  const mode: ForecastMode = params.get('mode') === 'approved' ? 'approved' : 'experimental';
   const asset = assets.find((item) => item.symbol === symbol)!;
-  const query = useFutureAnalysis(symbol),
+  const query = useFutureAnalysis(symbol, mode),
     markets = useMarkets();
   const [privateReport, setPrivateReport] = useState<Analysis | null>(null);
   const [consent, setConsent] = useState(false),
@@ -207,6 +285,7 @@ export function FutureAnalysis() {
   const current = query.data;
   const result =
     privateReport?.symbol === symbol &&
+    privateReport.mode === mode &&
     privateReport.forecastFingerprint === current?.forecastFingerprint &&
     (!privateReport.research.data || Date.parse(privateReport.research.data.expiresAt) > clock)
       ? privateReport
@@ -226,7 +305,7 @@ export function FutureAnalysis() {
     setRunning(true);
     setReviewError(null);
     try {
-      setPrivateReport(await requestFutureReview(symbol, controller.current.signal));
+      setPrivateReport(await requestFutureReview(symbol, controller.current.signal, mode));
     } catch (error) {
       setReviewError(error instanceof Error ? error.message : 'The review is unavailable.');
     } finally {
@@ -234,7 +313,7 @@ export function FutureAnalysis() {
     }
   }
   function choose(value: Symbol) {
-    setParams({ symbol: value });
+    setParams({ symbol: value, mode });
     setPrivateReport(null);
     setConsent(false);
     setReviewError(null);
@@ -254,6 +333,31 @@ export function FutureAnalysis() {
         </span>
       </div>
       <article className="panel future-report" aria-label={`${asset.name} Future Analysis report`}>
+        <label className="future-mode">
+          Forecast mode{' '}
+          <select
+            aria-label="Forecast mode"
+            value={mode}
+            disabled={running}
+            onChange={(event) => {
+              setParams({ symbol, mode: event.target.value });
+              setPrivateReport(null);
+              setConsent(false);
+              setReviewError(null);
+            }}
+          >
+            <option value="experimental">Experimental / Not validated</option>
+            <option value="approved">Approved forecasts</option>
+          </select>
+        </label>
+        {mode === 'experimental' && (
+          <Notice>
+            <strong>Experimental / Not validated</strong>. These estimates do not assert model
+            approval or proven accuracy. Selecting the lowest historical RMSE does not establish
+            predictive superiority. Historical selection is subject to selection bias. This is not a
+            buy/sell signal.
+          </Notice>
+        )}
         <header className="future-report-header">
           <div className="future-asset">
             <Coin symbol={symbol} />
@@ -296,7 +400,13 @@ export function FutureAnalysis() {
           <>
             <section className="future-summary" aria-labelledby="future-summary-title">
               <div className="future-report-status">
-                <span className="pill">{forecast ? 'APPROVED ML EVIDENCE' : 'ML NOT READY'}</span>
+                <span className="pill">
+                  {forecast
+                    ? mode === 'experimental'
+                      ? 'Experimental / Not validated'
+                      : 'APPROVED ML EVIDENCE'
+                    : 'ML NOT READY'}
+                </span>
                 <span
                   className={`pill ${content?.reviewStatus === 'CONFLICTING_EVIDENCE' ? 'warning-text' : ''}`}
                 >
@@ -313,7 +423,9 @@ export function FutureAnalysis() {
               <p>
                 {content?.executiveSummary ??
                   (forecast
-                    ? 'An independently approved model supplies the price forecast below. Optional grounded review can challenge its assumptions, identify conflicts and explore conditions that could invalidate it.'
+                    ? mode === 'experimental'
+                      ? 'An unapproved candidate supplies an immutable experimental point forecast. Optional grounded review can critique its limitations and current context; it cannot validate the model or change its numbers.'
+                      : 'An independently approved model supplies the price forecast below. Optional grounded review can challenge its assumptions, identify conflicts and explore conditions that could invalidate it.'
                     : 'No eligible numeric forecast is available. A grounded review can still research current conditions, but it cannot create a price range or directional prediction.')}
               </p>
               {content && (
@@ -347,7 +459,11 @@ export function FutureAnalysis() {
                 <div className="future-not-ready" role="status">
                   <LockKeyhole size={25} />
                   <div>
-                    <h3>No validated ML forecast</h3>
+                    <h3>
+                      {mode === 'experimental'
+                        ? 'No current experimental forecast'
+                        : 'No validated ML forecast'}
+                    </h3>
                     <p>
                       {reasonText(result.ml.reason) ||
                         'The previous forecast expired. A new validated publication is required.'}

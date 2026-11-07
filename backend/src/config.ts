@@ -92,6 +92,15 @@ const schema = z.object({
         new URL("../../ml/data/future-forecasts.json", import.meta.url),
       ),
     ),
+  FUTURE_EXPERIMENTAL_EXPORT_PATH: z
+    .string()
+    .min(1)
+    .max(1024)
+    .default(
+      fileURLToPath(
+        new URL("../../ml/data/experimental-forecasts.json", import.meta.url),
+      ),
+    ),
   FUTURE_ML_DATABASE_PATH: z
     .string()
     .min(1)

@@ -85,8 +85,13 @@ export function createApp(
     res.json(predictionStatus(symbolSchema.parse(req.params.symbol)));
   });
   app.get("/api/future-analysis/:symbol", async (req, res) => {
-    z.strictObject({}).parse(req.query);
-    res.json(await future.read(symbolSchema.parse(req.params.symbol)));
+    const { mode } = z
+      .strictObject({
+        mode: z.enum(["approved", "experimental"]).default("approved"),
+      })
+      .parse(req.query);
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json(await future.read(symbolSchema.parse(req.params.symbol), mode));
   });
   app.get("/api/analytics/:symbol", async (req, res) => {
     z.strictObject({}).parse(req.query);
@@ -121,12 +126,20 @@ export function createApp(
     }),
     async (req, res) => {
       z.strictObject({}).parse(req.query);
-      const { requestId } = z
-        .strictObject({ allowPaid: z.literal(true), requestId: z.uuid() })
+      const { requestId, mode } = z
+        .strictObject({
+          allowPaid: z.literal(true),
+          requestId: z.uuid(),
+          mode: z.enum(["approved", "experimental"]).default("approved"),
+        })
         .parse(req.body);
       res.setHeader("Cache-Control", "private, no-store");
       res.json(
-        await future.review(symbolSchema.parse(req.params.symbol), requestId),
+        await future.review(
+          symbolSchema.parse(req.params.symbol),
+          requestId,
+          mode,
+        ),
       );
     },
   );

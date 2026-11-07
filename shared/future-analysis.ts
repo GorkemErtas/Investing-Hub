@@ -179,6 +179,129 @@ export const mlResultSchema = z
       ctx.addIssue({ code: "custom", message: "Inconsistent ML availability" });
   });
 export type MlResult = z.infer<typeof mlResultSchema>;
+export const forecastModeSchema = z.enum(["approved", "experimental"]);
+export type ForecastMode = z.infer<typeof forecastModeSchema>;
+// A separate contract deliberately carries no prospective approval assertion.
+export const experimentalForecastSchema = z
+  .strictObject({
+    ...numericForecastSchema.shape,
+    interval: intervalSchema.nullable(),
+    validation: z.strictObject({
+      status: z.literal("experimental_not_validated"),
+      algorithm: z.enum(["ridge", "random_forest", "gradient_boosting"]),
+      trainingWindow: z.enum(["full", "3y", "2y", "1y"]),
+      historicalReference: z.string().min(1).max(300),
+      selectionRule: z.literal("lowest_selection_return_rmse_then_model_id_v1"),
+      eligibleCandidates: z.number().int().positive(),
+      selectionReturnRmse: z.number().finite().nonnegative(),
+      baselineReturnRmse: z.number().finite().nonnegative(),
+      selectionSamples: z.number().int().positive(),
+      selectionStart: timestamp,
+      selectionEnd: timestamp,
+      foldWins: z.number().int().nonnegative(),
+      foldCount: z.number().int().positive(),
+      historicalGatePassed: z.boolean(),
+      forwardSamples: z.number().int().nonnegative(),
+    }),
+  })
+  .superRefine((value, ctx) => {
+    const issue = (message: string) =>
+      ctx.addIssue({ code: "custom", message });
+    const source = Date.parse(value.sourceCandleCloseTime),
+      generated = Date.parse(value.generatedAt),
+      target = Date.parse(value.targetCloseTime),
+      trained = Date.parse(value.trainedAt),
+      validation = value.validation;
+    if (
+      !(
+        source < generated &&
+        generated < target &&
+        trained <= generated &&
+        Date.parse(value.modelExpiresAt) > generated
+      ) ||
+      target - source !== 86400000 ||
+      (target + 1) % 86400000 !== 0 ||
+      Date.parse(validation.selectionStart) >
+        Date.parse(validation.selectionEnd) ||
+      Date.parse(validation.selectionEnd) > Math.min(trained, source) ||
+      validation.foldWins > validation.foldCount
+    )
+      issue("Invalid experimental forecast/evidence chronology");
+    const equal = (a: number, b: number) =>
+      Math.abs(a - b) <= Math.max(1e-8, Math.abs(b) * 1e-10);
+    if (
+      !equal(
+        value.predictedPrice,
+        value.referencePrice * (1 + value.predictedReturn),
+      ) ||
+      value.direction !==
+        (value.predictedReturn > 0
+          ? "UP"
+          : value.predictedReturn < 0
+            ? "DOWN"
+            : "NEUTRAL")
+    )
+      issue("Experimental values must preserve ML output");
+    const interval = value.interval;
+    if (
+      interval &&
+      (Date.parse(interval.calibrationEnd) >=
+        Date.parse(interval.validationStart) ||
+        Date.parse(interval.validationStart) >
+          Date.parse(interval.evaluatedAt) ||
+        Date.parse(interval.evaluatedAt) > trained ||
+        !equal(
+          interval.lowerPrice,
+          value.referencePrice *
+            (1 + value.predictedReturn - interval.radiusReturn),
+        ) ||
+        !equal(
+          interval.upperPrice,
+          value.referencePrice *
+            (1 + value.predictedReturn + interval.radiusReturn),
+        ))
+    )
+      issue("Invalid experimental model-derived interval");
+  });
+export type ExperimentalForecast = z.infer<typeof experimentalForecastSchema>;
+export const experimentalResultSchema = z
+  .strictObject({
+    symbol: symbolSchema,
+    status: z.literal("experimental"),
+    reason: z.null(),
+    data: experimentalForecastSchema,
+  })
+  .refine(
+    (value) => value.symbol === value.data.symbol,
+    "Wrong experimental asset",
+  );
+export const analysisMlResultSchema = z.union([
+  mlResultSchema,
+  experimentalResultSchema,
+]);
+export type AnalysisMlResult = z.infer<typeof analysisMlResultSchema>;
+export const experimentalPublicationSchema = z
+  .strictObject({
+    version: z.literal("ml-experimental-v1"),
+    generatedAt: timestamp,
+    registry: z.strictObject({
+      size: z.number().int().nonnegative(),
+      mtimeNs: z.string().regex(/^\d+$/),
+    }),
+    forecasts: z.array(analysisMlResultSchema).length(assets.length),
+  })
+  .superRefine((value, ctx) => {
+    if (
+      new Set(value.forecasts.map((item) => item.symbol)).size !==
+        assets.length ||
+      value.forecasts.some((item) => item.status === "validated")
+    )
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Require every asset once with experimental or unavailable status",
+      });
+  });
 export const mlPublicationSchema = z
   .strictObject({
     version: z.literal("ml-publication-v1"),
@@ -329,11 +452,12 @@ export const researchResultSchema = z
 export const futureAnalysisSchema = z
   .strictObject({
     schemaVersion: z.literal("future-analysis-v1"),
+    mode: forecastModeSchema.default("approved"),
     symbol: symbolSchema,
     checkedAt: timestamp,
     forecastFingerprint: z.string().regex(/^[a-f0-9]{64}$/),
     mlFreshness: z.enum(["fresh", "stale", "unavailable"]),
-    ml: mlResultSchema,
+    ml: analysisMlResultSchema,
     research: researchResultSchema,
     conflict: z.enum(["CONFLICTING_EVIDENCE"]).nullable(),
     limitations: z.array(z.string().min(1).max(400)).min(1).max(12),
@@ -341,6 +465,11 @@ export const futureAnalysisSchema = z
   .superRefine((value, ctx) => {
     const issue = (message: string) =>
       ctx.addIssue({ code: "custom", message });
+    if (
+      (value.mode === "approved" && value.ml.status === "experimental") ||
+      (value.mode === "experimental" && value.ml.status === "validated")
+    )
+      issue("Forecast must match the explicitly selected mode");
     if (
       value.ml.symbol !== value.symbol ||
       (value.research.data && value.research.data.symbol !== value.symbol)
@@ -351,8 +480,8 @@ export const futureAnalysisSchema = z
       (value.mlFreshness !== "unavailable" || value.conflict)
     )
       issue("No direction/conflict without ML");
-    if (value.ml.status === "validated" && value.mlFreshness === "unavailable")
-      issue("Validated ML requires an explicit fresh or stale state");
+    if (value.ml.data && value.mlFreshness === "unavailable")
+      issue("Available ML requires an explicit fresh or stale state");
     const report = value.research.data;
     const expected =
       value.ml.data && report?.content.reviewStatus === "CONFLICTING_EVIDENCE"

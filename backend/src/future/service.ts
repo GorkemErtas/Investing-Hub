@@ -1,12 +1,17 @@
 import {
   futureAnalysisSchema,
-  mlResultSchema,
+  analysisMlResultSchema,
+  type ForecastMode,
   type FutureAnalysis,
   type GroundedReport,
 } from "@investing-hub/shared/future-analysis";
 import type { Symbol } from "@investing-hub/shared/contracts";
 import type { Config } from "../config.js";
 import { createMlReader, type MlReader } from "./ml-reader.js";
+import {
+  createExperimentalReader,
+  type ExperimentalReader,
+} from "./experimental-reader.js";
 import { createResearchProvider, type ResearchProvider } from "./provider.js";
 import { FutureStore, emptyState } from "./store.js";
 import { failure, FutureError, hash } from "./errors.js";
@@ -17,13 +22,18 @@ import {
 } from "./review-gate.js";
 
 export interface FutureReader {
-  read(symbol: Symbol): Promise<FutureAnalysis>;
-  review(symbol: Symbol, requestId: string): Promise<FutureAnalysis>;
+  read(symbol: Symbol, mode?: ForecastMode): Promise<FutureAnalysis>;
+  review(
+    symbol: Symbol,
+    requestId: string,
+    mode?: ForecastMode,
+  ): Promise<FutureAnalysis>;
 }
 export function createFutureService(
   config: Config,
   dependencies: {
     ml?: MlReader;
+    experimental?: ExperimentalReader;
     provider?: ResearchProvider;
     store?: FutureStore;
     now?: () => number;
@@ -31,6 +41,8 @@ export function createFutureService(
 ) {
   const now = dependencies.now ?? Date.now,
     ml = dependencies.ml ?? createMlReader(config, now);
+  const experimental =
+    dependencies.experimental ?? createExperimentalReader(config, now);
   const store =
     dependencies.store ?? new FutureStore(config.FUTURE_STORAGE_PATH);
   const gate = () =>
@@ -42,17 +54,22 @@ export function createFutureService(
           ? "model_capability_unverified"
           : null;
   const limitations = [
-    "Only the independently approved ML ledger supplies numeric forecasts, return, interval and direction.",
+    "Only the immutable ML ledger supplies numeric forecasts, return, interval and direction. Experimental results are not validated or approved.",
     "Historical interval coverage is empirical development/selection evidence, not a guaranteed future probability.",
     "Gemini critically reviews the supplied ML evidence; context labels do not validate forecast accuracy. Sources are attributed reporting, not independent fact checking.",
     "Grounded results and Search Suggestions are returned only to the submitting request. They are not stored, shared by symbol or included in ordinary GET responses.",
   ];
-  async function read(symbol: Symbol): Promise<FutureAnalysis> {
-    let numeric: Awaited<ReturnType<MlReader["read"]>>;
+  async function read(
+    symbol: Symbol,
+    mode: ForecastMode = "approved",
+  ): Promise<FutureAnalysis> {
+    let numeric: Awaited<ReturnType<ExperimentalReader["read"]>>;
     try {
-      const value = await ml.read(symbol);
+      const value = await (mode === "experimental" ? experimental : ml).read(
+        symbol,
+      );
       numeric = {
-        result: mlResultSchema.parse(value.result),
+        result: analysisMlResultSchema.parse(value.result),
         freshness: value.freshness,
       };
     } catch {
@@ -68,9 +85,10 @@ export function createFutureService(
     }
     return futureAnalysisSchema.parse({
       schemaVersion: "future-analysis-v1",
+      mode,
       symbol,
       checkedAt: new Date(now()).toISOString(),
-      forecastFingerprint: fingerprint(numeric.result, numeric.freshness),
+      forecastFingerprint: fingerprint(numeric.result, numeric.freshness, mode),
       mlFreshness: numeric.freshness,
       ml: numeric.result,
       research: {
@@ -108,8 +126,9 @@ export function createFutureService(
   async function review(
     symbol: Symbol,
     requestId: string,
+    mode: ForecastMode = "approved",
   ): Promise<FutureAnalysis> {
-    const base = await read(symbol);
+    const base = await read(symbol, mode);
     if (gate()) return base;
     let release: (() => Promise<void>) | undefined,
       state: Awaited<ReturnType<FutureStore["read"]>> | undefined;
@@ -207,7 +226,7 @@ export function createFutureService(
       await store.write(state);
       // Re-read current registry/export before delivery, never apply a review
       // to changed/expired data or a newly promoted model.
-      const current = await read(symbol);
+      const current = await read(symbol, mode);
       if (current.forecastFingerprint !== base.forecastFingerprint)
         return combine(current, null, "forecast_changed_during_review");
       return combine(base, report, null);
@@ -230,7 +249,7 @@ export function createFutureService(
           /* Remain fail-closed for spending; retain the ML fallback. */
         }
       }
-      return combine(await read(symbol), null, safe.code.toLowerCase());
+      return combine(await read(symbol, mode), null, safe.code.toLowerCase());
     } finally {
       if (release) {
         try {

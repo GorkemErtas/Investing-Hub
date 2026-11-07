@@ -1277,6 +1277,23 @@ tbody tr:hover {
   margin-bottom: 24px;
   overflow: hidden;
 }
+.future-mode {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 20px 24px 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.future-mode select {
+  max-width: 100%;
+  padding: 8px;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
 .future-report-header {
   display: flex;
   align-items: center;

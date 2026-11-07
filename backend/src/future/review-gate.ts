@@ -1,21 +1,30 @@
 import {
   groundedReportSchema,
   type GroundedReport,
-  type MlResult,
+  type AnalysisMlResult,
+  type ForecastMode,
 } from "@investing-hub/shared/future-analysis";
 import type { Symbol } from "@investing-hub/shared/contracts";
 import { hash, FutureError } from "./errors.js";
 
 export interface ReviewContext {
   symbol: Symbol;
-  ml: MlResult;
+  ml: AnalysisMlResult;
   freshness: "fresh" | "stale" | "unavailable";
   fingerprint: string;
 }
 export const fingerprint = (
-  ml: MlResult,
+  ml: AnalysisMlResult,
   freshness: ReviewContext["freshness"],
-) => hash(JSON.stringify({ ml, freshness }));
+  mode: ForecastMode = "approved",
+) =>
+  hash(
+    JSON.stringify({
+      ml,
+      freshness,
+      ...(mode === "experimental" ? { mode } : {}),
+    }),
+  );
 export function validateSuggestions(suggestions: string): void {
   if (
     /<(?:script|iframe|object|embed|form|base|meta|link)\b|\bon\w+\s*=|@import|url\(\s*["']?https?:|\bsrc\s*=\s*["']https?:/i.test(
