@@ -41,7 +41,9 @@ Ignored local artifacts are under `ml/data/analytics/runs/<run-id>` with `latest
 | Production registry            | Twelve candidates each for BTC/ETH, zero historical gate passes; no approved/active models                                 |
 | Prospective/interval evidence  | No evaluated prospective observations or original interval evidence for these older candidates; metrics remain unavailable |
 
-The pre-existing user file `ml/experiments/six_month_study.py` remains byte-identical (SHA-256 `CE2B8D5293C432B9120AEC8F99E7E65168BEFBFABA5DD4D7D1158E846ED86B36`) and is intentionally excluded from the feature commits.
+At the original delivery, the pre-existing user file `ml/experiments/six_month_study.py` was byte-identical (SHA-256 `CE2B8D5293C432B9120AEC8F99E7E65168BEFBFABA5DD4D7D1158E846ED86B36`) and excluded from the feature commits.
+
+Follow-up cleanup: the owner authorized removing the redundant untracked script. It duplicated existing return/volatility calculations while bypassing canonical verification, gap isolation and explicit database selection. No application imports, commands or tests referenced it. No tracked runtime code, data or reports changed; reference and whitespace checks passed, without rerunning runtime tests.
 
 ## Quantitative observations
 

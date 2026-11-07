@@ -16,7 +16,7 @@ The starting implementation already provided verified Binance ingestion, immutab
 | Unsupervised anomalies                   | Missing                                   | Four causal-at-observation methods; no invented supervised accuracy                                    |
 | SQL, analytical export and Lab UI        | Missing                                   | Named read-only queries, immutable local runs, CSVs, bounded contracts and separate web navigation     |
 
-The user's untracked `ml/experiments/six_month_study.py` is preserved. It is not used as a second pipeline or included in these commits.
+The standalone, untracked `ml/experiments/six_month_study.py` was subsequently reviewed and removed at the owner's request. Its return/volatility calculations duplicated existing features and Analytics Lab, bypassed source/completion verification and could join returns across missing days. Use the verified analytics command and existing feature extractor instead of maintaining a second script.
 
 ```mermaid
 flowchart LR
