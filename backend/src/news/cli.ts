@@ -7,19 +7,26 @@ export async function main(
   args = process.argv.slice(2),
   env = process.env,
 ): Promise<number> {
-  if (args.length !== 1 || !["refresh", "status", "prune"].includes(args[0])) {
-    console.error("Usage: node backend/dist/news/cli.js refresh|status|prune");
+  if (
+    args.length !== 1 ||
+    !["collect", "analyze", "status", "prune"].includes(args[0])
+  ) {
+    console.error(
+      "Usage: node backend/dist/news/cli.js collect|analyze|status|prune",
+    );
     return 1;
   }
   try {
     const service = createNewsService(parseConfig(env));
     console.info(
       JSON.stringify(
-        args[0] === "refresh"
-          ? await service.refresh()
-          : args[0] === "prune"
-            ? await service.prune()
-            : await service.status(),
+        args[0] === "collect"
+          ? await service.collect()
+          : args[0] === "analyze"
+            ? await service.analyze()
+            : args[0] === "prune"
+              ? await service.prune()
+              : await service.status(),
         null,
         2,
       ),

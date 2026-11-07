@@ -6,10 +6,10 @@ import {
   newsSentimentSchema,
   newsSymbolSchema,
   newsUncertaintySchema,
+  type NewsEvidence,
 } from "@investing-hub/shared/news";
-
-export const hash = (value: string) =>
-  createHash("sha256").update(value).digest("hex");
+export const hash = (text: string) =>
+  createHash("sha256").update(text).digest("hex");
 export class NewsError extends Error {
   constructor(
     public code:
@@ -19,6 +19,7 @@ export class NewsError extends Error {
       | "STORAGE"
       | "BUDGET"
       | "QUOTA"
+      | "COOLDOWN"
       | "TIMEOUT"
       | "PROVIDER"
       | "EVIDENCE"
@@ -29,24 +30,7 @@ export class NewsError extends Error {
     super(code);
   }
 }
-
-export interface Evidence {
-  id: string;
-  sourceUrl: string;
-  providerUrl: string;
-  provider: "cryptopanic" | "federal_reserve_rss";
-  sourceName: string;
-  title: string;
-  summary: string;
-  text: string;
-  publishedAt: string;
-  observedAt: string;
-  contentHash: string;
-  sourceResponseSha256: string;
-  primary: boolean;
-  opinion: boolean;
-  symbols: ("BTCUSDT" | "ETHUSDT")[];
-}
+export type Evidence = NewsEvidence;
 export const analysisSchema = z.strictObject({
   analyses: z
     .array(
@@ -65,9 +49,8 @@ export const analysisSchema = z.strictObject({
           "opinion",
           "speculation",
         ]),
-        supportingQuote: z.string().min(20).max(500),
+        supportingQuote: z.string().min(8).max(300),
       }),
     )
-    .max(8),
+    .max(16),
 });
-export type Analysis = z.infer<typeof analysisSchema>;

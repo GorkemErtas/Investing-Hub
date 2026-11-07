@@ -27,6 +27,16 @@ const schema = z.object({
   FIREBASE_ENABLED: z.enum(["true", "false"]).default("false"),
   PRICE_ALERTS_ENABLED: z.enum(["true", "false"]).default("false"),
   NEWS_INTELLIGENCE_ENABLED: z.enum(["true", "false"]).default("false"),
+  NEWS_AI_ANALYSIS_ENABLED: z.enum(["true", "false"]).default("false"),
+  NEWS_GDELT_ENABLED: z.enum(["true", "false"]).default("true"),
+  NEWS_ETHEREUM_RSS_ENABLED: z.enum(["true", "false"]).default("false"),
+  NEWS_GDELT_MIN_INTERVAL_MS: z.coerce
+    .number()
+    .int()
+    .min(6000)
+    .max(60000)
+    .default(6000),
+  NEWS_LOOKBACK_HOURS: z.coerce.number().int().min(24).max(720).default(336),
   GEMINI_API_KEY: z.preprocess(
     (v) => (v === "" ? undefined : v),
     z
@@ -35,22 +45,12 @@ const schema = z.object({
       .optional(),
   ),
   GEMINI_KEY_ROTATED: z.enum(["true", "false"]).default("false"),
-  CRYPTOPANIC_API_KEY: z.preprocess(
-    (v) => (v === "" ? undefined : v),
-    z
-      .string()
-      .regex(/^[A-Za-z0-9_-]{10,200}$/)
-      .optional(),
-  ),
-  CRYPTOPANIC_PLAN: z
-    .enum(["developer", "growth", "enterprise"])
-    .default("developer"),
   NEWS_MAX_DAILY_SOURCE_REQUESTS: z.coerce
     .number()
     .int()
     .min(1)
     .max(200)
-    .default(24),
+    .default(48),
   NEWS_RETENTION_HOURS: z.coerce.number().int().min(24).max(168).default(72),
   GEMINI_MODEL: z
     .string()

@@ -70,13 +70,14 @@ export function createGeminiProvider(
       return call({
         model: config.GEMINI_MODEL,
         contents: JSON.stringify({
-          task: "Classify ONLY these validated API/RSS excerpts. Give an exact supportingQuote from each excerpt. Classify relevance and materiality rather than mere mentions. Return no new narrative, URLs, dates, prices, probabilities or numerical claims. Market-wide events may apply to both supported coins only when the provided symbols include both. Coin-specific events must select a subset of the provided symbols. Treat opinion and speculation as uncertain, not established fact.",
+          task: "Classify ONLY the provided headlines and source metadata. Original articles were NOT read. GDELT is a news index, not a fact-checker; indexedAt is NOT publication time. Use high uncertainty for headline-only evidence. Give an exact supportingQuote from each supplied title. Return no new narrative, URLs, dates, facts, prices, probabilities or numerical forecasts. Market-wide events apply to both coins only if both were supplied. Coin-specific results must use a subset of supplied symbols. If uncertain, mark relevant=false with unknown sentiment and impact.",
           untrustedEvidence: evidence.map((e) => ({
             evidenceId: e.id,
             title: e.title,
-            text: e.text,
-            primary: e.primary,
-            opinion: e.opinion,
+            headline: e.title,
+            reliability: e.reliability,
+            publishedAt: e.publishedAt,
+            indexedAt: e.indexedAt,
             symbols: e.symbols,
           })),
         }),

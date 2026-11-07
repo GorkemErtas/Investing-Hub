@@ -3,7 +3,12 @@ import { join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import { hostname } from "node:os";
 import { z } from "zod";
-import { newsSnapshotSchema } from "@investing-hub/shared/news";
+import {
+  newsSnapshotSchema,
+  newsEvidenceSchema,
+  newsCoverageSchema,
+  newsAttributionSchema,
+} from "@investing-hub/shared/news";
 import { hash, NewsError } from "./types.js";
 
 const usageSchema = z.strictObject({
@@ -15,8 +20,17 @@ const usageSchema = z.strictObject({
   estimatedUsd: z.number().nonnegative(),
   unknownCostRequests: z.number().int().nonnegative(),
 });
+export const collectionSchema = z.strictObject({
+  generatedAt: z.string().datetime(),
+  lastCheckedAt: z.string().datetime(),
+  expiresAt: z.string().datetime(),
+  evidence: z.array(newsEvidenceSchema).max(16),
+  coverage: z.array(newsCoverageSchema).max(10),
+  attribution: z.array(newsAttributionSchema).max(5),
+});
 export const stateSchema = z.strictObject({
-  version: z.literal(1),
+  version: z.literal(2),
+  collection: collectionSchema.nullable(),
   snapshots: z.strictObject({
     BTCUSDT: newsSnapshotSchema.optional(),
     ETHUSDT: newsSnapshotSchema.optional(),
@@ -25,13 +39,15 @@ export const stateSchema = z.strictObject({
   usageHistory: z.array(usageSchema).max(31),
   blockedUntil: z.number().nonnegative(),
   sourceCooldowns: z.record(z.string(), z.number().nonnegative()),
+  nextSourceAt: z.record(z.string(), z.number().nonnegative()),
   lastAttempt: z.number().nonnegative(),
   lastFailure: z.string().max(50).nullable(),
   diagnostics: z.record(z.string(), z.number().int().nonnegative()),
 });
 export type NewsState = z.infer<typeof stateSchema>;
 export const emptyState = (): NewsState => ({
-  version: 1,
+  version: 2,
+  collection: null,
   snapshots: {},
   usage: {
     day: "",
@@ -45,6 +61,7 @@ export const emptyState = (): NewsState => ({
   usageHistory: [],
   blockedUntil: 0,
   sourceCooldowns: {},
+  nextSourceAt: {},
   lastAttempt: 0,
   lastFailure: null,
   diagnostics: {},
@@ -66,7 +83,28 @@ export class NewsStore {
         hash(envelope.payload) !== envelope.sha256
       )
         throw new NewsError("STORAGE");
-      return stateSchema.parse(JSON.parse(envelope.payload));
+      const payload = JSON.parse(envelope.payload);
+      if (payload.version === 1) {
+        // v1 snapshots cannot represent unknown publication or source-only
+        // operation. Invalidate them; preserve only validated usage counters.
+        const migrated = emptyState();
+        migrated.usage = usageSchema.parse(payload.usage);
+        migrated.usageHistory = z
+          .array(usageSchema)
+          .max(31)
+          .parse(payload.usageHistory);
+        migrated.blockedUntil = z
+          .number()
+          .nonnegative()
+          .parse(payload.blockedUntil);
+        migrated.lastAttempt = z
+          .number()
+          .nonnegative()
+          .parse(payload.lastAttempt);
+        migrated.lastFailure = "legacy_snapshot_invalidated";
+        return migrated;
+      }
+      return stateSchema.parse(payload);
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === "ENOENT")
         return emptyState();

@@ -12,7 +12,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "start": "node dist/server.js",
     "test": "vitest run",
-    "news:refresh": "tsx src/news/cli.ts refresh",
+    "news:collect": "tsx src/news/cli.ts collect",
+    "news:analyze": "tsx src/news/cli.ts analyze",
     "news:status": "tsx src/news/cli.ts status",
     "news:prune": "tsx src/news/cli.ts prune"
   },

@@ -1,125 +1,113 @@
 import { describe, expect, it } from "vitest";
 import {
+  newsEvidenceSchema,
   newsEventSchema,
-  newsInsightResponseSchema,
   newsSnapshotSchema,
 } from "../news.js";
-
-const event = {
+const evidence = {
   id: "a".repeat(32),
-  symbol: "ETHUSDT",
-  title: "TEST FIXTURE protocol announcement",
-  summary: "Synthetic evidence used only in tests.",
-  sourceUrl: "https://example.com/fixture",
-  providerUrl: "https://cryptopanic.com/news/123/fixture",
-  provider: "cryptopanic",
-  sourceName: "Fixture publisher",
-  publishedAt: "2026-11-06T10:00:00.000Z",
+  title: "TEST FIXTURE Bitcoin ETF announcement",
+  sourceUrl: "https://publisher.example.com/article",
+  providerUrl: "https://www.gdeltproject.org/",
+  provider: "gdelt",
+  sourceName: "publisher.example.com",
+  publisherDomain: "publisher.example.com",
+  language: "English",
+  publishedAt: null,
+  indexedAt: "2026-11-06T10:00:00.000Z",
   observedAt: "2026-11-06T11:00:00.000Z",
-  analyzedAt: "2026-11-06T12:00:00.000Z",
-  category: "network",
+  contentLevel: "headline_only",
+  reliability: "news_index",
+  category: "etf",
   scope: "coin_specific",
-  sentiment: "neutral",
-  potentialImpact: "medium",
+  symbols: ["BTCUSDT"],
+  sourceResponseSha256: "b".repeat(64),
+};
+const event = {
+  evidence,
+  symbol: "BTCUSDT",
+  analysisStatus: "not_configured",
+  analyzedAt: null,
+  sentiment: "unknown",
+  potentialImpact: "unknown",
   uncertainty: "high",
-  reportType: "reported",
-  evidenceReference: "b".repeat(32),
-  sourceResponseSha256: "c".repeat(64),
-  evidenceQuote: "Synthetic evidence used only in tests.",
-  verification: "api_record_metadata",
+  reportType: "unverified_reporting",
+  evidenceQuote: null,
+  explanation: null,
 };
 const snapshot = {
-  schemaVersion: "news-insight-v1",
-  symbol: "ETHUSDT",
+  schemaVersion: "news-insight-v2",
+  symbol: "BTCUSDT",
   status: "available",
-  generatedAt: "2026-11-06T12:00:00.000Z",
-  lastCheckedAt: "2026-11-06T12:00:00.000Z",
-  expiresAt: "2026-11-06T18:00:00.000Z",
-  model: "gemini-3.5-flash-lite",
-  evidenceFingerprint: "d".repeat(64),
-  outlook: "neutral",
-  summary: "Synthetic test-only outlook.",
+  generatedAt: "2026-11-06T11:00:00.000Z",
+  lastCheckedAt: "2026-11-06T11:00:00.000Z",
+  expiresAt: "2026-11-06T17:00:00.000Z",
+  model: null,
+  analysisStatus: "not_configured",
+  analyzedAt: null,
+  evidenceFingerprint: "c".repeat(64),
+  outlook: "unknown",
+  summary: null,
   events: [event],
-  attribution: [
-    {
-      provider: "cryptopanic",
-      name: "CryptoPanic",
-      url: "https://cryptopanic.com",
-      termsUrl: "https://cryptopanic.com/terms/",
-    },
-  ],
-  limitations: ["Provider provenance is not independent factual verification."],
+  attribution: [],
+  coverage: [],
+  limitations: ["Headline metadata only; not fact-checked."],
 };
-describe("focused news contracts", () => {
-  it("accepts source-attributed news without introducing an ML forecast", () => {
+describe("free source-only news contracts", () => {
+  it("preserves unknown publication time while carrying an index timestamp", () =>
+    expect(newsEvidenceSchema.safeParse(evidence).success).toBe(true));
+  it("rejects treating index time as publication or independent fact checking", () => {
+    expect(
+      newsEvidenceSchema.safeParse({
+        ...evidence,
+        publishedAt: evidence.indexedAt,
+      }).success,
+    ).toBe(false);
+    expect(
+      newsEvidenceSchema.safeParse({
+        ...evidence,
+        reliability: "official_primary",
+      }).success,
+    ).toBe(false);
+    expect(
+      newsEvidenceSchema.safeParse({
+        ...evidence,
+        indexedAt: "2026-11-07T00:00:00.000Z",
+      }).success,
+    ).toBe(false);
+  });
+  it("accepts source-only responses without invented AI output", () => {
     expect(newsSnapshotSchema.safeParse(snapshot).success).toBe(true);
     expect(
-      newsSnapshotSchema.safeParse({ ...snapshot, predictedPrice: 123 })
+      newsEventSchema.safeParse({ ...event, sentiment: "positive" }).success,
+    ).toBe(false);
+    expect(
+      newsSnapshotSchema.safeParse({ ...snapshot, summary: "AI forecast" })
+        .success,
+    ).toBe(false);
+    expect(
+      newsSnapshotSchema.safeParse({ ...snapshot, predictedPrice: 100 })
         .success,
     ).toBe(false);
   });
-  it("rejects future evidence, invented classification values and missing provenance", () => {
+  it("requires exact headline evidence and high uncertainty for analyzed items", () => {
+    const analyzed = {
+      ...event,
+      analysisStatus: "analyzed",
+      analyzedAt: "2026-11-06T12:00:00.000Z",
+      sentiment: "neutral",
+      potentialImpact: "medium",
+      evidenceQuote: evidence.title,
+      explanation: "Headline-only classification.",
+    };
+    expect(newsEventSchema.safeParse(analyzed).success).toBe(true);
+    expect(
+      newsEventSchema.safeParse({ ...analyzed, uncertainty: "medium" }).success,
+    ).toBe(false);
     expect(
       newsEventSchema.safeParse({
-        ...event,
-        publishedAt: "2026-11-07T00:00:00.000Z",
-      }).success,
-    ).toBe(false);
-    expect(
-      newsEventSchema.safeParse({ ...event, sentiment: "guaranteed" }).success,
-    ).toBe(false);
-    expect(
-      newsEventSchema.safeParse({ ...event, sourceResponseSha256: undefined })
-        .success,
-    ).toBe(false);
-    expect(
-      newsEventSchema.safeParse({ ...event, sourceUrl: "javascript:alert(1)" })
-        .success,
-    ).toBe(false);
-  });
-  it("requires nonempty evidence, unique events and matching coin contracts", () => {
-    expect(
-      newsSnapshotSchema.safeParse({ ...snapshot, events: [] }).success,
-    ).toBe(false);
-    expect(
-      newsSnapshotSchema.safeParse({ ...snapshot, events: [event, event] })
-        .success,
-    ).toBe(false);
-    expect(
-      newsSnapshotSchema.safeParse({ ...snapshot, symbol: "BTCUSDT" }).success,
-    ).toBe(false);
-    expect(
-      newsSnapshotSchema.safeParse({
-        ...snapshot,
-        status: "insufficient_evidence",
-        events: [],
-        outlook: "unknown",
-      }).success,
-    ).toBe(true);
-  });
-  it("represents unavailability explicitly with null data", () => {
-    expect(
-      newsInsightResponseSchema.safeParse({
-        symbol: "ETHUSDT",
-        status: "unavailable",
-        freshness: "unavailable",
-        lastUpdatedAt: null,
-        lastCheckedAt: null,
-        expiresAt: null,
-        reason: "disabled",
-        data: null,
-      }).success,
-    ).toBe(true);
-    expect(
-      newsInsightResponseSchema.safeParse({
-        symbol: "ETHUSDT",
-        status: "unavailable",
-        freshness: "fresh",
-        lastUpdatedAt: snapshot.generatedAt,
-        lastCheckedAt: snapshot.lastCheckedAt,
-        expiresAt: snapshot.expiresAt,
-        reason: "disabled",
-        data: snapshot,
+        ...analyzed,
+        evidenceQuote: "Fabricated evidence text",
       }).success,
     ).toBe(false);
   });

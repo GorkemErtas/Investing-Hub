@@ -1,11 +1,15 @@
 import { XMLParser, XMLValidator } from "fast-xml-parser";
 import { z } from "zod";
-import { hash, NewsError, type Evidence } from "./types.js";
-import { safeArticleUrl } from "./sources.js";
+import {
+  newsEvidenceSchema,
+  type NewsEvidence,
+  type NewsSymbol,
+} from "@investing-hub/shared/news";
+import { hash, NewsError } from "./types.js";
+import { safeArticleUrl, type Source } from "./sources.js";
 
-export const normalizeText = (s: string) =>
-  s
-    .replace(/<[^>]*>/g, " ")
+export const normalizeText = (text: string) =>
+  text
     .replace(
       /&(?:amp|lt|gt|quot|apos|nbsp);/g,
       (m) =>
@@ -18,128 +22,154 @@ export const normalizeText = (s: string) =>
           "&nbsp;": " ",
         })[m]!,
     )
+    .replace(/<[^>]*>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-const injection =
-  /ignore\s+(?:all\s+|any\s+|the\s+)?(?:previous|prior|system)\s+(?:instructions|prompts)|(?:system|developer)\s*(?:message|prompt)\s*:|reveal.{0,30}(?:api.?key|secret)|<\|(?:im_start|system)|(?:execute|run).{0,20}(?:shell|command)|override.{0,20}instructions/i;
-export const unsafeContent = (s: string) => injection.test(s);
-
-interface RecordInput {
-  sourceUrl: string;
-  providerUrl: string;
-  provider: Evidence["provider"];
-  sourceName: string;
-  title: string;
-  summary: string;
-  publishedAt: string;
-  symbols: Evidence["symbols"];
-  primary: boolean;
-  sourceResponseSha256: string;
-}
-function record(input: RecordInput, now: number): Evidence {
-  const sourceUrl = safeArticleUrl(input.sourceUrl);
-  const providerUrl = safeArticleUrl(input.providerUrl);
-  const title = normalizeText(input.title),
-    summary = normalizeText(input.summary).slice(0, 600);
-  const text = normalizeText(`${title} ${summary}`);
-  const published = Date.parse(input.publishedAt);
-  if (
-    !title ||
-    title.length > 300 ||
-    title.length < 20 ||
-    !Number.isFinite(published) ||
-    published > now ||
-    now - published > 72 * 3600000 ||
-    unsafeContent(text) ||
-    !input.sourceName.trim()
-  )
-    throw new NewsError("EVIDENCE");
-  return {
-    ...input,
-    id: hash(sourceUrl).slice(0, 32),
-    sourceUrl,
-    providerUrl,
-    title,
-    summary: summary || title,
+export const unsafeContent = (text: string) =>
+  /ignore\s+(?:all\s+|any\s+|the\s+)?(?:previous|prior|system)\s+(?:instructions|prompts)|(?:system|developer)\s*(?:message|prompt)\s*:|reveal.{0,30}(?:api.?key|secret)|<\|(?:im_start|system)|(?:execute|run).{0,20}(?:shell|command)|override.{0,20}instructions/i.test(
     text,
-    contentHash: hash(text.toLowerCase()),
-    sourceName: normalizeText(input.sourceName).slice(0, 100),
-    publishedAt: new Date(published).toISOString(),
-    observedAt: new Date(now).toISOString(),
-    opinion:
-      /\b(opinion|commentary|speculat|rumou?r|predicts?|price target)\b/i.test(
-        text,
-      ),
-  };
+  );
+const btc = /\b(bitcoin|btc)\b/i,
+  eth = /\b(ethereum|ether|eth|eip-?\d+)\b/i;
+const crypto = /\b(crypto(?:currency|currencies)?|digital assets?)\b/i;
+export function categoryFor(title: string): NewsEvidence["category"] {
+  if (/\b(hack|exploit|vulnerabilit\w*|security|stolen|breach)\b/i.test(title))
+    return "security";
+  if (/\betfs?\b|exchange.traded/i.test(title)) return "etf";
+  if (
+    /\b(interest rates?|monetary|fomc|federal funds|rate (?:cut|hike)|inflation)\b/i.test(
+      title,
+    )
+  )
+    return "monetary_policy";
+  if (/\b(regulat\w*|sec|law|legislat\w*|enforcement|ban)\b/i.test(title))
+    return "regulation";
+  if (/\b(outage|halt|disruption|withdrawals?)\b/i.test(title))
+    return "exchange_disruption";
+  if (
+    /\b(core|releases?|upgrade|fork|protocol|glamsterdam|network|validator|eip\w*)\b/i.test(
+      title,
+    )
+  )
+    return "network";
+  if (/\b(institution\w*|adoption|treasury)\b/i.test(title))
+    return "institutional_adoption";
+  return "ecosystem";
 }
-
-const apiItem = z.object({
-  id: z.number().int().positive(),
-  title: z.string(),
-  description: z.string().nullish(),
-  published_at: z.iso.datetime({ offset: true }),
+function relevance(
+  title: string,
+  source: Source,
+): { symbols: NewsSymbol[]; scope: NewsEvidence["scope"] } | null {
+  if (
+    /\b(price prediction|price forecast|technical analysis|price today|casino|giveaway|sponsored)\b/i.test(
+      title,
+    )
+  )
+    return null;
+  if (["ethereum_foundation_rss", "bitcoin_core_rss"].includes(source.provider))
+    return { symbols: source.symbols, scope: "coin_specific" };
+  const symbols: NewsSymbol[] = [
+    ...(btc.test(title) ? ["BTCUSDT" as const] : []),
+    ...(eth.test(title) ? ["ETHUSDT" as const] : []),
+  ];
+  if (symbols.length)
+    return {
+      symbols,
+      scope: symbols.length === 2 ? "market_wide" : "coin_specific",
+    };
+  const category = categoryFor(title);
+  if (
+    source.provider === "federal_reserve_rss" &&
+    category === "monetary_policy"
+  )
+    return { symbols: ["BTCUSDT", "ETHUSDT"], scope: "market_wide" };
+  if (crypto.test(title))
+    return { symbols: ["BTCUSDT", "ETHUSDT"], scope: "market_wide" };
+  return null;
+}
+function record(
+  titleValue: string,
+  urlValue: string,
+  source: Source,
+  times: { publishedAt: string | null; indexedAt: string | null },
+  language: string,
+  sha: string,
+  now: number,
+): NewsEvidence {
+  const title = normalizeText(titleValue),
+    sourceUrl = safeArticleUrl(urlValue);
+  const selected = relevance(title, source);
+  if (!selected || unsafeContent(title)) throw new NewsError("EVIDENCE");
+  const official = source.provider !== "gdelt";
+  const publisherDomain = new URL(sourceUrl).hostname;
+  return newsEvidenceSchema.parse({
+    id: hash(sourceUrl).slice(0, 32),
+    title,
+    sourceUrl,
+    providerUrl: official ? source.url : "https://www.gdeltproject.org/",
+    provider: source.provider,
+    sourceName: official ? source.attribution.name : publisherDomain,
+    publisherDomain,
+    language,
+    ...times,
+    observedAt: new Date(now).toISOString(),
+    contentLevel: "headline_only",
+    reliability: official ? "official_primary" : "news_index",
+    category: categoryFor(title),
+    ...selected,
+    sourceResponseSha256: sha,
+  });
+}
+const gdeltArticle = z.object({
   url: z.string(),
-  original_url: z.string().nullish(),
-  kind: z.string(),
-  source: z.object({ title: z.string(), domain: z.string(), type: z.string() }),
-  instruments: z.array(z.object({ code: z.string() })).default([]),
+  title: z.string(),
+  domain: z.string(),
+  language: z.string().min(1).max(50),
+  seendate: z.string(),
 });
-export function parseCryptoPanic(text: string, now: number) {
-  let payload;
+export function parseGdelt(text: string, source: Source, now: number) {
+  let rows: unknown[];
   try {
-    payload = z
-      .object({ results: z.array(z.unknown()).max(50) })
-      .parse(JSON.parse(text));
+    const payload = JSON.parse(text);
+    rows =
+      Object.keys(payload).length === 0
+        ? []
+        : z.object({ articles: z.array(z.unknown()).max(250) }).parse(payload)
+            .articles;
   } catch {
     throw new NewsError("EVIDENCE");
   }
-  const result: Evidence[] = [];
+  const evidence: NewsEvidence[] = [];
   let rejected = 0;
-  for (const raw of payload.results) {
+  for (const raw of rows) {
     try {
-      const item = apiItem.parse(raw);
+      const row = gdeltArticle.parse(raw),
+        url = safeArticleUrl(row.url);
       if (
-        !["news", "blog"].includes(item.kind) ||
-        ["twitter", "reddit", "media"].includes(item.source.type)
+        new URL(url).hostname.replace(/^www\./, "") !==
+        row.domain.toLowerCase().replace(/^www\./, "")
       )
         throw new NewsError("EVIDENCE");
-      const providerUrl = safeArticleUrl(item.url);
-      if (
-        new URL(providerUrl).hostname !== "cryptopanic.com" ||
-        !new URL(providerUrl).pathname.startsWith("/news/")
-      )
-        throw new NewsError("EVIDENCE");
-      const sourceUrl = item.original_url
-        ? safeArticleUrl(item.original_url)
-        : providerUrl;
-      if (
-        item.original_url &&
-        new URL(sourceUrl).hostname.replace(/^www\./, "") !==
-          item.source.domain.replace(/^www\./, "").toLowerCase()
-      )
-        throw new NewsError("EVIDENCE");
-      const symbols = item.instruments.flatMap((i) =>
-        i.code === "BTC"
-          ? ["BTCUSDT" as const]
-          : i.code === "ETH"
-            ? ["ETHUSDT" as const]
-            : [],
+      const stamp = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/.exec(
+        row.seendate,
       );
-      if (!symbols.length) throw new NewsError("EVIDENCE");
-      result.push(
+      if (!stamp) throw new NewsError("EVIDENCE");
+      const indexedAt = `${stamp[1]}-${stamp[2]}-${stamp[3]}T${stamp[4]}:${stamp[5]}:${stamp[6]}.000Z`;
+      if (
+        !z.iso.datetime().safeParse(indexedAt).success ||
+        Date.parse(indexedAt) > now ||
+        now - Date.parse(indexedAt) > 72 * 3600000
+      )
+        throw new NewsError("EVIDENCE");
+      // DOC ArticleList supplies a seen/indexing date, not verified publication.
+      evidence.push(
         record(
-          {
-            sourceUrl,
-            providerUrl,
-            provider: "cryptopanic",
-            sourceName: item.source.title,
-            title: item.title,
-            summary: item.description ?? item.title,
-            publishedAt: item.published_at,
-            symbols: [...new Set(symbols)],
-            primary: false,
-            sourceResponseSha256: hash(text),
-          },
+          row.title,
+          url,
+          source,
+          { publishedAt: null, indexedAt },
+          row.language,
+          hash(text),
           now,
         ),
       );
@@ -147,10 +177,47 @@ export function parseCryptoPanic(text: string, now: number) {
       rejected++;
     }
   }
-  return { evidence: result, rejected };
+  return { evidence, rejected };
 }
-
-export function parseOfficialRss(text: string, feedUrl: string, now: number) {
+function rssDate(value: string): string {
+  const match =
+    /^(?:(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun),\s*)?(\d{1,2}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d{4}) ([0-2]\d):([0-5]\d):([0-5]\d) (GMT|[+-]\d{4})$/.exec(
+      value,
+    );
+  if (!match) throw new NewsError("EVIDENCE");
+  const month = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ].indexOf(match[2]);
+  if (
+    Number(match[1]) < 1 ||
+    Number(match[1]) >
+      new Date(Date.UTC(Number(match[3]), month + 1, 0)).getUTCDate() ||
+    Number(match[4]) > 23 ||
+    (match[7] !== "GMT" &&
+      (Number(match[7].slice(1, 3)) > 14 || Number(match[7].slice(3)) > 59))
+  )
+    throw new NewsError("EVIDENCE");
+  const time = Date.parse(value);
+  if (!Number.isFinite(time)) throw new NewsError("EVIDENCE");
+  return new Date(time).toISOString();
+}
+export function parseOfficialRss(
+  text: string,
+  source: Source,
+  now: number,
+  lookbackHours = 336,
+) {
   if (
     Buffer.byteLength(text) > 1024 * 1024 ||
     /<!DOCTYPE|<!ENTITY/i.test(text) ||
@@ -166,66 +233,35 @@ export function parseOfficialRss(text: string, feedUrl: string, now: number) {
   }).parse(text);
   if (!parsed?.rss?.channel || typeof parsed.rss.channel !== "object")
     throw new NewsError("EVIDENCE");
-  const items = parsed.rss.channel.item ?? [];
-  if (!Array.isArray(items) || items.length > 100)
+  const rows = parsed.rss.channel.item ?? [];
+  if (!Array.isArray(rows) || rows.length > 250)
     throw new NewsError("EVIDENCE");
-  const result: Evidence[] = [];
+  const evidence: NewsEvidence[] = [];
   let rejected = 0;
-  for (const item of items) {
+  for (const row of rows) {
     try {
       if (
-        ![item.title, item.link, item.pubDate].every(
-          (v) => typeof v === "string",
-        ) ||
-        !/(?:GMT|[+-]\d{4})$/.test(item.pubDate)
+        ![row.title, row.link, row.pubDate].every((v) => typeof v === "string")
       )
         throw new NewsError("EVIDENCE");
-      const calendar =
-        /(?:^|,\s*)(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{4})\s+([0-2]\d):([0-5]\d):([0-5]\d)/.exec(
-          item.pubDate,
-        );
-      if (!calendar) throw new NewsError("EVIDENCE");
-      const month = [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-      ].indexOf(calendar[2]);
+      const url = safeArticleUrl(row.link),
+        publishedAt = rssDate(row.pubDate);
       if (
-        Number(calendar[1]) < 1 ||
-        Number(calendar[1]) >
-          new Date(Date.UTC(Number(calendar[3]), month + 1, 0)).getUTCDate() ||
-        Number(calendar[4]) > 23
+        !source.hosts.includes(new URL(url).hostname) ||
+        Date.parse(publishedAt) > now ||
+        now - Date.parse(publishedAt) > lookbackHours * 3600000
       )
         throw new NewsError("EVIDENCE");
-      const sourceUrl = safeArticleUrl(item.link);
-      if (new URL(sourceUrl).hostname !== "www.federalreserve.gov")
-        throw new NewsError("EVIDENCE");
-      result.push(
+      // Deliberately ignore description, content:encoded, images and bodies,
+      // even when a feed happens to include a full copyrighted article.
+      evidence.push(
         record(
-          {
-            sourceUrl,
-            providerUrl: feedUrl,
-            provider: "federal_reserve_rss",
-            sourceName: "Federal Reserve Board",
-            title: item.title,
-            summary:
-              typeof item.description === "string"
-                ? item.description
-                : item.title,
-            publishedAt: item.pubDate,
-            symbols: ["BTCUSDT", "ETHUSDT"],
-            primary: true,
-            sourceResponseSha256: hash(text),
-          },
+          row.title,
+          url,
+          source,
+          { publishedAt, indexedAt: null },
+          "en",
+          hash(text),
           now,
         ),
       );
@@ -233,12 +269,11 @@ export function parseOfficialRss(text: string, feedUrl: string, now: number) {
       rejected++;
     }
   }
-  return { evidence: result, rejected };
+  return { evidence, rejected };
 }
-
-export function deduplicate(evidence: Evidence[]): Evidence[] {
-  const result: Evidence[] = [];
-  const tokens = (s: string) =>
+export function deduplicate(records: NewsEvidence[]): NewsEvidence[] {
+  const result: NewsEvidence[] = [];
+  const words = (s: string) =>
     new Set(
       s
         .toLowerCase()
@@ -246,30 +281,79 @@ export function deduplicate(evidence: Evidence[]): Evidence[] {
         .split(/\s+/)
         .filter((w) => w.length > 2),
     );
-  for (const entry of evidence) {
-    const words = tokens(entry.title);
-    if (
-      result.some((other) => {
-        if (
-          entry.sourceUrl === other.sourceUrl ||
-          entry.contentHash === other.contentHash ||
-          (entry.summary.length >= 80 &&
-            entry.summary.toLowerCase() === other.summary.toLowerCase())
-        )
-          return true;
-        const otherWords = tokens(other.title);
-        return (
-          Math.abs(
-            Date.parse(entry.publishedAt) - Date.parse(other.publishedAt),
-          ) < 86400000 &&
-          [...words].filter((w) => otherWords.has(w)).length /
-            Math.max(1, new Set([...words, ...otherWords]).size) >=
-            0.8
-        );
-      })
-    )
-      continue;
-    result.push(entry);
+  for (const entry of records.sort(
+    (a, b) =>
+      Number(b.reliability === "official_primary") -
+      Number(a.reliability === "official_primary"),
+  )) {
+    const tokens = words(entry.title);
+    const same = result.find((other) => {
+      if (entry.sourceUrl === other.sourceUrl) return true;
+      if (
+        entry.scope === "coin_specific" &&
+        other.scope === "coin_specific" &&
+        !entry.symbols.some((s) => other.symbols.includes(s))
+      )
+        return false;
+      const otherTokens = words(other.title),
+        intersection = [...tokens].filter((t) => otherTokens.has(t)).length;
+      const t1 = entry.publishedAt ?? entry.indexedAt!,
+        t2 = other.publishedAt ?? other.indexedAt!;
+      return (
+        Math.abs(Date.parse(t1) - Date.parse(t2)) < 86400000 &&
+        intersection / Math.max(1, new Set([...tokens, ...otherTokens]).size) >=
+          0.85
+      );
+    });
+    if (same) {
+      if (same.reliability !== "official_primary")
+        same.symbols = [...new Set([...same.symbols, ...entry.symbols])];
+    } else result.push(structuredClone(entry));
   }
   return result;
 }
+export function balancedSelection(
+  records: NewsEvidence[],
+  perCoin = 8,
+): NewsEvidence[] {
+  const sorted = [...records].sort(
+    (a, b) =>
+      Number(b.reliability === "official_primary") -
+        Number(a.reliability === "official_primary") ||
+      Date.parse(b.publishedAt ?? b.indexedAt!) -
+        Date.parse(a.publishedAt ?? a.indexedAt!),
+  );
+  const selected = new Map<string, NewsEvidence>();
+  const counts: Record<NewsSymbol, number> = { BTCUSDT: 0, ETHUSDT: 0 };
+  // Alternate coins, counting a market-wide record against both limits. Taking
+  // the union of independent per-coin slices could exceed a snapshot's bound.
+  for (let round = 0; round < perCoin; round++)
+    for (const symbol of ["BTCUSDT", "ETHUSDT"] as const) {
+      const item = sorted.find(
+        (e) =>
+          e.symbols.includes(symbol) &&
+          !selected.has(e.id) &&
+          e.symbols.every((s) => counts[s] < perCoin),
+      );
+      if (item) {
+        selected.set(item.id, item);
+        for (const s of item.symbols) counts[s]++;
+      }
+    }
+  return [...selected.values()];
+}
+export const evidenceFingerprint = (records: NewsEvidence[]) =>
+  hash(
+    JSON.stringify(
+      records
+        .map((e) => [
+          e.id,
+          e.title,
+          e.provider,
+          e.symbols,
+          e.publishedAt,
+          e.indexedAt,
+        ])
+        .sort(),
+    ),
+  );
