@@ -192,7 +192,24 @@ const regression = z
     baselineRmse: number.nonnegative(),
     foldRmses: z.array(number.nonnegative()).min(2).max(12),
     foldWins: count,
-    historicalPass: z.boolean(),
+    selected: z.boolean().default(false),
+    comparisonId: hash.nullable().default(null),
+    directionalAccuracy: ratio.nullable().default(null),
+    finalEvaluation: z
+      .strictObject({
+        evaluationStart: time,
+        evaluationEnd: time,
+        samples: count.positive(),
+        returnMae: number.nonnegative(),
+        returnRmse: number.nonnegative(),
+        priceMaeUsdt: number.nonnegative(),
+        priceRmseUsdt: number.nonnegative(),
+        directionalAccuracy: ratio,
+        baselineReturnRmse: number.nonnegative(),
+        baselinePriceRmseUsdt: number.nonnegative(),
+      })
+      .nullable()
+      .default(null),
     interval: regressionInterval.nullable(),
   })
   .refine(

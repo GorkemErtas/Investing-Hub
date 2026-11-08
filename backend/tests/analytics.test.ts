@@ -15,7 +15,8 @@ import {
   localAddress,
   localHost,
 } from "../src/analytics/reader";
-import { hash } from "../src/future/errors";
+import { createHash } from "node:crypto";
+const hash = (text: string) => createHash("sha256").update(text).digest("hex");
 const dirs: string[] = [];
 afterEach(async () => {
   for (const dir of dirs.splice(0)) {
@@ -46,7 +47,7 @@ async function fixture() {
     NODE_ENV: "test",
     ANALYTICS_LAB_ENABLED: "true",
     ANALYTICS_EXPORT_PATH: output,
-    FUTURE_ML_DATABASE_PATH: db,
+    ML_DATABASE_PATH: db,
   });
   return {
     config,
@@ -141,7 +142,7 @@ describe("local read-only analytics", () => {
     expect((await request(app).get("/api/analytics/BTCUSDT")).status).toBe(200);
     expect(read).toHaveBeenCalledTimes(1);
   });
-  it("rejects unknown symbols/queries/POST and preserves normal Future Analysis independently", async () => {
+  it("rejects unknown symbols/queries/POST and preserves numerical predictions independently", async () => {
     const f = await fixture(),
       app = createApp(f.config, undefined, undefined, undefined, f.reader);
     expect((await request(app).get("/api/analytics/BTC")).status).toBe(400);
@@ -154,8 +155,7 @@ describe("local read-only analytics", () => {
     const good = await request(app).get("/api/analytics/BTCUSDT");
     expect(good.headers["cache-control"]).toBe("private, no-store");
     expect(
-      (await request(app).get("/api/future-analysis/BTCUSDT")).body.research
-        .status,
-    ).toBe("disabled");
+      (await request(app).get("/api/predictions/BTCUSDT")).body.status,
+    ).toBe("unavailable");
   });
 });

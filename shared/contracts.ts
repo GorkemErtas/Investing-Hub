@@ -96,15 +96,71 @@ export const candlesResponseSchema = z.object({
   data: z.array(candleSchema),
   meta: metaSchema,
 });
-export const predictionSchema = z.object({
-  symbol: symbolSchema,
-  target: z.literal("next_daily_close"),
-  horizon: z.literal("1d"),
-  predictionTimestamp: z.string().datetime(),
-  sourceDataTimestamp: z.string().datetime().nullable(),
-  modelVersion: z.string().nullable(),
-  predictedValue: z.number().nullable(),
-  evaluationReference: z.string(),
-  status: z.literal("disabled_unvalidated"),
-  reason: z.string(),
-});
+export const predictionSchema = z
+  .object({
+    symbol: symbolSchema,
+    target: z.literal("next_daily_close"),
+    horizon: z.literal("1d"),
+    predictionTimestamp: z.string().datetime(),
+    sourceDataTimestamp: z.string().datetime().nullable(),
+    targetTimestamp: z.string().datetime().nullable().default(null),
+    modelVersion: z.string().min(1).nullable(),
+    algorithm: z
+      .enum(["ridge", "random_forest", "gradient_boosting", "lstm"])
+      .nullable()
+      .default(null),
+    datasetFingerprint: z
+      .string()
+      .regex(/^[a-f0-9]{64}$/)
+      .nullable()
+      .default(null),
+    referencePrice: z.number().finite().positive().nullable().default(null),
+    predictedReturn: z.number().finite().gt(-1).nullable().default(null),
+    predictedValue: z.number().finite().positive().nullable(),
+    evaluationReference: z.string().min(1),
+    status: z.enum(["experimental", "unavailable", "disabled_unvalidated"]),
+    reason: z.string().min(1),
+  })
+  .superRefine((value, ctx) => {
+    const issue = (message: string) =>
+      ctx.addIssue({ code: "custom", message });
+    if (value.status === "experimental") {
+      if (
+        value.predictedValue === null ||
+        value.referencePrice === null ||
+        value.predictedReturn === null ||
+        !value.modelVersion ||
+        !value.algorithm ||
+        !value.datasetFingerprint ||
+        !value.sourceDataTimestamp ||
+        !value.targetTimestamp
+      ) {
+        issue(
+          "Available prediction requires model, provenance, numbers and timestamps",
+        );
+        return;
+      }
+      const source = Date.parse(value.sourceDataTimestamp),
+        generated = Date.parse(value.predictionTimestamp),
+        target = Date.parse(value.targetTimestamp);
+      if (!(
+        source < generated &&
+        generated < target &&
+        target - source === 86400000 &&
+        (source + 1) % 86400000 === 0
+      ))
+        issue("Invalid next-day prediction chronology");
+      const expected = value.referencePrice * (1 + value.predictedReturn);
+      if (
+        Math.abs(expected - value.predictedValue) >
+        Math.max(1e-9, Math.abs(expected) * 1e-10)
+      )
+        issue("Prediction price/return mismatch");
+    } else if (
+      value.predictedValue !== null ||
+      value.modelVersion !== null ||
+      value.referencePrice !== null ||
+      value.predictedReturn !== null
+    )
+      issue("Unavailable predictions must not contain invented values");
+  });

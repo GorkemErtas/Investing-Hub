@@ -9,11 +9,6 @@
       "react-native": "./dist/analytics.js",
       "default": "./dist/analytics.js"
     },
-    "./future-analysis": {
-      "types": "./future-analysis.ts",
-      "react-native": "./dist/future-analysis.js",
-      "default": "./dist/future-analysis.js"
-    },
     "./contracts": {
       "types": "./contracts.ts",
       "react-native": "./dist/contracts.js",
@@ -38,6 +33,11 @@
       "types": "./client.ts",
       "react-native": "./dist/client.js",
       "default": "./dist/client.js"
+    },
+    "./predictions": {
+      "types": "./predictions.ts",
+      "react-native": "./dist/predictions.js",
+      "default": "./dist/predictions.js"
     }
   },
   "scripts": {

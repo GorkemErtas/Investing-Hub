@@ -6,7 +6,8 @@ import {
 } from "@investing-hub/shared/analytics";
 import type { Symbol } from "@investing-hub/shared/contracts";
 import type { Config } from "../config.js";
-import { hash } from "../future/errors.js";
+import { createHash } from "node:crypto";
+const hash = (text: string) => createHash("sha256").update(text).digest("hex");
 
 export interface AnalyticsReader {
   read(symbol: Symbol): Promise<AnalyticsResponse>;
@@ -34,7 +35,7 @@ export function createAnalyticsReader(
         const info = await stat(config.ANALYTICS_EXPORT_PATH);
         if (info.size > 6 * 1024 * 1024)
           return unavailable("invalid_analytics_export");
-        const before = await stat(config.FUTURE_ML_DATABASE_PATH, {
+        const before = await stat(config.ML_DATABASE_PATH, {
           bigint: true,
         });
         const envelope = JSON.parse(
@@ -48,7 +49,7 @@ export function createAnalyticsReader(
         const report = analyticsReportSchema.parse(
           JSON.parse(envelope.payload),
         );
-        const after = await stat(config.FUTURE_ML_DATABASE_PATH, {
+        const after = await stat(config.ML_DATABASE_PATH, {
           bigint: true,
         });
         if (
