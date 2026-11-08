@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -8,15 +8,11 @@ import {
   Dimensions,
 } from "react-native";
 import { LineChart } from "react-native-chart-kit";
-import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
-
-/*Final update 20.06.2025*/
 
 const screenWidth = Dimensions.get("window").width;
 
 const ChartQuizSection = () => {
-  const { user } = useAuth();
   const { isDarkMode } = useTheme();
 
   const [selectedGraphIndex, setSelectedGraphIndex] = useState(0);

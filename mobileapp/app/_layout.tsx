@@ -2,12 +2,10 @@ import React, { useEffect, useState } from "react";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { AuthProvider, useAuth } from "../context/AuthContext";
-import { View, Text, StyleSheet } from "react-native";
-import { ThemeProvider } from "../context/ThemeContext";
-import { Image, Platform } from "react-native";
+import { View, Text, StyleSheet, Image, Platform } from "react-native";
+import { ThemeProvider, useTheme } from "../context/ThemeContext";
 import { setupForegroundNotificationHandler } from "../utils/notifications";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { useTheme } from "../context/ThemeContext";
 
 function SplashScreen() {
   return (
@@ -105,12 +103,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#2563EB",
     justifyContent: "center",
     alignItems: "center",
-  },
-  splashText: {
-    color: "white",
-    fontSize: 32,
-    fontWeight: "bold",
-    letterSpacing: 2,
   },
   splashImage: {
     width: 220,

@@ -241,16 +241,7 @@ select {
   border-radius: 0 3px 3px 0;
   background: var(--accent);
 }
-.nav-beta {
-  font-size: 8px;
-  letter-spacing: 1px;
-  background: var(--panel-alt);
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  padding: 2px 4px;
-  margin-left: auto;
-  color: var(--faint);
-}
+
 .sidebar-bottom {
   margin-top: auto;
   padding-top: 55px;

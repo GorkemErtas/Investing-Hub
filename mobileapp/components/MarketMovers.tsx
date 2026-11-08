@@ -5,23 +5,34 @@ import { useResource } from "../services/useResource";
 import { movers } from "../services/api";
 import { useTheme } from "../context/ThemeContext";
 
-const TopGainers = () => {
+export function MarketMovers({
+  direction,
+}: {
+  direction: "gainers" | "losers";
+}) {
+  const gainers = direction === "gainers";
   const [timeframe, setTimeframe] = useState("daily");
-  const load = useCallback(() => movers(timeframe, true), [timeframe]);
+  const load = useCallback(
+    () => movers(timeframe, gainers),
+    [timeframe, gainers],
+  );
   const resource = useResource(load);
-  const gainersData = resource.data?.data ?? [];
+  const data = resource.data?.data ?? [];
   const error = resource.error,
     initialLoading = resource.loading,
     meta = resource.data?.meta;
   const { isDarkMode: isDark } = useTheme();
-  const styles = getStyles(isDark);
+  const styles = getStyles(isDark, gainers);
 
-  const gainers = gainersData.filter((coin) => coin.change > 0);
+  const rows = data.filter((coin) =>
+    gainers ? coin.change > 0 : coin.change < 0,
+  );
 
   return (
     <View style={styles.container}>
       <Text style={styles.header}>
-        Top {timeframe.charAt(0).toUpperCase() + timeframe.slice(1)} Gainers
+        Top {timeframe.charAt(0).toUpperCase() + timeframe.slice(1)}{" "}
+        {gainers ? "Gainers" : "Losers"}
       </Text>
 
       <View style={styles.pickerWrapper}>
@@ -44,17 +55,21 @@ const TopGainers = () => {
         </Text>
       ) : null}
       {initialLoading ? (
-        <ActivityIndicator size="large" color="#2563EB" />
-      ) : gainers.length === 0 ? (
+        gainers ? (
+          <ActivityIndicator size="large" color="#2563EB" />
+        ) : (
+          <Text style={styles.emptyText}>Loading...</Text>
+        )
+      ) : rows.length === 0 ? (
         <Text style={styles.emptyText}>No data available</Text>
       ) : (
-        gainers.map((item, index) => (
+        rows.map((item, index) => (
           <View key={index} style={styles.card}>
             <Text style={styles.cell}>{item.symbol}</Text>
             <Text style={styles.cell}>
               {item.price ? item.price.toLocaleString() : "Unavailable"} USDT
             </Text>
-            <Text style={[styles.cell, styles.positiveChange]}>
+            <Text style={[styles.cell, styles.priceChange]}>
               {item.change ? item.change.toFixed(2) : 0}%
             </Text>
           </View>
@@ -62,9 +77,9 @@ const TopGainers = () => {
       )}
     </View>
   );
-};
+}
 
-const getStyles = (isDark) =>
+const getStyles = (isDark: boolean, gainers: boolean) =>
   StyleSheet.create({
     container: {
       padding: 16,
@@ -114,8 +129,8 @@ const getStyles = (isDark) =>
       flex: 1,
       textAlign: "center",
     },
-    positiveChange: {
-      color: "#16a34a",
+    priceChange: {
+      color: gainers ? "#16a34a" : "#DC2626",
     },
     emptyText: {
       fontSize: 16,
@@ -124,5 +139,3 @@ const getStyles = (isDark) =>
       marginTop: 10,
     },
   });
-
-export default TopGainers;

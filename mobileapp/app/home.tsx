@@ -16,8 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import WelcomeBanner from "../components/WelcomeBanner";
-import TrendingCoins from "../components/TrendingCoins";
-import TopExchanges from "../components/TopLosers";
+import { MarketMovers } from "../components/MarketMovers";
 import CryptoPricesTable from "../components/CryptoPricesTable";
 import RightSidebar from "../components/RightSidebar";
 import SettingsScreen from "../components/SettingsScreen";
@@ -71,8 +70,8 @@ export default function HomeScreen() {
         </Text>
 
         <View style={dynamicStyles.row}>
-          <TrendingCoins />
-          <TopExchanges />
+          <MarketMovers direction="gainers" />
+          <MarketMovers direction="losers" />
         </View>
 
         <CryptoPricesTable />

@@ -135,6 +135,22 @@ test("mobile preview: markets, actual candles, accounts, owned portfolio and log
   await expect(page.getByText("Crypto Dashboard", { exact: true })).toBeVisible(
     { timeout: 20000 },
   );
+  const gainers = page
+    .getByText("Top Daily Gainers", { exact: true })
+    .locator("..");
+  const losers = page
+    .getByText("Top Daily Losers", { exact: true })
+    .locator("..");
+  await expect(gainers).toContainText("4.00%");
+  await expect(losers).toContainText("-3.00%");
+  await gainers.getByRole("combobox").selectOption("weekly");
+  const weekly = page
+    .getByText("Top Weekly Gainers", { exact: true })
+    .locator("..");
+  await expect(weekly).toContainText("No data available");
+  await expect(losers).toContainText("-3.00%");
+  await weekly.getByRole("combobox").selectOption("daily");
+  await expect(gainers).toContainText("4.00%");
   await page.getByPlaceholder("Search by symbol").fill("ETH");
   await page.getByText("Details", { exact: true }).click();
   await expect(
