@@ -7,6 +7,7 @@ import { assets, type Symbol } from "@investing-hub/shared/contracts";
 import {
   mlFixture,
   reviewFixture,
+  textReviewFixture,
   testNow,
 } from "../../shared/tests/future-fixtures";
 import { parseConfig } from "../src/config";
@@ -93,8 +94,11 @@ const context = (symbol: Symbol = "BTCUSDT", ready = true): ReviewContext => {
     fingerprint: fingerprint(ml, freshness),
   };
 };
-function sdkResponse(ctx = context()) {
-  const report = reviewFixture(ctx.ml, ctx.fingerprint);
+function sdkResponse(ctx = context(), plainText = false) {
+  const report = (plainText ? textReviewFixture : reviewFixture)(
+    ctx.ml,
+    ctx.fingerprint,
+  );
   return {
     candidates: [
       {
@@ -640,12 +644,118 @@ describe("official SDK request and sanitized diagnostics", () => {
       }).success,
     ).toBe(false);
   });
-  it("sends Google Search and projected JSON schema through the real SDK with one attempt", async () => {
+  it.each([
+    ["absent", "missing_grounding_chunks"],
+    ["empty", "missing_grounding_chunks"],
+    ["chunks", "missing_grounding_chunks"],
+    ["supports", "missing_grounding_supports"],
+    ["suggestions", "missing_search_entry_point"],
+    ["sections", "review_schema"],
+    ["partial", "unsupported_structured_claims"],
+  ])(
+    "preserves ML and makes only one request when plain-text grounding fails: %s",
+    async (mode, stage) => {
+      const f = setup(),
+        response = sdkResponse(context(), true);
+      const metadata = response.candidates[0].groundingMetadata;
+      if (mode === "absent")
+        Reflect.deleteProperty(response.candidates[0], "groundingMetadata");
+      if (mode === "empty") {
+        metadata.groundingChunks = [];
+        metadata.groundingSupports = [];
+        metadata.searchEntryPoint.renderedContent = "";
+      }
+      if (mode === "chunks") metadata.groundingChunks = [];
+      if (mode === "supports") metadata.groundingSupports = [];
+      if (mode === "suggestions")
+        metadata.searchEntryPoint.renderedContent = "";
+      if (mode === "sections")
+        response.candidates[0].content.parts[0].text +=
+          "\n\n## Summary\nDuplicate unsupported section.";
+      if (mode === "partial") {
+        const segment = metadata.groundingSupports[0].segment;
+        segment.text = segment.text.slice(0, -10);
+        segment.endIndex -= 10;
+      }
+      const fetch = vi.fn(
+        async () =>
+          new Response(JSON.stringify(response), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          }),
+      );
+      vi.stubGlobal("fetch", fetch);
+      const service = createFutureService(f.config, {
+        ml: f.ml,
+        store: f.store,
+        now: f.now,
+      });
+      const result = await service.review("BTCUSDT", randomUUID());
+      expect(result.ml).toEqual(mlFixture());
+      expect(result.research.reason).toBe("insufficient_evidence");
+      expect(result.research.data).toBeNull();
+      expect(fetch).toHaveBeenCalledOnce();
+      const state = await f.store.read();
+      expect(state.lastFailure).toMatchObject({ httpStatus: 200, stage });
+      if (mode === "absent" || mode === "empty")
+        expect(state.lastFailure?.grounding).toEqual({
+          chunks: 0,
+          supports: 0,
+          searchEntryPoint: false,
+        });
+      expect(state.day.requests).toBe(1);
+      expect(state.day.unknownCostRequests).toBe(1);
+      expect(JSON.stringify(state)).not.toMatch(
+        /TEST FIXTURE|publisher|vertexaisearch/,
+      );
+    },
+  );
+  it("finds genuine support when an external claim also appears in an uncited summary", async () => {
+    const f = setup(),
+      ctx = context(),
+      original = textReviewFixture(ctx.ml);
+    const response = sdkResponse(ctx, true),
+      candidate = response.candidates[0];
+    const text = original.text.replace(
+      original.content.executiveSummary,
+      original.content.developments[0],
+    );
+    candidate.content.parts[0].text = text;
+    candidate.groundingMetadata.groundingSupports.forEach(({ segment }) => {
+      const start = text.lastIndexOf(segment.text);
+      segment.startIndex = Buffer.byteLength(text.slice(0, start));
+      segment.endIndex = segment.startIndex + Buffer.byteLength(segment.text);
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify(response), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          }),
+      ),
+    );
+    const result = await createResearchProvider(f.config, f.now).research(
+      ctx,
+      new AbortController().signal,
+    );
+    expect(result.report.text).toBe(text);
+    expect(result.report.content.developments).toEqual(
+      original.content.developments,
+    );
+    expect(result.report.citations[0].startByte).toBeGreaterThan(
+      Buffer.byteLength(
+        text.slice(0, text.indexOf(original.content.developments[0])),
+      ),
+    );
+  });
+  it("sends unstructured Google Search through the real SDK and accounts for its single call", async () => {
     const f = setup();
     let wire: Record<string, any> = {};
     const fetch = vi.fn(async (_url: unknown, init: RequestInit) => {
       wire = JSON.parse(String(init.body));
-      return new Response(JSON.stringify(sdkResponse()), {
+      return new Response(JSON.stringify(sdkResponse(context(), true)), {
         status: 200,
         headers: { "content-type": "application/json" },
       });
@@ -657,13 +767,21 @@ describe("official SDK request and sanitized diagnostics", () => {
     );
     expect(result.report.content.mlModelId).toBe(context().ml.data?.modelId);
     expect(wire.tools).toEqual([{ googleSearch: {} }]);
-    expect(wire.generationConfig.responseMimeType).toBe("application/json");
-    expect(
-      wire.generationConfig.responseJsonSchema.properties.horizon.enum,
-    ).toEqual(["1d"]);
-    expect(
-      JSON.stringify(wire.generationConfig.responseJsonSchema),
-    ).not.toMatch(/\$schema|format|pattern|minLength/);
+    expect(wire.generationConfig).not.toHaveProperty("responseMimeType");
+    expect(wire.generationConfig).not.toHaveProperty("responseJsonSchema");
+    expect(wire.generationConfig).not.toHaveProperty("responseSchema");
+    const original = textReviewFixture(context().ml);
+    expect(result.report.text).toBe(original.text);
+    expect(result.report.content).toEqual(original.content);
+    expect(result.report.citations).toEqual(original.citations);
+    expect(result.report.searchSuggestionsHtml).toBe(
+      original.searchSuggestionsHtml,
+    );
+    expect(result).toMatchObject({
+      inputTokens: 100,
+      outputTokens: 150,
+      usageKnown: true,
+    });
     expect(fetch).toHaveBeenCalledTimes(1);
   });
   it.each(["approved", "experimental"] as const)(

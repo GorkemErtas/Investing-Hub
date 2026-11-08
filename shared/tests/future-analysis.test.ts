@@ -5,15 +5,49 @@ import {
   numericForecastSchema,
   groundedReportSchema,
   reviewContentSchema,
+  reviewFromGroundedText,
 } from "../future-analysis.js";
 import {
   analysisFixture,
   numericFixture,
   mlFixture,
   reviewFixture,
+  textReviewFixture,
 } from "./future-fixtures";
 
 describe("Future Analysis trust boundaries", () => {
+  it("extracts the existing report sections verbatim from grounded plain text", () => {
+    const report = textReviewFixture(mlFixture());
+    expect(reviewFromGroundedText(report.text, report.content)).toEqual(
+      report.content,
+    );
+    expect(report.content).toEqual(reviewFixture(mlFixture()).content);
+    for (const text of [
+      report.text.replaceAll("## ", ""),
+      report.text
+        .replaceAll("## ", "")
+        .replace(/^(Summary|Risks)$/gm, "**$1:**"),
+    ])
+      expect(reviewFromGroundedText(text, report.content)).toEqual(
+        report.content,
+      );
+    expect(
+      groundedReportSchema.safeParse({
+        ...report,
+        content: {
+          ...report.content,
+          executiveSummary:
+            "This statement was invented and never appeared in the research.",
+        },
+      }).success,
+    ).toBe(false);
+    expect(() =>
+      reviewFromGroundedText(
+        report.text + "\n\n## Summary\nDuplicate summary.",
+        report.content,
+      ),
+    ).toThrow();
+  });
   it.each(assets)("supports the canonical $symbol asset", (asset) => {
     expect(symbolSchema.parse(asset.symbol)).toBe(asset.symbol);
     expect(

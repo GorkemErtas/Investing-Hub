@@ -87,17 +87,31 @@ export function validateReview(
     )
   )
     throw insufficient("unsafe_review");
-  // Every externally researched development, risk and event needs genuine support
-  // inside its original serialized response, never a model-supplied URL list.
+  // Each external claim must be fully covered by genuine provider spans in
+  // the original response, never by a model-supplied URL or citation list.
+  const citations = [...report.citations].sort(
+    (a, b) => a.startByte - b.startByte,
+  );
   const supported = (text: string) => {
-    const escaped = JSON.stringify(text).slice(1, -1);
-    const start = report.text.indexOf(escaped);
-    if (start < 0) return false;
-    const left = Buffer.byteLength(report.text.slice(0, start)),
-      right = left + Buffer.byteLength(escaped);
-    return report.citations.some(
-      (citation) => citation.startByte < right && citation.endByte > left,
-    );
+    const escaped = report.text.trimStart().startsWith("{")
+      ? JSON.stringify(text).slice(1, -1)
+      : text;
+    for (
+      let start = report.text.indexOf(escaped);
+      start >= 0;
+      start = report.text.indexOf(escaped, start + escaped.length)
+    ) {
+      const left = Buffer.byteLength(report.text.slice(0, start)),
+        right = left + Buffer.byteLength(escaped);
+      let covered = left;
+      for (const citation of citations) {
+        if (citation.endByte <= covered) continue;
+        if (citation.startByte > covered) break;
+        covered = citation.endByte;
+        if (covered >= right) return true;
+      }
+    }
+    return false;
   };
   if (
     ![

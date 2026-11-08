@@ -352,6 +352,60 @@ export const reviewContentSchema = z.strictObject({
   limitations: z.array(z.string().min(12).max(400)).min(1).max(6),
 });
 export type ReviewContent = z.infer<typeof reviewContentSchema>;
+
+// Extract verbatim sections locally, so formatting never needs another model
+// call and every displayed statement remains traceable to the original text.
+export function reviewFromGroundedText(
+  text: string,
+  identity: Pick<ReviewContent, "symbol" | "mlModelId" | "forecastFingerprint">,
+): ReviewContent {
+  const headings = [
+    ...text.matchAll(
+      /^[ \t]*(?:#{1,6}[ \t]+)?(?:\*\*)?(Summary|Critical review|Developments|Risks|Upcoming events|Bullish scenario|Base scenario|Bearish scenario|Conditional recommendations|Limitations):?(?:\*\*)?:?[ \t]*\r?$/gim,
+    ),
+  ];
+  const sections = new Map<string, string>();
+  headings.forEach((heading, index) => {
+    const name = heading[1].toLowerCase();
+    if (sections.has(name)) throw new Error("Duplicate review section");
+    sections.set(
+      name,
+      text
+        .slice(
+          heading.index! + heading[0].length,
+          headings[index + 1]?.index ?? text.length,
+        )
+        .trim(),
+    );
+  });
+  const section = (name: string) => sections.get(name) ?? "";
+  const items = (name: string) =>
+    section(name)
+      .split(/\r?\n/)
+      .map((line) => line.trim().replace(/^[-*][ \t]+/, ""))
+      .filter(Boolean);
+  return reviewContentSchema.parse({
+    ...identity,
+    horizon: "1d",
+    reviewStatus:
+      text.match(/^Review status:[ \t]*([A-Z_]+)[ \t]*\r?$/m)?.[1] ??
+      "HIGH_UNCERTAINTY",
+    overallOutlook:
+      text.match(/^Overall outlook:[ \t]*([a-z_]+)[ \t]*\r?$/m)?.[1] ?? "mixed",
+    executiveSummary: section("summary"),
+    criticalReview: section("critical review"),
+    developments: items("developments"),
+    risks: items("risks"),
+    upcomingEvents: items("upcoming events"),
+    scenarios: {
+      bullish: section("bullish scenario"),
+      base: section("base scenario"),
+      bearish: section("bearish scenario"),
+    },
+    recommendations: items("conditional recommendations"),
+    limitations: items("limitations"),
+  });
+}
 export const groundedReportSchema = z
   .strictObject({
     symbol: symbolSchema,
@@ -414,10 +468,10 @@ export const groundedReportSchema = z
       }
     }
     try {
-      if (
-        JSON.stringify(reviewContentSchema.parse(JSON.parse(value.text))) !==
-        JSON.stringify(value.content)
-      )
+      const original = value.text.trimStart().startsWith("{")
+        ? reviewContentSchema.parse(JSON.parse(value.text))
+        : reviewFromGroundedText(value.text, value.content);
+      if (JSON.stringify(original) !== JSON.stringify(value.content))
         issue("Review must match the unmodified grounded response");
     } catch {
       issue("Invalid structured grounded response");

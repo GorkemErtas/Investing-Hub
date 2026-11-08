@@ -8,6 +8,7 @@ import {
   experimentalFixture,
   mlFixture,
   reviewFixture,
+  textReviewFixture,
   testNow,
 } from "../../shared/tests/future-fixtures";
 import { parseConfig } from "../src/config";
@@ -180,7 +181,7 @@ describe("read-only experimental forecasts", () => {
       const service = createFutureService(f.config, { now: () => testNow });
       const before = await service.read("BTCUSDT", "experimental");
       expect(before.ml.status).toBe(ready ? "experimental" : "unavailable");
-      const report = reviewFixture(before.ml, before.forecastFingerprint);
+      const report = textReviewFixture(before.ml, before.forecastFingerprint);
       const fetch = vi.fn(
         async (_url: unknown, _init: RequestInit) =>
           new Response(
@@ -228,12 +229,31 @@ describe("read-only experimental forecasts", () => {
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent",
       );
       const wire = JSON.parse(String(init.body));
+      expect(wire.generationConfig).not.toHaveProperty("responseMimeType");
+      expect(wire.generationConfig).not.toHaveProperty("responseJsonSchema");
       const evidence = JSON.parse(wire.contents[0].parts[0].text);
       expect(evidence.mlEvidence).toEqual(before.ml);
       expect(evidence.forecastFingerprint).toBe(before.forecastFingerprint);
       expect(result.mode).toBe("experimental");
       expect(result.ml).toEqual(before.ml);
       expect(result.research.status).toBe("available");
+      expect(result.research.data?.text).toBe(report.text);
+      expect(result.research.data?.citations).toEqual(report.citations);
+      expect(result.research.data?.searchSuggestionsHtml).toBe(
+        report.searchSuggestionsHtml,
+      );
+      const state = await new FutureStore(f.config.FUTURE_STORAGE_PATH).read();
+      expect(state.day).toMatchObject({
+        requests: 1,
+        inputTokens: 100,
+        outputTokens: 150,
+        searchQueries: 1,
+        unknownQueryRequests: 0,
+        unknownCostRequests: 0,
+      });
+      expect(state.day.estimatedUsd).toBeCloseTo(
+        (100 * 0.3) / 1e6 + (150 * 2.5) / 1e6 + 0.014,
+      );
       expect(result.research.data?.content.forecastFingerprint).toBe(
         before.forecastFingerprint,
       );

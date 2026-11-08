@@ -214,6 +214,46 @@ export function reviewFixture(
     searchQueryCount: 1,
   });
 }
+export function textReviewFixture(
+  ml: AnalysisMlResult,
+  fingerprint = fixtureFingerprint(ml),
+  now = testNow,
+): GroundedReport {
+  const report = reviewFixture(ml, fingerprint, now),
+    content = report.content;
+  const bullets = (items: string[]) =>
+    items.map((item) => `- ${item}`).join("\n");
+  const text = [
+    `Review status: ${content.reviewStatus}\nOverall outlook: ${content.overallOutlook}`,
+    `## Summary\n${content.executiveSummary}`,
+    `## Critical review\n${content.criticalReview}`,
+    `## Developments\n${bullets(content.developments)}`,
+    `## Risks\n${bullets(content.risks)}`,
+    `## Upcoming events\n${bullets(content.upcomingEvents)}`,
+    `## Bullish scenario\n${content.scenarios.bullish}`,
+    `## Base scenario\n${content.scenarios.base}`,
+    `## Bearish scenario\n${content.scenarios.bearish}`,
+    `## Conditional recommendations\n${bullets(content.recommendations)}`,
+    `## Limitations\n${bullets(content.limitations)}`,
+  ].join("\n\n");
+  return groundedReportSchema.parse({
+    ...report,
+    text,
+    citations: [
+      ...content.developments,
+      ...content.risks,
+      ...content.upcomingEvents,
+    ].map((quote) => {
+      const start = text.indexOf(quote);
+      return {
+        startByte: Buffer.byteLength(text.slice(0, start)),
+        endByte: Buffer.byteLength(text.slice(0, start + quote.length)),
+        quote,
+        sourceIds: ["source-0"],
+      };
+    }),
+  });
+}
 export function analysisFixture(
   symbol: Symbol = assets[0].symbol,
   now = testNow,
