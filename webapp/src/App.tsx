@@ -29,15 +29,11 @@ const PricePredictions = lazy(() =>
   import('./pages/PricePredictions').then((m) => ({ default: m.PricePredictions })),
 );
 const Learn = lazy(() => import('./pages/Learn').then((m) => ({ default: m.Learn })));
-const AnalyticsLab = lazy(() =>
-  import('./pages/AnalyticsLab').then((m) => ({ default: m.AnalyticsLab })),
-);
 
 const nav = [
   { to: '/', label: 'Overview', icon: LayoutDashboard },
   { to: '/portfolio', label: 'Portfolio', icon: Wallet },
   { to: '/predictions', label: 'Price Predictions', icon: FlaskConical },
-  { to: '/analytics', label: 'Analytics Lab', icon: ChartNoAxesCombined },
   { to: '/learn', label: 'Learning Hub', icon: BookOpen },
 ];
 function validatePortfolios(value: unknown) {
@@ -248,7 +244,6 @@ export default function App() {
               />
               <Route path="/predictions" element={<PricePredictions />} />
               <Route path="/future-analysis" element={<Navigate to="/predictions" replace />} />
-              <Route path="/analytics" element={<AnalyticsLab />} />
               <Route path="/learn" element={<Learn />} />
               <Route path="/learning-hub" element={<Learn />} />
               <Route

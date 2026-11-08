@@ -7,7 +7,6 @@ import {
   type Interval,
   type Symbol,
 } from '@investing-hub/shared/contracts';
-import { analyticsResponseSchema } from '@investing-hub/shared/analytics';
 
 async function get<T>(
   path: string,
@@ -51,19 +50,5 @@ export const usePrediction = (symbol: Symbol) =>
     queryKey: ['prediction', symbol],
     queryFn: ({ signal }) => get(`/predictions/${symbol}`, predictionSchema, signal),
     staleTime: 300000,
-    retry: 1,
-  });
-
-export const useAnalytics = (symbol: Symbol) =>
-  useQuery({
-    queryKey: ['analytics', symbol],
-    queryFn: ({ signal }) =>
-      get(
-        `/analytics/${symbol}`,
-        analyticsResponseSchema.refine((v) => v.symbol === symbol),
-        signal,
-        'Analytics Lab',
-      ),
-    staleTime: 60000,
     retry: 1,
   });

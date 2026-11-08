@@ -2,7 +2,6 @@
 
 Express/TypeScript serves public market data, already-generated local predictions and the retained optional mobile services. `GET /api/predictions/:symbol` returns one experimental numerical next-day forecast or an explicit unavailable state. It reads `PREDICTIONS_EXPORT_PATH` and verifies the matching `ML_DATABASE_PATH` stamp, checksum, schema and UTC expiry. It never loads a model, spawns Python, trains or sends an AI request. No research/review API remains.
 
-Analytics Lab remains an independent local-only `GET /api/analytics/:symbol`, enabled with `ANALYTICS_LAB_ENABLED=true` in non-production mode and protected by loopback socket/Host/Origin checks. Configure `ANALYTICS_EXPORT_PATH` and the same `ML_DATABASE_PATH`. Analytics quality scores do not gate predictions.
 
 ```powershell
 npm ci

@@ -12,19 +12,12 @@ import {
   type PredictionReader,
 } from "./predictions/service.js";
 import { createMobileRouter, type MobileModule } from "./mobile/routes.js";
-import {
-  createAnalyticsReader,
-  localAddress,
-  localHost,
-  type AnalyticsReader,
-} from "./analytics/reader.js";
 
 export function createApp(
   config: Config,
   market: MarketService = createMarketService(config),
   mobile?: MobileModule,
   predictions: PredictionReader = createPredictionReader(config),
-  analytics: AnalyticsReader = createAnalyticsReader(config),
 ) {
   const app = express();
   app.disable("x-powered-by");
@@ -85,29 +78,6 @@ export function createApp(
   app.get("/api/predictions/:symbol", async (req, res) => {
     z.strictObject({}).parse(req.query);
     res.json(await predictions.read(symbolSchema.parse(req.params.symbol)));
-  });
-  app.get("/api/analytics/:symbol", async (req, res) => {
-    z.strictObject({}).parse(req.query);
-    const symbol = symbolSchema.parse(req.params.symbol);
-    const origin = req.get("Origin");
-    const localOrigin = !origin || localHost(new URL(origin).hostname);
-    if (
-      config.NODE_ENV === "production" ||
-      config.ANALYTICS_LAB_ENABLED !== "true" ||
-      !localAddress(req.socket.remoteAddress) ||
-      !localHost(req.hostname) ||
-      !localOrigin
-    ) {
-      res.json({
-        symbol,
-        status: "disabled",
-        reason: "local_analytics_disabled",
-        report: null,
-      });
-      return;
-    }
-    res.setHeader("Cache-Control", "private, no-store");
-    res.json(await analytics.read(symbol));
   });
   // Optional private services do not intercept public market/prediction endpoints.
   const privatePaths = ["/api/auth", "/api/me", "/api/portfolios"];

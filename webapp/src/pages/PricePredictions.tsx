@@ -84,10 +84,7 @@ export function PricePredictions() {
           </p>
         </div>
       </div>
-      <p className="prediction-note">
-        Experimental predictions can be inaccurate. Historical model comparisons are available in
-        Analytics Lab.
-      </p>
+      <p className="prediction-note">Experimental predictions can be inaccurate.</p>
       <div className="prediction-grid">
         {assets.map((asset) => (
           <PredictionCard key={asset.symbol} symbol={asset.symbol} />

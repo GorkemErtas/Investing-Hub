@@ -4,11 +4,6 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./analytics": {
-      "types": "./analytics.ts",
-      "react-native": "./dist/analytics.js",
-      "default": "./dist/analytics.js"
-    },
     "./contracts": {
       "types": "./contracts.ts",
       "react-native": "./dist/contracts.js",

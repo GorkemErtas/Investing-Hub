@@ -72,7 +72,9 @@ describe("read-only local numeric predictions", () => {
     );
     expect(pkg.dependencies).not.toHaveProperty("@google/genai");
     expect(
-      Object.keys(parseConfig({})).some((key) => /GEMINI|FUTURE_/.test(key)),
+      Object.keys(parseConfig({})).some((key) =>
+        /GEMINI|FUTURE_|ANALYTICS/.test(key),
+      ),
     ).toBe(false);
   });
   it("serves every symbol's unchanged numeric forecast without inference, writes or external requests", async () => {
@@ -131,6 +133,7 @@ describe("read-only local numeric predictions", () => {
       "/api/future-analysis/BTCUSDT",
       "/api/future-analysis/BTCUSDT/review",
       "/api/research/BTCUSDT",
+      "/api/analytics/BTCUSDT",
       "/predict/lstm/BTC/1d",
     ]) {
       expect((await request(app).get(path)).status).toBe(404);
