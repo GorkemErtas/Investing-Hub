@@ -9,7 +9,7 @@ from contextlib import closing
 from pathlib import Path
 from unittest.mock import patch
 from daily import DailyLog, daily_status, MAX_LOGS
-from job_lock import job_lock, JobBusy
+from job_lock import job_lock
 from json_store import atomic_json
 from common import DAY_MS, digest
 from pipeline import main

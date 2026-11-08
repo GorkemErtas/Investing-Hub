@@ -1,8 +1,9 @@
 """Finite daily orchestration and bounded local operational records; no training."""
 import json
+from argparse import Namespace
 from pathlib import Path
 from uuid import uuid4
-from common import DAY_MS, SYMBOLS, canonical, latest_open, utc_ms
+from common import DAY_MS, ROOT, SYMBOLS, canonical, latest_open, load_config, utc_ms
 from job_lock import job_lock
 from publication import stamp, verify_predictions
 from store import Store
@@ -56,7 +57,7 @@ def daily_status(directory):
 
 def run_daily(args, operation, clock=utc_ms):
     started = clock()
-    log = DailyLog(args.log_directory, started)
+    log = DailyLog(args.log_directory or args.db.parent/'logs'/'daily', started)
     stage = 'lock'
     log.record('started', started)
     store = None
@@ -65,11 +66,18 @@ def run_daily(args, operation, clock=utc_ms):
             if not Path(args.db).is_file():
                 raise ValueError('existing_database_required')
             store = Store(args.db)
+            stage = 'configuration'
+            config = load_config(args.config)
+            if args.symbol or len(config['symbols']) != len(SYMBOLS) or set(config['symbols']) != set(SYMBOLS):
+                raise ValueError('Daily execution requires all eight symbols')
             for stage in ('sync', 'validate', 'reconcile', 'predict'):
                 if latest_open(clock()) != latest_open(started):
                     raise ValueError('utc_day_changed')
                 log.record('step_started', clock(), stage=stage)
-                result = operation(stage, store, clock(), lambda attempt: log.record('network_retry', clock(), attempt=attempt))
+                step = Namespace(**{**vars(args), 'command': stage, 'require_complete': True,
+                                    'start': None, 'legacy_dir': ROOT/'data'})
+                result = operation(step, store, config, clock(),
+                                   on_retry=lambda attempt: log.record('network_retry', clock(), attempt=attempt))
                 if stage in ('sync', 'validate', 'reconcile'):
                     # Keep per-symbol operational counts, without source content or private paths.
                     counts = [{key: row[key] for key in ('symbol', 'added', 'rows', 'reconciled') if key in row} for row in result]
