@@ -4,7 +4,10 @@ import { createApp } from "../src/app";
 import { parseConfig } from "../src/config";
 import type { MarketService } from "../src/market/service";
 
-const config = parseConfig({ NODE_ENV: "test" });
+const config = parseConfig({
+  NODE_ENV: "test",
+  PREDICTIONS_EXPORT_PATH: ".missing-test-predictions.json",
+});
 const market: MarketService = {
   markets: vi.fn(async () => ({
     data: [],
@@ -68,7 +71,7 @@ describe("guest API security and contracts", () => {
       400,
     );
   });
-  it("never presents an unvalidated prediction as a price", async () => {
+  it("returns an explicit unavailable state when no local forecast exists", async () => {
     const res = await request(createApp(config, market)).get(
       "/api/predictions/BTCUSDT",
     );
@@ -77,7 +80,7 @@ describe("guest API security and contracts", () => {
       symbol: "BTCUSDT",
       horizon: "1d",
       target: "next_daily_close",
-      status: "disabled_unvalidated",
+      status: "unavailable",
       predictedValue: null,
       modelVersion: null,
       sourceDataTimestamp: null,

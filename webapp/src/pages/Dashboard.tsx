@@ -106,21 +106,19 @@ export function Dashboard({
               <p className="muted padded">Movers appear when market data is available.</p>
             )}
           </section>
-          <section className="research-teaser">
-            <div className="research-icon">
+          <section className="prediction-teaser">
+            <div className="prediction-icon">
               <FlaskConical size={22} />
             </div>
-            <span className="pill">RESEARCH, WITH RIGOR</span>
+            <span className="pill">LOCAL PRICE ESTIMATES</span>
             <h2>
               Better questions.
               <br />
               Honest forecasts.
             </h2>
-            <p>
-              Explore an ML outlook, critical grounded review, scenarios and the evidence behind it.
-            </p>
-            <Link to={`/future-analysis?symbol=${symbol}`}>
-              Open Future Analysis <ArrowRight size={16} />
+            <p>See the next-day numeric forecast from the selected local model for each coin.</p>
+            <Link to={`/predictions?symbol=${symbol}`}>
+              Open Price Predictions <ArrowRight size={16} />
             </Link>
             <div className="teaser-grid" aria-hidden="true" />
           </section>

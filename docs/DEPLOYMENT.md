@@ -15,9 +15,9 @@ This builds `backend/Dockerfile` and `webapp/Dockerfile` with the root context. 
 
 Docker Desktop was unavailable during verification: Compose syntax validation is distinct from actual image build/container startup. Consult VERIFICATION for actual results.
 
-## Optional Future Analysis
+## Optional local prediction publication
 
-Default Compose enables neither paid Search nor ML publication. Python runs separately on persistent local disk. Configure read-only mounts for an explicitly generated ML JSON export and its matching SQLite database; registry changes revoke that export. If paid review is intentionally enabled, provide server-only credentials, project quotas/billing controls and an owned persistent accounting directory shared by one API host. Grounded reports are never mounted, persisted or redistributed. Nginx permits the backend's bounded review timeout; normal page loads make no paid calls. A crashed accounting lock requires verified operator recovery, without deleting usage counters. See [configuration and operational boundaries](FUTURE_ANALYSIS.md). No timer, provider spending or deployment was enabled here.
+Training/inference run separately in Python, never inside HTTP containers. Mount the already-generated `predictions.json` and matching SQLite database read-only and configure `PREDICTIONS_EXPORT_PATH` / `ML_DATABASE_PATH` to those paths. A database mutation invalidates the snapshot until `daily` (or an explicit `predict`) republishes. No numerical file means an explicit unavailable response. No external generative-AI key, consent flow or paid API service is required. See [local generation order](../ml/README.md). No deployment was performed by this refactor.
 
 ## Optional accounts
 
@@ -38,3 +38,7 @@ Do not deploy the old JavaScript backend alongside the new API: new decimal-stri
 ## Production native builds
 
 Run EAS from mobileapp with the full repository context. Production API URLs require HTTPS. Private values never belong in `EXPO_PUBLIC_*`. Verify Firebase client configuration for the owner's project. The inherited debug signing assignment was removed from the native release variant. Release artifacts remain unsigned until owner-managed signing is configured. iOS compilation requires macOS/Xcode and iOS Firebase configuration when push is enabled. No EAS build, app-store release, Docker deployment or public hosting was performed in this task.
+
+## Optional host daily job
+
+The Windows host can run the explicitly installed [daily task](DAILY_UPDATES.md) independently of Node, React and containers. It uses the repository `.venv`, current selected models and one local SQLite store. It is not installed by build/deployment/startup. Mount the publication directory and database read-only if using containers; replacing a single bind-mounted file atomically may leave a container on the previous inode, so mount the directory. Restart/reconfigure consumers after moving data paths. The installing Windows user must remain signed in and power/network policies must permit execution or catch-up. No deployment or scheduled-task installation was performed by this change.

@@ -1,3 +1,5 @@
+> Historical verification record. Current implementation, measured models and operating instructions are in [Price Predictions](PRICE_PREDICTIONS.md) and [the ML guide](../ml/README.md). Older commands below are not current procedures.
+
 # Dynamic ML lifecycle verification
 
 Run date: 2026-11-06, Windows/PowerShell, Python 3.13.14, Node 26.13.0. Work stayed on the current `main` branch. Initial implementation and verification left the changes unstaged. Separate commits and push follow the repository owner's subsequent explicit instruction. No branch switching, history rewriting, scheduler, remote job or deployment was enabled.
@@ -25,31 +27,31 @@ No tracked files were removed. Backend/web/mobile implementation, shared financi
 
 ## Executed checks and actual results
 
-| Command | Result |
-| --- | --- |
-| `.\.venv\Scripts\python.exe -m unittest discover -s ml -p 'test_*.py' -v` | **37 passed**, including the six original feature tests |
-| `.\.venv\Scripts\python.exe -m pip check` | No broken requirements |
-| `npm test` | **74 passed**: shared 27, backend 45, web 2 |
-| `npm run typecheck` | Passed shared/backend/web |
-| `npm run build` | Passed shared/backend/web production build |
-| `npm run lint` | Passed existing web lint |
-| `npm --prefix mobileapp run typecheck` | Passed |
-| `npm --prefix mobileapp test` | **3 passed** |
-| `npm run test:browser` | **4 passed**, including disabled forecast display and provider outage |
-| PowerShell AST parse of `ml/run.ps1` | Passed |
-| `powershell.exe -NoProfile -File .\ml\run.ps1 -Task Daily` / `-Task Weekly` | Both finite runs passed; logs written, no scheduler registration, no duplicate models/predictions |
-| `python ml/pipeline.py sync` | Real initial BTC/ETH history sync succeeded; 3,368 rows per pair |
-| `python ml/pipeline.py validate` | Both real datasets verified; no missing days/duplicates/anomalies |
-| `python ml/pipeline.py train` | **24 candidates registered**, all inactive; no historical candidate passed the complete quality gate |
-| Repeat `sync` | **0 added** for each pair, same dataset version, no network fetch needed |
-| Repeat `train` | **24 already_registered**, unchanged IDs/artifacts |
-| `python ml/pipeline.py predict --shadow-all` | **24 pending unvalidated shadow forecasts**, plus two disabled active-model results |
-| `python ml/pipeline.py reconcile` | **0 reconciled**, correctly waits for future target completion |
-| `python ml/pipeline.py status` | Passed; no active models; real local dataset/forecast state inspected |
-| `python ml/pipeline.py inspect-model --model-id ID` | Passed; complete registered candidate report inspected |
-| `python ml/pipeline.py evaluate --model-id ID` | Correctly ineligible: historical gate failed and zero completed prospective observations |
-| `python ml/pipeline.py backup --output ml/data/local-review-backup.sqlite3` | Consistent real-store backup created without changing the source database |
-| SQLite `PRAGMA integrity_check` | `ok` on real local store and test backup |
+| Command                                                                     | Result                                                                                               |
+| --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `.\.venv\Scripts\python.exe -m unittest discover -s ml -p 'test_*.py' -v`   | **37 passed**, including the six original feature tests                                              |
+| `.\.venv\Scripts\python.exe -m pip check`                                   | No broken requirements                                                                               |
+| `npm test`                                                                  | **74 passed**: shared 27, backend 45, web 2                                                          |
+| `npm run typecheck`                                                         | Passed shared/backend/web                                                                            |
+| `npm run build`                                                             | Passed shared/backend/web production build                                                           |
+| `npm run lint`                                                              | Passed existing web lint                                                                             |
+| `npm --prefix mobileapp run typecheck`                                      | Passed                                                                                               |
+| `npm --prefix mobileapp test`                                               | **3 passed**                                                                                         |
+| `npm run test:browser`                                                      | **4 passed**, including disabled forecast display and provider outage                                |
+| PowerShell AST parse of `ml/run.ps1`                                        | Passed                                                                                               |
+| `powershell.exe -NoProfile -File .\ml\run.ps1 -Task Daily` / `-Task Weekly` | Both finite runs passed; logs written, no scheduler registration, no duplicate models/predictions    |
+| `python ml/pipeline.py sync`                                                | Real initial BTC/ETH history sync succeeded; 3,368 rows per pair                                     |
+| `python ml/pipeline.py validate`                                            | Both real datasets verified; no missing days/duplicates/anomalies                                    |
+| `python ml/pipeline.py train`                                               | **24 candidates registered**, all inactive; no historical candidate passed the complete quality gate |
+| Repeat `sync`                                                               | **0 added** for each pair, same dataset version, no network fetch needed                             |
+| Repeat `train`                                                              | **24 already_registered**, unchanged IDs/artifacts                                                   |
+| `python ml/pipeline.py predict --shadow-all`                                | **24 pending unvalidated shadow forecasts**, plus two disabled active-model results                  |
+| `python ml/pipeline.py reconcile`                                           | **0 reconciled**, correctly waits for future target completion                                       |
+| `python ml/pipeline.py status`                                              | Passed; no active models; real local dataset/forecast state inspected                                |
+| `python ml/pipeline.py inspect-model --model-id ID`                         | Passed; complete registered candidate report inspected                                               |
+| `python ml/pipeline.py evaluate --model-id ID`                              | Correctly ineligible: historical gate failed and zero completed prospective observations             |
+| `python ml/pipeline.py backup --output ml/data/local-review-backup.sqlite3` | Consistent real-store backup created without changing the source database                            |
+| SQLite `PRAGMA integrity_check`                                             | `ok` on real local store and test backup                                                             |
 
 The Python suite covers exact UTC/millisecond completion, units (milliseconds/microseconds), mixed/fractional timestamp rejection, missing-day repair, repeated/restarted sync, outage/corruption/partial-download rollback, conflicting records, manifest/data tampering, legacy checksum import, chronological purging/window modes, training-only scaler fitting, independent reproducibility, numeric sklearn parity for all algorithms, cyclic artifact rejection, disabled/candidate status, prospective metrics, baseline/incumbent gates, explicit approval/promotion, historical failure despite good prospective scores, pending target preservation, retained failed/rejected forecasts, source availability, rollback age/checksum/prior-approval checks, transaction failure recovery and safe backups.
 

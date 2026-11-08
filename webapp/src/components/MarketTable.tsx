@@ -143,8 +143,8 @@ export function MarketTable({
                     </div>
                   </td>
                   <td>
-                    <Link className="text-button" to={`/future-analysis?symbol=${m.symbol}`}>
-                      Future Analysis <span aria-hidden="true">↗</span>
+                    <Link className="text-button" to={`/predictions?symbol=${m.symbol}`}>
+                      Price Predictions <span aria-hidden="true">↗</span>
                     </Link>
                   </td>
                 </tr>

@@ -65,6 +65,18 @@ def fingerprint(frame: pd.DataFrame) -> str:
 
 
 class Store:
+    @classmethod
+    def readonly(cls, path: Path | str):
+        """Reuse verification/query methods without schema writes or file creation."""
+        instance = cls.__new__(cls)
+        instance.db = sqlite3.connect(Path(path).resolve().as_uri() + '?mode=ro', uri=True, timeout=5)
+        instance.db.row_factory = sqlite3.Row
+        instance.db.execute('PRAGMA query_only=ON')
+        if instance.db.execute('PRAGMA user_version').fetchone()[0] != 1:
+            instance.close()
+            raise ValueError('Unsupported database schema')
+        return instance
+
     def __init__(self, path: Path | str):
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -111,19 +123,18 @@ class Store:
         meta = self.dataset(symbol)
         if meta is None or fingerprint(frame) != meta['fingerprint']:
             raise ValueError(f'{symbol}: dataset fingerprint mismatch or absent provenance')
-        frame, quality = validate_candles(frame, now_ms=now)
-        # Verify each row has an attributable source; foreign keys alone do not
-        # cover offline edits made with another tool's foreign_keys disabled.
-        sources = self.db.execute(
-            'SELECT DISTINCT s.id,s.metadata,s.retrieved_at,s.symbol FROM candles c LEFT JOIN sources s ON s.id=c.source_id '
-            'WHERE c.symbol=?', (symbol,)).fetchall()
-        for source in sources:
-            if source['id'] is None or digest(source['metadata'].encode()) != source['id']:
-                raise ValueError('Source provenance integrity mismatch')
-            if source['symbol'] != symbol or json.loads(source['metadata'])['retrieved_at'] != source['retrieved_at']:
-                raise ValueError('Source symbol/retrieval metadata mismatch')
-        if sorted(r['id'] for r in sources) != meta['source_ids']:
+        sources = self.candle_sources(symbol)
+        identities = [r[0] for r in self.db.execute('SELECT DISTINCT source_id FROM candles WHERE symbol=? ORDER BY source_id', (symbol,))]
+        if identities != meta['source_ids']:
             raise ValueError('Dataset source manifest mismatch')
+        frame, quality = validate_candles(frame, now_ms=now, symbol=symbol, sources=sources)
+        review = quality.get('anomaly_reviews')
+        recorded = meta.get('anomaly_reviews')
+        if review or recorded:
+            if (not review or not recorded or recorded.get('policy_version') != 1 or
+                    not isinstance(recorded.get('policy_sha256'), str) or len(recorded['policy_sha256']) != 64 or
+                    recorded.get('approved') != review['approved']):
+                raise ValueError(f'{symbol}: historical anomaly review audit mismatch')
         boundary = meta.get('history_boundary')
         if boundary and (boundary['first_open'] % 86400000 or boundary['first_open'] > int(frame.open_time.min()) or
                          boundary['source']['kind'] != 'listing_boundary' or
@@ -132,8 +143,27 @@ class Store:
             raise ValueError('Invalid evidenced history boundary')
         return frame, meta, quality
 
+    def candle_sources(self, symbol: str):
+        """Verified attribution by UTC opening, shared with revalidation/training."""
+        symbol_check(symbol)
+        rows = self.db.execute(
+            'SELECT c.open_time,s.id,s.metadata,s.retrieved_at,s.symbol FROM candles c '
+            'LEFT JOIN sources s ON s.id=c.source_id WHERE c.symbol=?', (symbol,)).fetchall()
+        verified, result = {}, {}
+        for row in rows:
+            identity = row['id']
+            if identity not in verified:
+                if identity is None or digest(row['metadata'].encode()) != identity:
+                    raise ValueError('Source provenance integrity mismatch')
+                source = json.loads(row['metadata'])
+                if row['symbol'] != symbol or source['retrieved_at'] != row['retrieved_at']:
+                    raise ValueError('Source symbol/retrieval metadata mismatch')
+                verified[identity] = source
+            result[int(row['open_time'])] = verified[identity]
+        return result
+
     def save_candles(self, symbol: str, frame: pd.DataFrame, sources: list[dict],
-                     source_for_open: dict[int, str], now: int, history_boundary=None):
+                     source_for_open: dict[int, str], now: int, history_boundary=None, validation_quality=None):
         """Caller holds transaction; never overwrite a conflicting verified row."""
         for source in sources:
             content = canonical(source)
@@ -161,6 +191,8 @@ class Store:
                 'rows': len(complete), 'start': int(complete.open_time.min()),
                 'end': int(complete.close_time.max()), 'created_at': now, 'source_ids': source_ids,
                 'parent': previous['fingerprint'] if previous else None}
+        if validation_quality and validation_quality.get('anomaly_reviews'):
+            meta['anomaly_reviews'] = validation_quality['anomaly_reviews']
         if history_boundary:
             meta['history_boundary'] = history_boundary
         elif previous and previous.get('history_boundary'):

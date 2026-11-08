@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+import math
 
 from common import COLUMNS, DAY_MS, utc_ms
 
@@ -13,7 +14,9 @@ FEATURE_VERSION = 'daily-past-only-v2'
 
 
 def validate_candles(raw: pd.DataFrame, max_return: float = 0.8,
-                     now_ms: int | None = None) -> tuple[pd.DataFrame, dict]:
+                     now_ms: int | None = None, *, symbol=None, sources=None) -> tuple[pd.DataFrame, dict]:
+    if not math.isfinite(max_return) or not 0 < max_return <= 0.8:
+        raise ValueError('Daily-return threshold must be positive and at most 80%; use exact anomaly reviews')
     required = COLUMNS
     if not set(required).issubset(raw):
         raise ValueError('Missing OHLCV columns')
@@ -41,13 +44,19 @@ def validate_candles(raw: pd.DataFrame, max_return: float = 0.8,
     if ((frame.low > prices[['open', 'close']].min(axis=1)) | (frame.high < prices[['open', 'close']].max(axis=1))).any():
         raise ValueError('Invalid OHLC range')
     daily_return = frame.close.pct_change(fill_method=None)
-    if (daily_return.abs() > max_return).any():
-        raise ValueError('Extreme daily return requires manual source review; no silent clipping')
+    extremes = frame.index[daily_return.abs() > max_return].tolist()
+    review = None
+    if extremes:
+        from anomaly_reviews import review_extremes
+        review = review_extremes(frame, extremes, symbol, sources)
     gaps = int((frame.open_time.diff().dropna() != DAY_MS).sum())
     frame['segment'] = frame.open_time.diff().ne(DAY_MS).cumsum()
     missing = int(((frame.open_time.diff().dropna() // DAY_MS) - 1).clip(lower=0).sum())
-    return frame, {'rows': len(frame), 'gap_boundaries': gaps, 'missing_days': missing, 'duplicates': 0,
-                   'anomalies': 0, 'policy': 'Reject malformed/anomalous data; break windows at gaps, never fill prices.'}
+    quality = {'rows': len(frame), 'gap_boundaries': gaps, 'missing_days': missing, 'duplicates': 0,
+               'anomalies': len(extremes), 'policy': 'Reject unreviewed extremes; exact reviewed observations retain original prices; break windows at gaps.'}
+    if review:
+        quality['anomaly_reviews'] = review
+    return frame, quality
 
 
 def feature_frame(frame: pd.DataFrame) -> pd.DataFrame:
@@ -78,8 +87,8 @@ def feature_frame(frame: pd.DataFrame) -> pd.DataFrame:
     return pd.concat(parts).sort_index().replace([np.inf, -np.inf], np.nan)
 
 
-def prepare(raw: pd.DataFrame, max_return: float = 0.8, now_ms: int | None = None):
-    frame, quality = validate_candles(raw, max_return, now_ms)
+def prepare(raw: pd.DataFrame, max_return: float = 0.8, now_ms: int | None = None, *, symbol=None, sources=None):
+    frame, quality = validate_candles(raw, max_return, now_ms, symbol=symbol, sources=sources)
     data = feature_frame(frame).dropna(subset=FEATURES + ['target', 'target_time'])
     quality['usable_samples'] = len(data)
     quality['excluded_warmup_or_gap_samples'] = len(frame) - len(data)

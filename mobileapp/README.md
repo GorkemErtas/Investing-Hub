@@ -34,3 +34,7 @@ Public data is deduplicated; polling pauses on background/hidden tabs and screen
 `npm --prefix mobileapp run typecheck`, `npm --prefix mobileapp test`, `npm --prefix mobileapp run doctor`, `npm --prefix mobileapp run lint`, and `npm --prefix mobileapp run test:browser` (builds a separate fixture-only browser export).
 
 From mobileapp with a valid production URL: `npx expo export --platform android --output-dir dist-android`, or `--platform web --output-dir dist-web` for preview. Native validation: `android/gradlew.bat :app:assembleDebug --no-daemon --console=plain` on Windows. Bundle/export success does not prove native compilation or device behavior. See [actual verification and blockers](../docs/VERIFICATION.md).
+
+## Local numerical predictions
+
+The existing prediction client now accepts `experimental` numerical forecasts from `/api/predictions/:symbol`, with the model identity and target UTC timestamp. The detail view displays the unchanged USDT forecast and an experimental label; unavailable or expired forecasts never become placeholder prices. Training and inference remain offline Python operations. There is no generative-AI or research-review request. Existing authentication, settings, portfolio and notification contracts are unchanged.

@@ -35,9 +35,10 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 
 
 class Binance:
-    def __init__(self, opener=None, pause=time.sleep, clock=utc_ms):
+    def __init__(self, opener=None, pause=time.sleep, clock=utc_ms, on_retry=None):
         self.open = opener or urllib.request.build_opener(NoRedirect()).open
         self.pause, self.clock = pause, clock
+        self.on_retry = on_retry
 
     def download(self, url: str, archive: bool = False) -> bytes:
         parsed = urllib.parse.urlparse(url)
@@ -66,7 +67,9 @@ class Binance:
             except (TimeoutError, OSError, urllib.error.URLError) as error:
                 if attempt == 2:
                     raise ProviderError(f'Provider unavailable after 3 attempts: {type(error).__name__}') from None
-            log.warning('Transient provider failure; retry %s/2: %s', attempt + 1, url)
+            log.warning('Transient provider failure; retry %s/2', attempt + 1)
+            if self.on_retry:
+                self.on_retry(attempt + 1)
             self.pause(0.5 * 2**attempt)
         raise ProviderError('Provider download failed')
 

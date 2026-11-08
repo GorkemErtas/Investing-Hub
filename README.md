@@ -1,65 +1,69 @@
 # Investing Hub
 
-A modular monolith with a guest React web demo, an Expo mobile app, one TypeScript API, universal contracts/accounting, and an offline Python research pipeline. All trading is simulated. Market quotes are in **USDT**, not USD. Future Analysis publishes only explicitly exported, independently approved ML forecasts; no model is currently ready.
+A local ML cryptocurrency price prediction application with a modern React web interface, an Expo mobile client and one TypeScript API. All trading is simulated. Prices are in **USDT**.
 
-| Directory   | Responsibility                                                                                                |
-| ----------- | ------------------------------------------------------------------------------------------------------------- |
-| `webapp`    | Modern responsive dashboard, charts, guest portfolios, Learning Hub and one Future Analysis report            |
-| `mobileapp` | Expo Router screens, native app/assets, secure session and storage adapters                                   |
-| `backend`   | Public market/Future Analysis API and optional authenticated mobile services                                  |
-| `shared`    | Zod contracts, Decimal chronological ledger, analysis and typed HTTP client; no React/platform dependencies   |
-| `ml`        | Incremental daily datasets, offline training/registry, prospective forecast history and a quarantined archive |
-| `docs`      | Audit, architecture, endpoint migration, security and actual verification results                             |
+Price Predictions shows a numeric next-day closing estimate and target UTC date for BTC, ETH, SOL, BNB, XRP, ADA, DOGE and LINK. Models run locally in Python; the API only reads already-generated predictions. There is no generative AI service, paid review, news feed or research-report dependency.
 
-## Web and public API
+## Quick start
 
-Use Node 24 or 26 and npm. From the repository root:
+Node 24/26 and Python 3.13 are supported by the verified environment.
 
 ```powershell
 npm ci
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r ml/requirements.txt
+# Reuse the existing database. Sync downloads only missing completed daily candles.
+.\.venv\Scripts\python.exe ml/pipeline.py sync
+.\.venv\Scripts\python.exe ml/pipeline.py train
+.\.venv\Scripts\python.exe ml/pipeline.py select
+.\.venv\Scripts\python.exe ml/pipeline.py predict
 npm run dev
 ```
 
-Open `http://127.0.0.1:3000`. The web dev server proxies `/api` to the root backend on port 5000. The guest demo requires no account, MongoDB, SMTP, Firebase or paid API key. Guest portfolios stay in the browser under the existing `ih:*:v1` keys.
+Open the printed Vite URL, normally http://localhost:3000, then **Price Predictions**. Training can take several minutes on CPU. It is explicit and never runs in an HTTP handler. Daily updates use `powershell.exe -NoProfile -File ml/run.ps1 -Task Daily` without training or model selection. Refresh models only when you explicitly choose to. `status` and `evaluate` inspect frozen results without retraining.
 
-Run independently in two terminals with `npm run dev:api` and `npm run dev:web`. For production: `npm run build`, then `npm start -w backend`; serve `webapp/dist` with the documented reverse proxy. `npm run dev:web` alone still needs a running API for live quotes.
+The default SQLite database is `ml/data/lifecycle.sqlite3`; the single publication is `ml/data/predictions.json`. Override the CLI database with `--db` or `INVESTING_HUB_ML_DB`; point the backend's `ML_DATABASE_PATH` and `PREDICTIONS_EXPORT_PATH` at the matching files. Missing, stale or corrupt inputs produce an explicit unavailable state, never a placeholder price. Existing datasets, historical experiment records and archived artifacts are preserved.
 
-## Mobile
-
-The Expo SDK 53 install is intentionally isolated from the web workspace, so native React 19.0 does not resolve the web's newer React installation. First install/build shared code with the root instructions, then:
+## Optional daily updates
 
 ```powershell
-npm --prefix mobileapp ci
-Copy-Item mobileapp/.env.example mobileapp/.env.local
-# Edit EXPO_PUBLIC_API_URL for your emulator/device/backend.
-npm --prefix mobileapp start
+powershell.exe -NoProfile -File .\ml\run.ps1 -Task Daily
+powershell.exe -NoProfile -File .\ml\schedule.ps1 -Action Install
+powershell.exe -NoProfile -File .\ml\schedule.ps1 -Action Status
+powershell.exe -NoProfile -File .\ml\schedule.ps1 -Action Uninstall
 ```
 
-Use `http://10.0.2.2:5000` for the Android emulator, your computer's LAN origin for a physical device, and HTTPS for a production build. The app validates the URL. Run a native development build with `npm --prefix mobileapp run android`; Firebase native modules require a development build rather than Expo Go. Public mobile market/learning screens work without account services. See [mobile setup](mobileapp/README.md) for account, EAS, native and notification requirements.
+The opt-in Windows task runs at 03:15 Europe/Istanbul / 00:15 UTC without application servers, daily training or reselection. The installing user must stay signed in; the computer must run or resume. See [daily updates, logs, recovery and backups](docs/DAILY_UPDATES.md).
 
-## Future Analysis
+## Models and evaluation
 
-Future Analysis combines an ML forecast with a critical Gemini review of that exact evidence and current Google Search context in one report. All eight shared assets are selectable, with direct dashboard links. Python remains the sole numerical authority; chronological residual calibration and existing historical/prospective gates control publication. Missing or unapproved ML stays unavailable. Gemini Search is disabled by default and runs only after explicit user consent, without shared grounded-result caching. No paid live calls, model approvals, publication jobs or deployments were enabled. See [setup, architecture, costs and source presentation](docs/FUTURE_ANALYSIS.md) and [verification/readiness](docs/FUTURE_VERIFICATION.md).
+Ridge, Random Forest, Gradient Boosting and a trainable CPU PyTorch LSTM use the same next-day return target and chronological evaluation days for each coin. Three selection folds precede a separate final evaluation period. Selection minimizes out-of-sample price RMSE; candidates within 0.5% of the best error prefer the fixed simplicity order. A model does not need to beat the no-change baseline to produce an experimental forecast. No approval, promotion or predictive-quality threshold exists.
 
-## Optional mobile accounts
+Features are past-only, labels are purged at boundaries, and scalers fit training inputs only. Numeric JSON artifacts are checksum-verified and tested against training-library inference. Historical performance does not establish future reliability. See [methodology, commands and safeguards](ml/README.md) and [actual eight-coin measurements](docs/PRICE_PREDICTIONS.md).
 
-Set a private `MONGO_URI` and a strong `JWT_SECRET` of at least 32 random bytes in the backend process environment. Nothing loads historical `.env` files automatically. Use [backend configuration](backend/README.md) and its safe example. Registration additionally requires SMTP; existing verified users can log in without it. Firebase delivery and price-alert polling are separately opt-in.
+## Retained application features
 
-The API keeps the existing `users`, `portfolios` and `settings` collections. Existing bcrypt hashes, ownership IDs and transaction field names are read compatibly; no database records are deleted or migrated automatically. Private requests authenticate the caller and constrain every operation to their ownership. Mongo failure does not stop public market data.
+- Market dashboard, public Binance quotes, real OHLCV charts and technical levels.
+- Simulated portfolios, fees, history replay and existing browser storage.
+- Learning Hub, themes and responsive navigation.
+- Existing optional mobile account, portfolio and notification services. The shared `/api/predictions/:symbol` response retains familiar numeric/timestamp fields and adds experimental availability.
+
+`/predictions` is the single web prediction page. Old `/future-analysis` bookmarks redirect there; `/research` and all review APIs are removed. Existing mobile/market/account endpoints remain supported. No deployment or scheduled task is installed automatically.
 
 ## Verification
 
+See [final MVP verification](docs/MVP_VERIFICATION.md) for the actual results and operational limits.
+
 ```powershell
-npm run build
-npm run typecheck
+.\.venv\Scripts\python.exe -m unittest discover -s ml -p 'test_*.py'
 npm test
+npm run typecheck
 npm run lint
+npm run build
 npm run test:browser
-npm --prefix mobileapp run typecheck
-npm --prefix mobileapp test
-npm --prefix mobileapp run doctor
+npm run check:mobile
+npm run test:mobile
+npm --prefix mobileapp run test:browser
 ```
 
-Python setup, incremental sync, manual/weekly training, explicit model review, rollback and Windows scheduling are in [ml/README.md](ml/README.md). The lifecycle never automatically approves, exports or registers jobs; explicit eligible publication is consumed by Future Analysis, while the legacy mobile prediction route stays disabled. See its [architecture audit](docs/ML_LIFECYCLE.md) and [actual verification](docs/ML_VERIFICATION.md). Docker files use the root build context; `docker compose up --build` serves the guest web app on loopback port 8080 without Mongo. See [deployment](docs/DEPLOYMENT.md) before enabling mobile services or exposing a host publicly.
-
-Read [audit/plan](docs/MIGRATION_AUDIT.md), [architecture](docs/ARCHITECTURE.md), [every legacy endpoint](docs/API_COMPATIBILITY.md), [security](docs/SECURITY.md), [verification and remaining limitations](docs/VERIFICATION.md), and [review/staging groups](docs/REVIEW_GUIDE.md). Historical web-only reports are labeled under `docs/historical-web`.
+Read [architecture](docs/ARCHITECTURE.md), [API compatibility](docs/API_COMPATIBILITY.md), [security](docs/SECURITY.md), [mobile setup](mobileapp/README.md) and [optional deployment notes](docs/DEPLOYMENT.md). Older experiment documents are historical records, not current operating instructions.

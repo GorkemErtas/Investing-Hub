@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
-import { NavLink, Route, Routes, useLocation } from 'react-router-dom';
+import { Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import {
   ArrowUpRight,
   BookOpen,
@@ -25,15 +25,15 @@ import { Notice, Skeleton } from './components/ui';
 
 const Dashboard = lazy(() => import('./pages/Dashboard').then((m) => ({ default: m.Dashboard })));
 const Portfolio = lazy(() => import('./pages/Portfolio').then((m) => ({ default: m.Portfolio })));
-const FutureAnalysis = lazy(() =>
-  import('./pages/FutureAnalysis').then((m) => ({ default: m.FutureAnalysis })),
+const PricePredictions = lazy(() =>
+  import('./pages/PricePredictions').then((m) => ({ default: m.PricePredictions })),
 );
 const Learn = lazy(() => import('./pages/Learn').then((m) => ({ default: m.Learn })));
 
 const nav = [
   { to: '/', label: 'Overview', icon: LayoutDashboard },
   { to: '/portfolio', label: 'Portfolio', icon: Wallet },
-  { to: '/future-analysis', label: 'Future Analysis', icon: FlaskConical },
+  { to: '/predictions', label: 'Price Predictions', icon: FlaskConical },
   { to: '/learn', label: 'Learning Hub', icon: BookOpen },
 ];
 function validatePortfolios(value: unknown) {
@@ -59,7 +59,7 @@ export default function App() {
   const location = useLocation();
   const active = nav.find(
     (item) =>
-      item.to === (location.pathname === '/research' ? '/future-analysis' : location.pathname),
+      item.to === (location.pathname === '/future-analysis' ? '/predictions' : location.pathname),
   );
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -148,7 +148,6 @@ export default function App() {
             >
               <item.icon size={19} />
               {item.label}
-              {item.to === '/future-analysis' && <span className="nav-beta">LAB</span>}
             </NavLink>
           ))}
         </nav>
@@ -243,8 +242,8 @@ export default function App() {
                   />
                 }
               />
-              <Route path="/future-analysis" element={<FutureAnalysis />} />
-              <Route path="/research" element={<FutureAnalysis />} />
+              <Route path="/predictions" element={<PricePredictions />} />
+              <Route path="/future-analysis" element={<Navigate to="/predictions" replace />} />
               <Route path="/learn" element={<Learn />} />
               <Route path="/learning-hub" element={<Learn />} />
               <Route

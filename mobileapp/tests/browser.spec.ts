@@ -1,4 +1,6 @@
 import { expect, test } from "@playwright/test";
+import { predictionFixture } from "../../shared/tests/predictions-fixtures";
+import type { Symbol } from "../../shared/contracts";
 test("mobile preview: markets, actual candles, accounts, owned portfolio and logout isolation", async ({
   page,
 }) => {
@@ -56,6 +58,10 @@ test("mobile preview: markets, actual candles, accounts, owned portfolio and log
   let privateCalls = 0;
   await page.route("https://api.example.invalid/api/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
+    if (path.startsWith("/api/predictions/"))
+      return route.fulfill({
+        json: predictionFixture(path.split("/").at(-1) as Symbol, Date.now()),
+      });
     if (path === "/api/markets")
       return route.fulfill({
         json: {
@@ -136,6 +142,11 @@ test("mobile preview: markets, actual candles, accounts, owned portfolio and log
   ).toBeVisible();
   await page.getByText("Candlestick", { exact: true }).click();
   await expect(page.getByText(/O 100 H 125 L 90 C 110 USDT/)).toBeVisible();
+  await page.getByText("Trade", { exact: true }).click();
+  await expect(
+    page.getByText("Experimental price prediction", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText(/USDT \/ Target UTC date/)).toBeVisible();
   await page.getByRole("tab", { name: /portfolio/i }).click();
   await expect(
     page.getByText("Log in to manage your private portfolios."),

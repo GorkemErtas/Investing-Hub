@@ -11,11 +11,9 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "start": "node dist/server.js",
-    "test": "vitest run",
-    "future:status": "tsx src/future/cli.ts status"
+    "test": "vitest run"
   },
   "dependencies": {
-    "@google/genai": "3.0.0",
     "@investing-hub/shared": "*",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",

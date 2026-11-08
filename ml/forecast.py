@@ -1,74 +1,61 @@
-"""Prospective predictions and delayed actual-value reconciliation."""
+"""One immutable next-day forecast from the objectively selected local model."""
 from __future__ import annotations
-
 import json
-
 import numpy as np
-
 from artifact import predict
 from common import DAY_MS, canonical, digest, latest_open
 from features import FEATURES, FEATURE_VERSION, feature_frame
-from train import metrics
-from calibration import price_interval
+from train import PIPELINE_VERSION, metrics
 
 
-def generate(store, symbol, config, now, model_id=None):
-    model = store.model(model_id) if model_id else store.active(symbol)
-    if model is None:
-        result = {'symbol': symbol, 'status': 'disabled_unvalidated', 'reason': 'No active approved local model'}
-        store.event('prediction_disabled', result, now)
-        return result
-    if model['symbol'] != symbol:
-        raise ValueError('Model symbol mismatch')
-    frame, dataset, quality = store.verified_frame(symbol, now)
-    latest = frame.iloc[-1]
-    source_time, reference = int(latest.close_time), float(latest.close)
-    target_time = source_time + DAY_MS
-    prediction_id = digest(canonical([symbol, model['id'], target_time]).encode())
-    previous = store.db.execute('SELECT * FROM predictions WHERE id=?', (prediction_id,)).fetchone()
-    if previous:
-        return dict(previous)
-    report = model['metadata']
-    status, reason, predicted_return, predicted_price = 'pending', None, None, None
+def generate(store, symbol, config, now):
     try:
-        if model['status'] in ('rejected', 'archived'):
-            status = 'rejected'
-            raise ValueError('Model status does not permit new forecasts')
-        if source_time - DAY_MS + 1 != latest_open(now) or quality['missing_days']:
-            raise ValueError('Dataset stale or has gaps')
-        if not source_time < now < target_time:
-            raise ValueError('Prediction must precede target close and follow source completion')
-        if report['trained_at'] > now or report['training_range']['target_end'] > source_time:
-            raise ValueError('Model contains data unavailable at forecast origin')
-        if now - report['trained_at'] > config['max_model_age_days'] * DAY_MS:
-            raise ValueError('Model has expired')
-        if report['feature_version'] != FEATURE_VERSION or report['feature_order'] != FEATURES:
-            raise ValueError('Feature contract mismatch')
-        # Backdating is not supported by the CLI. Tests inject a clock only.
-        source_available = store.db.execute(
-            'SELECT MAX(s.retrieved_at) FROM candles c JOIN sources s ON c.source_id=s.id WHERE c.symbol=?',
-            (symbol,)).fetchone()[0]
-        if source_available > now:
-            raise ValueError('Source had not been retrieved at forecast timestamp')
-        features = feature_frame(frame).iloc[[-1]][FEATURES]
-        predicted_return = float(predict(model['artifact'], features)[0])
-        predicted_price = reference * (1 + predicted_return)
-        if not np.isfinite(predicted_price) or predicted_price <= 0:
-            raise ValueError('Invalid model price output')
-    except (ValueError, KeyError, TypeError) as error:
-        status = 'rejected' if status == 'rejected' else 'failed'
-        reason = str(error)
-        predicted_return = predicted_price = None
-    details = {'dataset_fingerprint': dataset['fingerprint'], 'reason': reason,
-               'model_status_at_generation': model['status'],
-               'usage': 'offline_research_only' if model['status'] == 'active' else 'shadow_unvalidated',
-               'calibration': price_interval(report.get('interval_calibration'), reference, predicted_return)
-                              if predicted_return is not None else None}
-    store.db.execute('INSERT INTO predictions VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-                     (prediction_id, symbol, model['id'], now, source_time, target_time, reference,
-                      predicted_return, predicted_price, None, None, None, status, canonical(details)))
-    store.event('prediction', {'id': prediction_id, 'status': status, 'reason': reason}, now)
-    return dict(store.db.execute('SELECT * FROM predictions WHERE id=?', (prediction_id,)).fetchone())
+        model = store.active(symbol)
+        if not model or model['metadata'].get('pipeline_version') != PIPELINE_VERSION:
+            raise ValueError('no_selected_model')
+        frame, dataset, quality = store.verified_frame(symbol, now)
+        latest = frame.iloc[-1]
+        source, reference = int(latest.close_time), float(latest.close)
+        target = source+DAY_MS
+        meta = model['metadata']
+        if quality['missing_days'] or int(latest.open_time) != latest_open(now):
+            raise ValueError('dataset_stale_or_gapped')
+        if not source < now < target or meta['trained_at'] > now or meta['training_range']['target_end'] > source:
+            raise ValueError('invalid_forecast_chronology')
+        if meta['feature_version'] != FEATURE_VERSION or meta['feature_order'] != FEATURES:
+            raise ValueError('feature_contract_mismatch')
+        if not store.db.execute('SELECT 1 FROM dataset_versions WHERE symbol=? AND fingerprint=?', (symbol, meta['dataset_fingerprint'])).fetchone():
+            raise ValueError('training_dataset_version_missing')
+        retrieved = store.db.execute('SELECT MAX(s.retrieved_at) FROM candles c JOIN sources s ON c.source_id=s.id WHERE c.symbol=?', (symbol,)).fetchone()[0]
+        if retrieved > now:
+            raise ValueError('source_not_available_at_forecast')
+        features = feature_frame(frame).dropna(subset=FEATURES)[FEATURES]
+        if meta['algorithm'] == 'lstm':
+            lookback = json.loads(model['artifact'])['lookback']
+            x = features.iloc[-lookback:].to_numpy()[None, :, :]
+        else:
+            x = features.iloc[[-1]]
+        change = float(predict(model['artifact'], x)[0])
+        price = reference*(1+change)
+        if not np.isfinite(price) or price <= 0:
+            raise ValueError('invalid_model_output')
+        identity = digest(canonical([symbol, model['id'], target]).encode())
+        previous = store.db.execute('SELECT * FROM predictions WHERE id=?', (identity,)).fetchone()
+        if previous:
+            if previous['status'] not in ('pending', 'evaluated') or previous['predicted_price'] != price or previous['reference_price'] != reference:
+                raise ValueError('immutable_forecast_mismatch')
+            return dict(previous)
+        details = {'pipeline_version': PIPELINE_VERSION, 'dataset_fingerprint': dataset['fingerprint'],
+                   'model_status_at_generation': 'active', 'reason': None}
+        store.db.execute('INSERT INTO predictions VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+            (identity, symbol, model['id'], now, source, target, reference, change, price,
+             None, None, None, 'pending', canonical(details)))
+        store.event('prediction', {'id': identity, 'symbol': symbol, 'model_id': model['id']}, now)
+        return dict(store.db.execute('SELECT * FROM predictions WHERE id=?', (identity,)).fetchone())
+    except (ValueError, KeyError, TypeError, OverflowError) as error:
+        result = {'symbol': symbol, 'status': 'unavailable', 'reason': str(error)}
+        store.event('prediction_unavailable', result, now)
+        return result
 
 
 def forward_rows(store, model, now):

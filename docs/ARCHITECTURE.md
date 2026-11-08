@@ -10,17 +10,18 @@ flowchart LR
   Mobile --> Shared
   API --> Shared
   API --> Market[Binance public data]
-  Local --> Export[Explicit gated ML JSON publication]
+  Binance[Verified daily Binance OHLCV] --> SQLite[(Existing local SQLite)]
+  SQLite --> Local[Python features and chronological evaluation]
+  Local --> Select[Best model per coin: RF / GB / Ridge / LSTM]
+  Select --> Forecast[Local next-day inference]
+  Forecast --> Export[Single numerical predictions.json]
   Export --> API
-  API -. consented POST only .-> Gemini[Gemini critical review + Google Search]
-  Gemini --> Gate[Deterministic schema and provenance gate]
-  Gate --> Private[Initiating report view only: no shared result cache]
   API -. optional .-> Mongo[(Existing MongoDB)]
   API -. optional .-> Mail[SMTP verification]
   API -. optional .-> FCM[Firebase delivery]
-  Binance[Binance official archives / completed UTC daily klines] --> CLI[ml: finite Python CLI jobs]
-  CLI --> Local[(Local SQLite datasets / registry / forecast ledger)]
-  CLI --> Reports[Development selection / prospective shadow evaluation]
+  Task[Opt-in Windows daily task at 00:15 UTC] --> Daily[Existing CLI: sync / validate / reconcile / predict / verify]
+  Daily --> SQLite
+  Daily --> Forecast
 ```
 
 ## Boundaries
@@ -29,11 +30,13 @@ flowchart LR
 - `backend/src/market` is the retained modern provider/cache/service implementation. The provider hostname is fixed, symbols/intervals allowlisted, candle UTC boundaries validated, and publication/fetch times distinguished. Cache TTL, stale limit, request deduplication, cold-failure backoff, provider concurrency/rate cooldown and request budgets bound costs.
 - `backend/src/mobile` contains authenticated account, owned portfolio, settings, Mongo and notification services. Repository injection makes HTTP/service authorization and failure behavior testable without Mongo. Queries carry both owner and resource ID. Full-history validation and Mongo version predicates protect trade updates. Public routes do not read Mongo or send mail/push.
 - `backend/src/app.ts` owns HTTP policy, validation and sanitized errors. `server.ts` owns environment composition and lifecycle. No active `server.js`, nested backend, ONNX runtime or public force-refresh endpoint remains.
-- `backend/src/future` separates read-only ML export validation, Gemini grounded critical review, deterministic review gates, orchestration and durable accounting. GETs never spend or return grounded results. A consented POST sends server-validated ML/evaluation evidence, validates original grounding spans, identifiers and numeric parity, preserves conflicts and returns the report only to that request. Search output, sources and suggestions are never persisted or shared by symbol; only counters/cooldowns/safe diagnostics persist. See [Future Analysis](FUTURE_ANALYSIS.md).
-- `webapp/src/pages/FutureAnalysis.tsx` presents one report for all shared assets with ML-only prices, interval and direction, critical review, qualitative scenarios, monitoring guidance, source links and original sandboxed Search Suggestions. GET state uses React Query; the paid report remains component-local and clears on navigation/coin changes.
+- `backend/src/predictions` reads the single checksum/schema/registry-stamped numerical publication. It does not load models, invoke Python or contact a generative AI service. Missing/expired/corrupt forecasts are explicitly unavailable.
+- `webapp/src/pages/PricePredictions.tsx` displays all eight numerical next-day USDT forecasts, target UTC dates and experimental labels. It has no research report, narrative, source iframe, consent or paid action.
 - `webapp` retains browser-only guest transactions and the existing storage keys. It consumes shared accounting/contracts without requiring mobile account infrastructure.
-- `mobileapp` owns native navigation, platform APIs and secure-token/preferences adapters. Its typed client validates contracts, scopes private data to the session and pauses polling in the background. Existing market, portfolio, authentication and disabled prediction contracts remain compatible.
-- `ml` owns completed UTC daily datasets, offline training, the registry, prospective ledger and chronological OOS residual calibration. Approval/promotion stays explicit. A separate export emits eligible active-origin forecasts atomically under the registry lock. Backend reads never load a model or spawn Python. The legacy mobile prediction endpoint stays disabled; Future Analysis consumes only the gated export. Historical artifacts remain quarantined. See [ML boundaries](ML_LIFECYCLE.md).
+- `mobileapp` owns native navigation, platform APIs and secure-token/preferences adapters. Its typed client validates contracts, scopes private data to the session and pauses polling in the background. Existing market, portfolio and authentication contracts remain compatible; the prediction contract supports numeric experimental values and explicit unavailability.
+- `ml` owns completed UTC datasets, shared past-only features, comparable chronological training/evaluation, deterministic per-coin selection and the existing immutable forecast ledger. Ridge/Random Forest/Gradient Boosting and a CPU PyTorch LSTM are real candidates. `predict` publishes one numerical snapshot. No performance approval gates or duplicate publication paths exist. Historical artifacts/records are preserved; see [methodology](../ml/README.md).
+
+`ml/daily.py` orchestrates the existing CLI operations under the same database file lock as manual writes. Generic checksum-protected atomic JSON lives in `ml/json_store.py`. The optional PowerShell scheduler contains no models or duplicate inference path; it invokes the repository virtualenv using absolute paths. Internal evaluation stays in SQLite and the `evaluate` CLI. [Daily operations](DAILY_UPDATES.md) documents UTC scheduling, bounded execution/logging and recovery.
 
 ## Package/build strategy
 

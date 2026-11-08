@@ -1,190 +1,136 @@
-"""Independent lifecycle CLI. No API server, scheduler registration or deployment."""
+"""Explicit local CLI: sync, train/evaluate, select, predict and inspect."""
 from __future__ import annotations
-
 import argparse
 import json
 import logging
 import os
-import sys
+import sqlite3
+from argparse import Namespace
+from contextlib import nullcontext
 from pathlib import Path
-
-from common import ROOT, SYMBOLS, canonical, day, latest_open, load_config, utc_ms
+from common import ROOT, SYMBOLS, day, load_config, utc_ms, latest_open
+from job_lock import job_lock
 from forecast import generate, reconcile
 from ingestion import import_legacy, sync
 from provider import Binance
-from registry import approve, evaluate, promote, reject, rollback
+from publication import export_predictions
 from store import Store
-from train import train_models
+from train import train_models, select_best, PIPELINE_VERSION
 
 
 def parser():
     result = argparse.ArgumentParser(description=__doc__)
     commands = result.add_subparsers(dest='command', required=True)
-    for name in ('sync', 'validate', 'train', 'evaluate', 'approve', 'promote', 'reject',
-                 'rollback', 'predict', 'reconcile', 'status', 'inspect-model', 'daily', 'weekly', 'backup', 'export-analysis'):
+    for name in ('sync','validate','train','evaluate','select','predict','reconcile','status','daily','daily-status','backup'):
         command = commands.add_parser(name)
-        command.add_argument('--db', type=Path, default=Path(os.environ.get(
-            'INVESTING_HUB_ML_DB', ROOT / 'data' / 'lifecycle.sqlite3')))
-        command.add_argument('--config', type=Path, default=ROOT / 'config.json')
+        command.add_argument('--db', type=Path, default=Path(os.environ.get('INVESTING_HUB_ML_DB', ROOT/'data'/'lifecycle.sqlite3')))
+        command.add_argument('--config', type=Path, default=ROOT/'config.json')
         command.add_argument('--symbol', choices=SYMBOLS)
-        if name in ('sync', 'daily', 'weekly'):
-            command.add_argument('--start', help='UTC YYYY-MM-DD; defaults to configured history start')
-            command.add_argument('--legacy-dir', type=Path, default=ROOT / 'data')
-        if name in ('evaluate', 'approve', 'promote', 'reject', 'rollback', 'inspect-model'):
-            command.add_argument('--model-id', required=True)
-        if name in ('reject', 'rollback'):
-            command.add_argument('--reason', required=True)
-        if name == 'predict':
-            choice = command.add_mutually_exclusive_group()
-            choice.add_argument('--model-id', help='Explicit candidate shadow forecast, never public/trusted')
-            choice.add_argument('--shadow-all', action='store_true', help='Forecast all nonexpired candidate/approved models')
-        if name == 'backup':
-            command.add_argument('--output', type=Path, required=True)
-        if name == 'export-analysis':
-            command.add_argument('--output', type=Path, default=ROOT / 'data' / 'future-forecasts.json')
+        if name == 'sync':
+            command.add_argument('--start')
+            command.add_argument('--legacy-dir', type=Path, default=ROOT/'data')
+        if name in ('predict','daily','backup'):
+            command.add_argument('--output', type=Path, default=ROOT/'data'/'predictions.json' if name!='backup' else None, required=name=='backup')
+        if name in ('daily','daily-status'):
+            command.add_argument('--log-directory', type=Path)
     return result
 
 
 def inspect_status(store, symbols, config, now):
-    datasets = []
+    datasets=[]
     for symbol in symbols:
-        metadata = store.dataset(symbol)
-        if metadata:
-            frame, _, quality = store.verified_frame(symbol, now)
-            datasets.append({'symbol': symbol, 'dataset': metadata, 'quality': quality,
-                             'current': int(frame.open_time.max()) == latest_open(now)})
-        else:
-            datasets.append({'symbol': symbol, 'status': 'not_synced'})
-    models = [{'id': r['id'], 'symbol': r['symbol'], 'status': r['status'],
-               'trained_at': r['metadata']['trained_at'],
-               'historical_pass': r['metadata']['historical_pass'],
-               'validation_rmse': r['metadata']['validation_metrics']['return_rmse'],
-               'no_change_rmse': r['metadata']['baseline_metrics']['return_rmse'],
-               'expired': now - r['metadata']['trained_at'] > config['max_model_age_days'] * 86400000}
-              for r in (store.model(row[0]) for row in store.db.execute('SELECT id FROM models').fetchall())
-              if r['symbol'] in symbols]
-    counts = [dict(r) for r in store.db.execute(
-        'SELECT symbol,status,COUNT(*) AS count FROM predictions GROUP BY symbol,status')]
-    performance = [{'model_id': r[0], 'through_time': r[1], 'metrics': json.loads(r[2])}
-                   for r in store.db.execute('SELECT * FROM performance ORDER BY through_time DESC LIMIT 20')]
-    events = [dict(r) for r in store.db.execute('SELECT * FROM events ORDER BY id DESC LIMIT 10')]
-    return {'as_of': now, 'datasets': datasets, 'models': models, 'predictions': counts,
-            'recent_performance': performance, 'recent_events': events,
-            'public_forecast_status': 'legacy route disabled; Future Analysis requires explicit eligible export-analysis'}
-
-
-def forecasts(store, symbols, config, now, model_id=None, shadow_all=False):
-    output = []
-    for symbol in symbols:
-        ids = [model_id] if model_id else [None]
-        if shadow_all:
-            ids += [r[0] for r in store.db.execute(
-                "SELECT id FROM models WHERE symbol=? AND status IN ('candidate','approved')", (symbol,))
-                if now - store.model(r[0])['metadata']['trained_at'] <= config['max_model_age_days'] * 86400000]
-        for identity in ids:
-            if identity and store.model(identity)['symbol'] != symbol:
-                if model_id:
-                    continue
-                raise ValueError('Shadow model symbol mismatch')
-            with store.transaction():
-                output.append(generate(store, symbol, config, now, identity))
-    return output
-
-
-def run(args, store, config, now):
-    symbols = [args.symbol] if args.symbol else config['symbols']
-    command = args.command
-    if command == 'export-analysis':
-        from publication import export_analysis
-        return export_analysis(store, args.db, args.output, config, now)
-    if command == 'inspect-model':
-        model = store.model(args.model_id)
-        return {'id': model['id'], 'status': model['status'], 'artifact_checksum': model['checksum'],
-                'report': model['metadata']}
-    if command == 'backup':
-        import sqlite3
-        if args.output.resolve() == args.db.resolve() or args.output.exists():
-            raise ValueError('Backup destination must be a new, separate file')
-        args.output.parent.mkdir(parents=True, exist_ok=True)
-        target = sqlite3.connect(args.output)
         try:
-            store.db.backup(target)
-        finally:
-            target.close()
-        return {'backup': str(args.output.resolve())}
-    if command in ('evaluate', 'approve', 'promote', 'reject', 'rollback'):
+            frame, metadata, quality = store.verified_frame(symbol, now)
+            datasets.append({'symbol':symbol,'rows':len(frame),'last_close':int(frame.close_time.max()),'fingerprint':metadata['fingerprint'],'missing_days':quality['missing_days']})
+        except ValueError as error:
+            datasets.append({'symbol':symbol,'status':'unavailable','reason':str(error)})
+    models=[]
+    for row in store.db.execute('SELECT id FROM models ORDER BY symbol,id').fetchall():
+        model=store.model(row[0]); meta=model['metadata']
+        if model['symbol'] in symbols and meta.get('pipeline_version') == PIPELINE_VERSION:
+            models.append({'symbol':model['symbol'],'model_id':model['id'],'selected':model['status']=='active',
+                'algorithm':meta['algorithm'],'trained_at':meta['trained_at'],'dataset_fingerprint':meta['dataset_fingerprint'],
+                'selection':meta['validation_metrics'],'final_evaluation':meta['final_evaluation']})
+    return {'as_of':now,'datasets':datasets,'models':models}
+
+
+def run(args, store, config, now, provider=None):
+    symbols=[args.symbol] if args.symbol else config['symbols']
+    if args.command=='backup':
+        if args.output.exists() or args.output.resolve()==args.db.resolve():
+            raise ValueError('Backup requires a new separate destination')
+        args.output.parent.mkdir(parents=True,exist_ok=True)
+        target=sqlite3.connect(args.output)
+        try: store.db.backup(target)
+        finally: target.close()
+        return {'backup':str(args.output.resolve())}
+    if args.command in ('status','evaluate'):
+        return inspect_status(store,symbols,config,now)
+    results=[]
+    if args.command=='sync':
+        provider=provider or Binance()
+        for symbol in symbols:
+            if not store.dataset(symbol): import_legacy(store,args.legacy_dir,symbol,now)
+            result=sync(store,provider,symbol,day(args.start or config['start_date']),now,config['max_absolute_daily_return'])
+            results.append({'symbol':symbol,'added':result['added'],'fingerprint':result['dataset']['fingerprint'],'rows':result['dataset']['rows']})
+        return results
+    for symbol in symbols:
         with store.transaction():
-            if command in ('reject', 'rollback'):
-                return (reject(store, args.model_id, args.reason, now) if command == 'reject' else
-                        rollback(store, args.model_id, config, now, args.reason))
-            return {'evaluate': evaluate, 'approve': approve, 'promote': promote}[command](
-                store, args.model_id, config, now)
-    output = []
-    if command in ('sync', 'daily', 'weekly'):
-        provider = Binance()
-        for symbol in symbols:
-            if not store.dataset(symbol):
-                import_legacy(store, args.legacy_dir, symbol, now)
-            output.append(sync(store, provider, symbol, day(args.start or config['start_date']),
-                               now, config['max_absolute_daily_return']))
-        if command == 'sync':
-            return output
-        now = utc_ms()
-    if command in ('validate', 'status'):
-        with store.transaction():
-            if command == 'status':
-                return inspect_status(store, symbols, config, now)
-            for symbol in symbols:
-                _, metadata, quality = store.verified_frame(symbol, now)
-                if quality['missing_days']:
-                    raise ValueError(f'{symbol}: {quality["missing_days"]} missing daily observations')
-                output.append({'symbol': symbol, 'dataset': metadata, 'quality': quality})
-            return output
-    if command in ('reconcile', 'daily', 'weekly'):
-        for symbol in symbols:
-            with store.transaction():
-                output.append(reconcile(store, symbol, now))
-    if command in ('train', 'weekly'):
-        for symbol in symbols:
-            with store.transaction():
-                output.extend(train_models(store, symbol, config, now))
-    if command in ('predict', 'daily', 'weekly'):
-        if command == 'weekly':
-            now = utc_ms()
-        output.extend(forecasts(store, symbols, config, now,
-                               getattr(args, 'model_id', None),
-                               getattr(args, 'shadow_all', command in ('daily', 'weekly'))))
-    return output
+            if args.command=='train': results.extend(train_models(store,symbol,config,now))
+            elif args.command=='select': results.append(select_best(store,symbol,config,now))
+            elif args.command=='predict': results.append(generate(store,symbol,config,now))
+            elif args.command=='reconcile': results.append(reconcile(store,symbol,now))
+            elif args.command=='validate':
+                frame,metadata,quality=store.verified_frame(symbol,now)
+                if quality['missing_days'] or int(frame.open_time.max()) != latest_open(now):
+                    raise ValueError('Current gap-free completed daily data required')
+                results.append({'symbol':symbol,'rows':len(frame),'quality':quality,'fingerprint':metadata['fingerprint']})
+    if args.command=='predict':
+        return export_predictions(store,args.db,args.output,utc_ms(),getattr(args,'require_complete',False))
+    return results
 
 
 def main(argv=None):
-    args = parser().parse_args(argv)
-    logging.basicConfig(level=logging.INFO, format='%(levelname)s %(name)s: %(message)s')
-    store = None
+    args=parser().parse_args(argv)
+    logging.basicConfig(level=logging.INFO,format='%(levelname)s %(name)s: %(message)s')
+    store=None
     try:
-        config = load_config(args.config)
-        store = Store(args.db)
-        now = utc_ms()
-        result = run(args, store, config, now)
-        print(json.dumps(result, indent=2, allow_nan=False))
-        if isinstance(result, dict) and result.get('eligible') is False and args.command in ('approve', 'promote'):
-            return 2
-        if isinstance(result, list) and any(r.get('status') in ('failed', 'rejected') for r in result):
-            return 2
+        if args.command=='daily-status':
+            from daily import daily_status
+            result=daily_status(args.log_directory or args.db.parent/'logs'/'daily')
+        else:
+            if not args.db.exists() and args.command not in ('sync','daily'):
+                raise ValueError('Existing database required; sync creates the initial dataset')
+            if args.command=='daily':
+                from daily import run_daily
+                args.log_directory=args.log_directory or args.db.parent/'logs'/'daily'
+                config=None
+                def operation(command, current_store, now, on_retry):
+                    nonlocal config
+                    if config is None:
+                        config=load_config(args.config)
+                        if args.symbol or len(config['symbols']) != len(SYMBOLS) or set(config['symbols']) != set(SYMBOLS):
+                            raise ValueError('Daily execution requires all eight symbols')
+                    step=Namespace(**{**vars(args),'command':command,'require_complete':True,
+                                      'start':None,'legacy_dir':ROOT/'data'})
+                    return run(step,current_store,config,now,Binance(on_retry=on_retry))
+                result=run_daily(args,operation,clock=utc_ms)
+            else:
+                config=load_config(args.config)
+                reading=args.command in ('status','evaluate','backup')
+                if args.command=='sync': args.db.parent.mkdir(parents=True,exist_ok=True)
+                with nullcontext() if reading else job_lock(args.db):
+                    store=Store.readonly(args.db) if reading else Store(args.db)
+                    result=run(args,store,config,utc_ms())
+        print(json.dumps(result,indent=2,allow_nan=False))
         return 0
     except Exception as error:
-        # Record a failed attempt outside the rolled-back work transaction.
-        if store is not None:
-            try:
-                store.event('command_failed', {'command': args.command, 'error': str(error)})
-            except Exception:
-                logging.exception('Could not persist failure audit event')
-        logging.error('%s failed: %s', args.command, error)
+        logging.error('%s failed: %s',args.command,
+                      type(error).__name__+'; inspect daily-status' if args.command=='daily' else error)
         return 1
     finally:
-        if store is not None:
-            store.close()
+        if store is not None: store.close()
 
 
-if __name__ == '__main__':
-    sys.exit(main())
+if __name__=='__main__':
+    raise SystemExit(main())

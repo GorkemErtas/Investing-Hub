@@ -7,15 +7,17 @@ import { intervalSchema, symbolSchema } from "@investing-hub/shared/contracts";
 import type { Config } from "./config.js";
 import { AppError } from "./errors.js";
 import { createMarketService, type MarketService } from "./market/service.js";
-import { predictionStatus } from "./predictions/service.js";
+import {
+  createPredictionReader,
+  type PredictionReader,
+} from "./predictions/service.js";
 import { createMobileRouter, type MobileModule } from "./mobile/routes.js";
-import { createFutureService, type FutureReader } from "./future/service.js";
 
 export function createApp(
   config: Config,
   market: MarketService = createMarketService(config),
   mobile?: MobileModule,
-  future: FutureReader = createFutureService(config),
+  predictions: PredictionReader = createPredictionReader(config),
 ) {
   const app = express();
   app.disable("x-powered-by");
@@ -73,33 +75,10 @@ export function createApp(
       .parse(req.query);
     res.json(await market.candles(symbol, interval));
   });
-  app.get("/api/predictions/:symbol", (req, res) => {
+  app.get("/api/predictions/:symbol", async (req, res) => {
     z.strictObject({}).parse(req.query);
-    res.json(predictionStatus(symbolSchema.parse(req.params.symbol)));
+    res.json(await predictions.read(symbolSchema.parse(req.params.symbol)));
   });
-  app.get("/api/future-analysis/:symbol", async (req, res) => {
-    z.strictObject({}).parse(req.query);
-    res.json(await future.read(symbolSchema.parse(req.params.symbol)));
-  });
-  app.post(
-    "/api/future-analysis/:symbol/review",
-    rateLimit({
-      windowMs: 3600000,
-      limit: 4,
-      standardHeaders: "draft-8",
-      legacyHeaders: false,
-    }),
-    async (req, res) => {
-      z.strictObject({}).parse(req.query);
-      const { requestId } = z
-        .strictObject({ allowPaid: z.literal(true), requestId: z.uuid() })
-        .parse(req.body);
-      res.setHeader("Cache-Control", "private, no-store");
-      res.json(
-        await future.review(symbolSchema.parse(req.params.symbol), requestId),
-      );
-    },
-  );
   // Optional private services do not intercept public market/prediction endpoints.
   const privatePaths = ["/api/auth", "/api/me", "/api/portfolios"];
   if (mobile) {

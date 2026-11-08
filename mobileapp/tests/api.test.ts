@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { predictionFixture } from "../../shared/tests/predictions-fixtures";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -12,28 +13,36 @@ const meta = {
   stale: false,
 };
 describe("mobile typed API and session adapter", () => {
+  it("accepts the numeric experimental forecast through the existing prediction API", async () => {
+    const fixture = predictionFixture("ETHUSDT", Date.now());
+    const fetcher = vi.fn<typeof fetch>(
+      async () => new Response(JSON.stringify(fixture)),
+    );
+    vi.stubGlobal("fetch", fetcher);
+    const { api } = await import("../services/api");
+    expect(await api.prediction("ETHUSDT")).toEqual(fixture);
+    expect(fetcher).toHaveBeenCalledOnce();
+  });
   it("deduplicates market calls made by multiple dashboard components and keeps the USDT contract", async () => {
-    const fetcher = vi
-      .fn<typeof fetch>()
-      .mockImplementation(
-        async () =>
-          new Response(
-            JSON.stringify({
-              data: [
-                {
-                  symbol: "BTCUSDT",
-                  price: 100,
-                  change24h: 2,
-                  quoteVolume: 10,
-                  high24h: 110,
-                  low24h: 90,
-                  sourceTime: meta.sourceTime,
-                },
-              ],
-              meta,
-            }),
-          ),
-      );
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(
+      async () =>
+        new Response(
+          JSON.stringify({
+            data: [
+              {
+                symbol: "BTCUSDT",
+                price: 100,
+                change24h: 2,
+                quoteVolume: 10,
+                high24h: 110,
+                low24h: 90,
+                sourceTime: meta.sourceTime,
+              },
+            ],
+            meta,
+          }),
+        ),
+    );
     vi.stubGlobal("fetch", fetcher);
     const { marketRows } = await import("../services/api");
     const [first, second] = await Promise.all([marketRows(), marketRows()]);
@@ -46,20 +55,18 @@ describe("mobile typed API and session adapter", () => {
     expect(second.meta.quoteCurrency).toBe("USDT");
   });
   it("notifies the auth provider on expired private sessions and uses memory-only tokens for browser preview", async () => {
-    const fetcher = vi
-      .fn<typeof fetch>()
-      .mockImplementation(
-        async () =>
-          new Response(
-            JSON.stringify({
-              error: {
-                code: "SESSION_EXPIRED",
-                message: "Please log in again.",
-              },
-            }),
-            { status: 401 },
-          ),
-      );
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(
+      async () =>
+        new Response(
+          JSON.stringify({
+            error: {
+              code: "SESSION_EXPIRED",
+              message: "Please log in again.",
+            },
+          }),
+          { status: 401 },
+        ),
+    );
     vi.stubGlobal("fetch", fetcher);
     const { tokenStore } = await import("../services/tokenStore");
     expect(await tokenStore.get()).toBeNull();
@@ -78,30 +85,28 @@ describe("mobile typed API and session adapter", () => {
   it("maps OHLCV without inventing open, high or low prices", async () => {
     vi.stubGlobal(
       "fetch",
-      vi
-        .fn<typeof fetch>()
-        .mockImplementation(
-          async () =>
-            new Response(
-              JSON.stringify({
-                symbol: "BTCUSDT",
-                interval: "1d",
-                meta,
-                data: [
-                  {
-                    openTime: 1704067200000,
-                    closeTime: 1704153599999,
-                    open: 100,
-                    high: 125,
-                    low: 90,
-                    close: 110,
-                    volume: 4,
-                    completed: true,
-                  },
-                ],
-              }),
-            ),
-        ),
+      vi.fn<typeof fetch>().mockImplementation(
+        async () =>
+          new Response(
+            JSON.stringify({
+              symbol: "BTCUSDT",
+              interval: "1d",
+              meta,
+              data: [
+                {
+                  openTime: 1704067200000,
+                  closeTime: 1704153599999,
+                  open: 100,
+                  high: 125,
+                  low: 90,
+                  close: 110,
+                  volume: 4,
+                  completed: true,
+                },
+              ],
+            }),
+          ),
+      ),
     );
     const { chartRows, intervalFor, symbolFor } =
       await import("../services/api");
