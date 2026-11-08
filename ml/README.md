@@ -16,13 +16,11 @@ python -m venv .venv
 .\.venv\Scripts\python.exe ml/pipeline.py select
 .\.venv\Scripts\python.exe ml/pipeline.py predict
 .\.venv\Scripts\python.exe ml/pipeline.py status
-# Optional local model/statistical dashboard export:
-.\.venv\Scripts\python.exe ml/pipeline.py analytics
 ```
 
-All commands accept `--db PATH`; the default is `INVESTING_HUB_ML_DB` or `ml/data/lifecycle.sqlite3`. `--symbol BTCUSDT` restricts training, synchronization, selection or generation. Publication always contains all eight symbols, with unavailable entries where needed. `predict --output PATH` selects the single publication destination. Backend `ML_DATABASE_PATH` and `PREDICTIONS_EXPORT_PATH` must match. Missing databases are not created by read commands. `ml/run.ps1 -Task Sync|Train|Select|Predict|Status` provides an explicitly invoked Windows wrapper with a process mutex; it registers no job.
+All commands accept `--db PATH`; the default is `INVESTING_HUB_ML_DB` or `ml/data/lifecycle.sqlite3`. `--symbol BTCUSDT` restricts training, synchronization, selection or generation. Publication always contains all eight symbols, with unavailable entries where needed. `predict --output PATH` selects the single publication destination. Backend `ML_DATABASE_PATH` and `PREDICTIONS_EXPORT_PATH` must match. Missing databases are not created by read commands. `ml/run.ps1 -Task Daily|Sync|Train|Select|Predict|Status` provides an explicitly invoked Windows wrapper. All mutating CLI jobs share one OS-released file lock per resolved database, including the entire daily sequence; the wrapper registers no task.
 
-For the next UTC day, run `sync` then `predict`. Existing selected models can predict newly verified data without retraining every day. Run `train` and `select` when refreshing models. Training/evaluation are one operation; `evaluate` reads the stored evaluation, while `select` applies the deterministic ranking without another fit. `reconcile` optionally appends realized outcomes to the existing ledger without changing original forecasts.
+For the next UTC day, run `powershell.exe -NoProfile -File ml/run.ps1 -Task Daily` (sync, validate freshness, reconcile, predict, publish and verify). Existing selected models can predict newly verified data without retraining every day. Run `train` and `select` when refreshing models. Training/evaluation are one operation; `evaluate` reads the stored evaluation, while `select` applies the deterministic ranking without another fit. `reconcile` optionally appends realized outcomes to the existing ledger without changing original forecasts.
 
 ## Evaluation and selection
 
@@ -34,7 +32,7 @@ Ridge uses a train-only StandardScaler and alpha 100. Random Forest uses one hun
 
 Selection uses aggregate **selection-fold price RMSE in USDT**, separately for each coin and comparison ID. Every candidate must have the same data/config/code/environment and evaluation plan. Candidates within a relative 0.5% of the smallest RMSE are treated as effectively equivalent and prefer Ridge, Gradient Boosting, Random Forest, then LSTM; model ID breaks any remaining tie. This tolerance chooses simplicity, not minimum quality. Final-period errors, baseline outperformance, fold wins, prospective sample counts and old registry labels are never selection gates.
 
-MAE/RMSE are stored in return fractions and price USDT, along with direction accuracy and an identical-date no-change baseline. Analytics Lab exposes selection and final-period results separately; the machine-readable run report includes every model and date boundary. The final period is excluded from this run's ranking but is previously inspected historical data, **not a pristine unseen benchmark**. No model is deemed reliable merely because it was selected. Cross-platform BLAS/PyTorch differences may prevent bit-identical reproduction even with fixed seeds and deterministic CPU algorithms; the recorded environment scopes reproducibility. See [PyTorch reproducibility](https://docs.pytorch.org/docs/stable/notes/randomness.html).
+MAE/RMSE are stored in return fractions and price USDT, along with direction accuracy and an identical-date no-change baseline. The internal `evaluate` CLI exposes selection and final-period results separately; the machine-readable run report includes every model and date boundary. The final period is excluded from this run's ranking but is previously inspected historical data, **not a pristine unseen benchmark**. No model is deemed reliable merely because it was selected. Cross-platform BLAS/PyTorch differences may prevent bit-identical reproduction even with fixed seeds and deterministic CPU algorithms; the recorded environment scopes reproducibility. See [PyTorch reproducibility](https://docs.pytorch.org/docs/stable/notes/randomness.html).
 
 ## Integrity, history and availability
 
@@ -51,3 +49,7 @@ Publication holds a SQLite writer reservation through the atomic JSON replacemen
 ```
 
 Tests cover actual trainable candidates for all eight synthetic assets, common chronological windows, scaler isolation, deterministic selection and LSTM weights, artifact parity/corruption, no future-feature leakage, explicit unavailable output, non-destructive source synchronization and the complete CLI. Actual market-data results and preserved-record checks are in [the measured run](../docs/PRICE_PREDICTIONS.md), with all 32 candidate measurements in the ignored `ml/data/price-predictions-verification.json`.
+
+## Daily operation
+
+Use `pipeline.py daily` or `powershell.exe -NoProfile -File ml/run.ps1 -Task Daily` for the complete daily sequence, without training/reselection. `daily-status` reads the most recent structured execution record. Explicit schedule installation, UTC timezone handling, bounded retries/retention, lock behavior, backup and safe restore commands are in [daily operations](../docs/DAILY_UPDATES.md). Scheduler installation is opt-in and never runs in tests or startup.

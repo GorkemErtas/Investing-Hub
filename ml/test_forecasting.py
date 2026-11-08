@@ -8,14 +8,14 @@ from pathlib import Path
 from unittest.mock import patch
 import numpy as np
 from artifact import predict
-from common import ROOT, SYMBOLS, canonical, digest
+from common import ROOT, SYMBOLS, DAY_MS, canonical, digest
 from features import FEATURES, prepare
 from forecast import generate
 from lstm import LSTMRegressor
 from pipeline import main
 from publication import export_predictions, prediction_result
 from store import Store
-from test_lifecycle import DatabaseTests, config, seed
+from test_lifecycle import DatabaseTests, FixtureProvider, config, seed
 from test_pipeline import candles
 from train import ALGORITHMS, evaluation_plan, sequence_data, select_best, train_models, training_slice, candidates
 
@@ -117,6 +117,81 @@ class ForecastWorkflowTests(DatabaseTests):
         self.assertEqual(len(report['forecasts']),8)
         self.assertTrue(all(f['status']=='experimental' for f in report['forecasts']))
         self.assertEqual(self.store.db.execute('SELECT COUNT(*) FROM models').fetchone()[0],32)
+
+    def daily_arguments(self):
+        cfg=Path(self.tmp.name)/'daily-config.json'
+        cfg.write_text(canonical({**self.cfg,'start_date':'2020-01-01'}),encoding='utf-8')
+        return ['daily','--db',str(self.path),'--config',str(cfg),'--output',str(Path(self.tmp.name)/'predictions.json')]
+
+    def test_daily_real_command_order_new_day_reconciliation_idempotence_and_model_preservation(self):
+        import pipeline
+        from daily import daily_status
+        from publication import verify_predictions
+        for symbol in SYMBOLS:
+            with self.store.transaction(): generate(self.store,symbol,self.cfg,self.now+1)
+        models=[tuple(row) for row in self.store.db.execute('SELECT * FROM models ORDER BY id')]
+        now=self.now+DAY_MS+900000
+        class EightSymbolProvider(FixtureProvider):
+            def recent(provider,symbol,start,end):
+                provider.frame=candles(701); provider.frame['volume']+=SYMBOLS.index(symbol)
+                return provider.batch('rest',start,end)
+        provider=EightSymbolProvider(candles(701),now)
+        commands=[]
+        original=pipeline.run
+        def observed(args,*values,**kwargs):
+            commands.append(args.command)
+            return original(args,*values,**kwargs)
+        with patch('pipeline.utc_ms',return_value=now),patch('pipeline.Binance',return_value=provider),patch('pipeline.run',side_effect=observed),patch('sys.stdout',new_callable=io.StringIO),patch('pipeline.train_models',side_effect=AssertionError('No daily training')),patch('pipeline.select_best',side_effect=AssertionError('No daily selection')):
+            self.assertEqual(main(self.daily_arguments()),0)
+            fetched=len(provider.calls)
+            self.assertEqual(main(self.daily_arguments()),0)
+            self.assertEqual(len(provider.calls),fetched)
+        self.assertEqual(commands,['sync','validate','reconcile','predict']*2)
+        self.assertEqual(models,[tuple(row) for row in self.store.db.execute('SELECT * FROM models ORDER BY id')])
+        self.assertEqual(self.store.db.execute("SELECT COUNT(*) FROM predictions WHERE status='evaluated'").fetchone()[0],8)
+        self.assertEqual(self.store.db.execute("SELECT COUNT(*) FROM predictions WHERE status='pending'").fetchone()[0],8)
+        self.assertEqual(verify_predictions(self.store,self.path,Path(self.tmp.name)/'predictions.json',now)['valid_forecasts'],8)
+        result=daily_status(Path(self.tmp.name)/'logs'/'daily')
+        self.assertEqual(result['status'],'success')
+        self.assertEqual(result['lastEvent']['valid_forecasts'],8)
+
+    def test_daily_network_failure_keeps_publication_and_logs_only_safe_stage(self):
+        from daily import daily_status
+        from provider import ProviderError
+        output=Path(self.tmp.name)/'predictions.json'; output.write_text('PREVIOUS VALID PUBLICATION')
+        with patch('pipeline.utc_ms',return_value=self.now+1),patch('pipeline.sync',side_effect=ProviderError('secret C:/private/key news')),patch('sys.stdout',new_callable=io.StringIO):
+            self.assertEqual(main(self.daily_arguments()),1)
+        self.assertEqual(output.read_text(),'PREVIOUS VALID PUBLICATION')
+        directory=Path(self.tmp.name)/'logs'/'daily'
+        status=daily_status(directory)
+        self.assertEqual(status['lastEvent']['stage'],'sync')
+        logs=''.join(path.read_text() for path in directory.glob('*.jsonl'))
+        self.assertNotIn('private',logs); self.assertNotIn('secret',logs)
+        self.assertIn('ProviderError',logs)
+
+    def test_daily_incomplete_or_corrupt_data_never_replace_publication(self):
+        from daily import daily_status
+        output=Path(self.tmp.name)/'predictions.json'; output.write_text('KEEP THIS PUBLICATION')
+        self.store.db.execute("UPDATE models SET status='candidate' WHERE symbol='LINKUSDT'")
+        with patch('pipeline.utc_ms',return_value=self.now+1),patch('pipeline.Binance',return_value=FixtureProvider(self.raw,self.now+1)),patch('sys.stdout',new_callable=io.StringIO):
+            self.assertEqual(main(self.daily_arguments()),1)
+        self.assertEqual(output.read_text(),'KEEP THIS PUBLICATION')
+        self.assertEqual(daily_status(Path(self.tmp.name)/'logs'/'daily')['lastEvent']['stage'],'predict')
+        self.store.db.execute("UPDATE candles SET volume=volume+1 WHERE symbol='BTCUSDT' AND open_time=(SELECT MIN(open_time) FROM candles)")
+        with patch('pipeline.utc_ms',return_value=self.now+1),patch('sys.stdout',new_callable=io.StringIO):
+            self.assertEqual(main(self.daily_arguments()),1)
+        self.assertEqual(output.read_text(),'KEEP THIS PUBLICATION')
+
+    def test_daily_rejects_stale_candles_before_reconciliation_or_publication(self):
+        import pipeline
+        from daily import daily_status
+        original=pipeline.run
+        def stale_sync(args,*values,**kwargs):
+            return [] if args.command=='sync' else original(args,*values,**kwargs)
+        with patch('pipeline.utc_ms',return_value=self.now+DAY_MS),patch('pipeline.run',side_effect=stale_sync),patch('sys.stdout',new_callable=io.StringIO):
+            self.assertEqual(main(self.daily_arguments()),1)
+        self.assertEqual(daily_status(Path(self.tmp.name)/'logs'/'daily')['lastEvent']['stage'],'validate')
+        self.assertFalse((Path(self.tmp.name)/'predictions.json').exists())
 
 
 class ChronologyAndLSTMTests(unittest.TestCase):

@@ -5,7 +5,7 @@ from pathlib import Path
 from common import DAY_MS, SYMBOLS, canonical, digest, latest_open
 from features import FEATURE_VERSION, FEATURES
 from train import PIPELINE_VERSION, ALGORITHMS
-from analytics.export import atomic_json
+from json_store import atomic_json
 
 
 def stamp(value):
@@ -53,7 +53,27 @@ def prediction_result(store, symbol, now):
         return unavailable(symbol, now, 'data_or_model_integrity_failed')
 
 
-def export_predictions(store, database, output, now):
+def verify_predictions(store, database, output, now, require_complete=True):
+    output = Path(output)
+    if output.stat().st_size > 2 * 1024 * 1024:
+        raise ValueError('invalid_publication_size')
+    envelope = json.loads(output.read_text(encoding='utf-8'))
+    if digest(envelope['payload'].encode()) != envelope['sha256']:
+        raise ValueError('invalid_publication_checksum')
+    report = json.loads(envelope['payload'])
+    stat = Path(database).stat()
+    if (report['version'] != PIPELINE_VERSION or
+        report['registry'] != {'size': stat.st_size, 'mtimeNs': str(stat.st_mtime_ns)} or
+        report['generatedAt'] > stamp(now) or
+        report['forecasts'] != [prediction_result(store, symbol, now) for symbol in SYMBOLS]):
+        raise ValueError('invalid_publication_content_or_registry')
+    valid = sum(row['status'] == 'experimental' for row in report['forecasts'])
+    if require_complete and valid != len(SYMBOLS):
+        raise ValueError('incomplete_publication')
+    return {'valid_forecasts': valid, 'symbols': list(SYMBOLS)}
+
+
+def export_predictions(store, database, output, now, require_complete=False):
     database, output = Path(database).resolve(), Path(output).resolve()
     if output == database or output.suffix.lower() != '.json':
         raise ValueError('Publication must be a separate JSON file')
@@ -65,5 +85,8 @@ def export_predictions(store, database, output, now):
         report = {'version': PIPELINE_VERSION, 'generatedAt': stamp(now),
             'registry': {'size': stat.st_size, 'mtimeNs': str(stat.st_mtime_ns)},
             'forecasts': [prediction_result(store, symbol, now) for symbol in SYMBOLS]}
+        if require_complete and any(row['status'] != 'experimental' for row in report['forecasts']):
+            raise ValueError('incomplete_prediction_set_previous_publication_preserved')
         atomic_json(output, report)
+        verify_predictions(store, database, output, now, require_complete)
     return report

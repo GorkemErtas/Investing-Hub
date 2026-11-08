@@ -5,8 +5,11 @@ import json
 import logging
 import os
 import sqlite3
+from argparse import Namespace
+from contextlib import nullcontext
 from pathlib import Path
-from common import ROOT, SYMBOLS, day, load_config, utc_ms
+from common import ROOT, SYMBOLS, day, load_config, utc_ms, latest_open
+from job_lock import job_lock
 from forecast import generate, reconcile
 from ingestion import import_legacy, sync
 from provider import Binance
@@ -18,7 +21,7 @@ from train import train_models, select_best, PIPELINE_VERSION
 def parser():
     result = argparse.ArgumentParser(description=__doc__)
     commands = result.add_subparsers(dest='command', required=True)
-    for name in ('sync','validate','train','evaluate','select','predict','reconcile','status','analytics','backup'):
+    for name in ('sync','validate','train','evaluate','select','predict','reconcile','status','daily','daily-status','backup'):
         command = commands.add_parser(name)
         command.add_argument('--db', type=Path, default=Path(os.environ.get('INVESTING_HUB_ML_DB', ROOT/'data'/'lifecycle.sqlite3')))
         command.add_argument('--config', type=Path, default=ROOT/'config.json')
@@ -26,8 +29,10 @@ def parser():
         if name == 'sync':
             command.add_argument('--start')
             command.add_argument('--legacy-dir', type=Path, default=ROOT/'data')
-        if name in ('predict','analytics','backup'):
-            command.add_argument('--output', type=Path, default=(ROOT/'data'/'predictions.json' if name=='predict' else ROOT/'data'/'analytics') if name!='backup' else None, required=name=='backup')
+        if name in ('predict','daily','backup'):
+            command.add_argument('--output', type=Path, default=ROOT/'data'/'predictions.json' if name!='backup' else None, required=name=='backup')
+        if name in ('daily','daily-status'):
+            command.add_argument('--log-directory', type=Path)
     return result
 
 
@@ -49,7 +54,7 @@ def inspect_status(store, symbols, config, now):
     return {'as_of':now,'datasets':datasets,'models':models}
 
 
-def run(args, store, config, now):
+def run(args, store, config, now, provider=None):
     symbols=[args.symbol] if args.symbol else config['symbols']
     if args.command=='backup':
         if args.output.exists() or args.output.resolve()==args.db.resolve():
@@ -63,7 +68,7 @@ def run(args, store, config, now):
         return inspect_status(store,symbols,config,now)
     results=[]
     if args.command=='sync':
-        provider=Binance()
+        provider=provider or Binance()
         for symbol in symbols:
             if not store.dataset(symbol): import_legacy(store,args.legacy_dir,symbol,now)
             result=sync(store,provider,symbol,day(args.start or config['start_date']),now,config['max_absolute_daily_return'])
@@ -77,10 +82,11 @@ def run(args, store, config, now):
             elif args.command=='reconcile': results.append(reconcile(store,symbol,now))
             elif args.command=='validate':
                 frame,metadata,quality=store.verified_frame(symbol,now)
-                if quality['missing_days']: raise ValueError('Dataset gaps require synchronization')
+                if quality['missing_days'] or int(frame.open_time.max()) != latest_open(now):
+                    raise ValueError('Current gap-free completed daily data required')
                 results.append({'symbol':symbol,'rows':len(frame),'quality':quality,'fingerprint':metadata['fingerprint']})
     if args.command=='predict':
-        return export_predictions(store,args.db,args.output,utc_ms())
+        return export_predictions(store,args.db,args.output,utc_ms(),getattr(args,'require_complete',False))
     return results
 
 
@@ -89,18 +95,38 @@ def main(argv=None):
     logging.basicConfig(level=logging.INFO,format='%(levelname)s %(name)s: %(message)s')
     store=None
     try:
-        if args.command=='analytics':
-            from analytics.cli import run as analytics
-            result=analytics(args.db,args.output,utc_ms())
+        if args.command=='daily-status':
+            from daily import daily_status
+            result=daily_status(args.log_directory or args.db.parent/'logs'/'daily')
         else:
-            if not args.db.exists() and args.command!='sync':
+            if not args.db.exists() and args.command not in ('sync','daily'):
                 raise ValueError('Existing database required; sync creates the initial dataset')
-            store=Store.readonly(args.db) if args.command in ('status','evaluate','backup') else Store(args.db)
-            result=run(args,store,load_config(args.config),utc_ms())
+            if args.command=='daily':
+                from daily import run_daily
+                args.log_directory=args.log_directory or args.db.parent/'logs'/'daily'
+                config=None
+                def operation(command, current_store, now, on_retry):
+                    nonlocal config
+                    if config is None:
+                        config=load_config(args.config)
+                        if args.symbol or len(config['symbols']) != len(SYMBOLS) or set(config['symbols']) != set(SYMBOLS):
+                            raise ValueError('Daily execution requires all eight symbols')
+                    step=Namespace(**{**vars(args),'command':command,'require_complete':True,
+                                      'start':None,'legacy_dir':ROOT/'data'})
+                    return run(step,current_store,config,now,Binance(on_retry=on_retry))
+                result=run_daily(args,operation,clock=utc_ms)
+            else:
+                config=load_config(args.config)
+                reading=args.command in ('status','evaluate','backup')
+                if args.command=='sync': args.db.parent.mkdir(parents=True,exist_ok=True)
+                with nullcontext() if reading else job_lock(args.db):
+                    store=Store.readonly(args.db) if reading else Store(args.db)
+                    result=run(args,store,config,utc_ms())
         print(json.dumps(result,indent=2,allow_nan=False))
         return 0
     except Exception as error:
-        logging.error('%s failed: %s',args.command,error)
+        logging.error('%s failed: %s',args.command,
+                      type(error).__name__+'; inspect daily-status' if args.command=='daily' else error)
         return 1
     finally:
         if store is not None: store.close()

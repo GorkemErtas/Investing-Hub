@@ -74,7 +74,7 @@ class Store:
         instance.db.execute('PRAGMA query_only=ON')
         if instance.db.execute('PRAGMA user_version').fetchone()[0] != 1:
             instance.close()
-            raise ValueError('Unsupported analytics database schema')
+            raise ValueError('Unsupported database schema')
         return instance
 
     def __init__(self, path: Path | str):

@@ -8,6 +8,8 @@ The single command surface is `ml/pipeline.py`; [ml/README.md](../ml/README.md) 
 4. `predict` runs the selected local artifact, records an immutable next-day price and atomically publishes one `predictions.json`. Missing/corrupt data or artifacts return unavailable, without substitute values.
 5. The API validates the publication and serves `/api/predictions/:symbol`; the web and mobile clients display experimental numerical results. There is no training/inference in HTTP handlers.
 
-`status`/`evaluate` inspect frozen evidence; `analytics` produces the retained local comparison dashboard; `reconcile` appends actual outcomes without changing original forecasts. Existing source, dataset, model, experiment and ledger records are retained. Old registry status names can still be read as historical data, but no approval/promotion code is used for new forecasts.
+`status`/`evaluate` inspect frozen evidence; `reconcile` appends actual outcomes without changing original forecasts. Existing source, dataset, model, experiment and ledger records are retained. Old registry status names can still be read as historical data, but no approval/promotion code is used for new forecasts.
 
 Numeric JSON artifacts contain only checked feature contracts, bounded arrays and weights. There is no pickle/ONNX execution or generative-AI dependency. Fixed seeds and recorded versions support reproducibility within the recorded CPU/numerical environment; cross-platform bit identity is not promised.
+
+`daily` orchestrates sync, freshness/integrity validation, reconciliation and all-eight prediction publication under one OS job lock; it does not train or select. `daily-status` reads bounded operational logs. The optional Windows task is installed explicitly; see [operations](DAILY_UPDATES.md).
