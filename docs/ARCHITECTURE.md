@@ -10,11 +10,12 @@ flowchart LR
   Mobile --> Shared
   API --> Shared
   API --> Market[Binance public data]
-  Local --> Export[Explicit gated ML JSON publication]
+  Binance[Verified daily Binance OHLCV] --> SQLite[(Existing local SQLite)]
+  SQLite --> Local[Python features and chronological evaluation]
+  Local --> Select[Best model per coin: RF / GB / Ridge / LSTM]
+  Select --> Forecast[Local next-day inference]
+  Forecast --> Export[Single numerical predictions.json]
   Export --> API
-  API -. consented POST only .-> Gemini[Gemini critical review + Google Search]
-  Gemini --> Gate[Deterministic schema and provenance gate]
-  Gate --> Private[Initiating report view only: no shared result cache]
   API -. optional .-> Mongo[(Existing MongoDB)]
   API -. optional .-> Mail[SMTP verification]
   API -. optional .-> FCM[Firebase delivery]
@@ -29,15 +30,15 @@ flowchart LR
 - `backend/src/market` is the retained modern provider/cache/service implementation. The provider hostname is fixed, symbols/intervals allowlisted, candle UTC boundaries validated, and publication/fetch times distinguished. Cache TTL, stale limit, request deduplication, cold-failure backoff, provider concurrency/rate cooldown and request budgets bound costs.
 - `backend/src/mobile` contains authenticated account, owned portfolio, settings, Mongo and notification services. Repository injection makes HTTP/service authorization and failure behavior testable without Mongo. Queries carry both owner and resource ID. Full-history validation and Mongo version predicates protect trade updates. Public routes do not read Mongo or send mail/push.
 - `backend/src/app.ts` owns HTTP policy, validation and sanitized errors. `server.ts` owns environment composition and lifecycle. No active `server.js`, nested backend, ONNX runtime or public force-refresh endpoint remains.
-- `backend/src/future` separates read-only ML export validation, a single Gemini interpretation of supplied ML evidence, deterministic report gates and durable accounting. GETs never spend or return private reports. A consented POST validates the selected model/forecast fingerprint, requests structured output without Search/tools, and preserves original ML numbers and conflicts. Only counters/cooldowns/safe diagnostics persist. See [Future Analysis](FUTURE_ANALYSIS.md).
-- `webapp/src/pages/FutureAnalysis.tsx` preserves ML-only prices, intervals and direction alongside critical analysis, qualitative scenarios, uncertainty and conditional guidance. Reports are labeled as AI interpretations without live research and contain no web citations. GET state uses React Query; paid reports stay component-local and clear on navigation/coin/mode changes.
+- `backend/src/predictions` reads the single checksum/schema/registry-stamped numerical publication. It does not load models, invoke Python or contact a generative AI service. Missing/expired/corrupt forecasts are explicitly unavailable.
+- `webapp/src/pages/PricePredictions.tsx` displays all eight numerical next-day USDT forecasts, target UTC dates and experimental labels. It has no research report, narrative, source iframe, consent or paid action.
 - `webapp` retains browser-only guest transactions and the existing storage keys. It consumes shared accounting/contracts without requiring mobile account infrastructure.
-- `mobileapp` owns native navigation, platform APIs and secure-token/preferences adapters. Its typed client validates contracts, scopes private data to the session and pauses polling in the background. Existing market, portfolio, authentication and disabled prediction contracts remain compatible.
-- `ml` owns completed UTC daily datasets, offline training, the registry, prospective ledger and chronological OOS residual calibration. Approval/promotion stays explicit. A separate export emits eligible active-origin forecasts atomically under the registry lock. Backend reads never load a model or spawn Python. The legacy mobile prediction endpoint stays disabled; Future Analysis consumes only the gated export. Historical artifacts remain quarantined. See [ML boundaries](ML_LIFECYCLE.md).
+- `mobileapp` owns native navigation, platform APIs and secure-token/preferences adapters. Its typed client validates contracts, scopes private data to the session and pauses polling in the background. Existing market, portfolio and authentication contracts remain compatible; the prediction contract supports numeric experimental values and explicit unavailability.
+- `ml` owns completed UTC datasets, shared past-only features, comparable chronological training/evaluation, deterministic per-coin selection and the existing immutable forecast ledger. Ridge/Random Forest/Gradient Boosting and a CPU PyTorch LSTM are real candidates. `predict` publishes one numerical snapshot. No performance approval gates or duplicate publication paths exist. Historical artifacts/records are preserved; see [methodology](../ml/README.md).
 
 ## Package/build strategy
 
-Analytics Lab adds an offline research path without another database/registry: `ml/analytics` reads the existing SQLite via `Store.readonly()`, reuses features and the shared chronological split plan, and emits ignored immutable analytical JSON/CSVs. A bounded checksum/schema/registry-stamp reader in `backend/src/analytics` serves only aggregate report data on localhost in explicitly enabled development mode; production denies access. `shared/analytics.ts` validates semantic counts, chronology, availability and limits. `/analytics` is a separate React page; Future Analysis/Gemini behavior remains independent. See [analytics architecture and scientific methods](DATA_ANALYTICS.md).
+Analytics Lab adds an offline research path without another database/registry: `ml/analytics` reads the existing SQLite via `Store.readonly()`, reuses features and the shared chronological split plan, and emits ignored immutable analytical JSON/CSVs. A bounded checksum/schema/registry-stamp reader in `backend/src/analytics` serves only aggregate report data on localhost in explicitly enabled development mode; production denies access. `shared/analytics.ts` validates semantic counts, chronology, availability and limits. `/analytics` is a separate React page; numerical predictions remain independent of analytical scores. See [analytics architecture and scientific methods](DATA_ANALYTICS.md).
 
 Root npm workspaces are `shared`, `backend`, `webapp`. A single root lock resolves those packages. Mobile has its own npm manifest/lock to preserve Expo SDK 53's supported React 19.0 version without duplicating React inside the native bundle. Shared has no React dependency. Node, Vite and Metro consume the same built ESM files; TypeScript uses source type declarations. Build shared before importing it at runtime. Expo's resolver could not map Node-style relative `.js` specifiers back to source `.ts`, so native source exports were replaced by the common compiled artifact.
 

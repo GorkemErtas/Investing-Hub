@@ -1,3 +1,5 @@
+> Historical verification record. Current implementation, measured models and operating instructions are in [Price Predictions](PRICE_PREDICTIONS.md) and [the ML guide](../ml/README.md). Older commands below are not current procedures.
+
 # Analytics Lab verification and actual findings
 
 Verified 2026-11-07 on Windows/PowerShell, Node 26.13.0, with the existing pinned Python environment. Work is isolated on `feat/analytics-lab`, based on `c967c40`. Only this feature branch is intended for push; no merge or deployment is part of the task.

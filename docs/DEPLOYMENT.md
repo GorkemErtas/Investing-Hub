@@ -15,11 +15,9 @@ This builds `backend/Dockerfile` and `webapp/Dockerfile` with the root context. 
 
 Docker Desktop was unavailable during verification: Compose syntax validation is distinct from actual image build/container startup. Consult VERIFICATION for actual results.
 
-## Optional Future Analysis
+## Optional local prediction publication
 
-Analytics Lab is a separate local/development-only workflow and is always disabled under `NODE_ENV=production`, even if its enable flag is true. No production mount, analytics service or scheduler was added. Generate private offline reports on the research machine; do not place CSV/raw datasets in web assets or Docker build contexts. See [Analytics Lab local setup](DATA_ANALYTICS.md).
-
-Default Compose enables neither paid Search nor ML publication. Python runs separately on persistent local disk. Configure read-only mounts for an explicitly generated ML JSON export and its matching SQLite database; registry changes revoke that export. If paid review is intentionally enabled, provide server-only credentials, project quotas/billing controls and an owned persistent accounting directory shared by one API host. Grounded reports are never mounted, persisted or redistributed. Nginx permits the backend's bounded review timeout; normal page loads make no paid calls. A crashed accounting lock requires verified operator recovery, without deleting usage counters. See [configuration and operational boundaries](FUTURE_ANALYSIS.md). No timer, provider spending or deployment was enabled here.
+Training/inference run separately in Python, never inside HTTP containers. Mount the already-generated `predictions.json` and matching SQLite database read-only and configure `PREDICTIONS_EXPORT_PATH` / `ML_DATABASE_PATH` to those paths. A database mutation invalidates the snapshot until the operator runs `predict` again. No numerical file means an explicit unavailable response. No external generative-AI key, consent flow or paid API service is required. See [local generation order](../ml/README.md). No deployment was performed by this refactor.
 
 ## Optional accounts
 

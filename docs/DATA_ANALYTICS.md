@@ -1,20 +1,20 @@
 # Analytics Lab: applied data analytics and ML engineering
 
-Analytics Lab is a **local, non-commercial research workspace**, separate from Future Analysis. It answers what the verified data contains, how statistical methods behave, how classifiers compare with simple references, and where evidence is missing. It never approves a model, creates prospective observations, changes recorded forecasts or calls Gemini.
+Analytics Lab is a **local, non-commercial research workspace**, separate from Price Predictions. It answers what the verified data contains, how statistical methods behave, how classifiers compare with simple references, and where evidence is missing. It never approves a model, creates prospective observations, changes recorded forecasts or contacts an external generative AI service.
 
 ## 1. Audit and architecture
 
-The starting implementation already provided verified Binance ingestion, immutable SQLite data/provenance, fourteen past-only features, independent regression candidates, purged chronological evaluation, prospective reconciliation, a registry, interval calibration and strict publication gates. Future Analysis already combined approved numeric evidence with an opt-in, budgeted Gemini critical review. Those features remain intact.
+The retained implementation provides verified Binance ingestion, immutable SQLite provenance, past-only features, comparable chronological model selection, separate final evaluation and an immutable forecast ledger. Price Predictions uses the selected local model directly; no external AI review or predictive-quality gate exists. Historical interval and experiment records remain inspectable.
 
-| Capability                               | Starting state                            | Extension                                                                                              |
-| ---------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Data quality and feature extraction      | Implemented in `store.py` / `features.py` | Reused unchanged; dedicated `Store.readonly()` avoids schema creation                                  |
-| Regression and interval evaluation       | Implemented, no locally approved models   | Read existing frozen evidence; separate historical selection, prospective shadow and active monitoring |
-| Chronological splits                     | Implemented in regression                 | Extracted `evaluation_splits()` and reused it with `training_slice()`                                  |
-| EDA, statistical inference, correlations | Partial manual six-month study            | Reproducible distributions, statistics, calendar-aligned rolling correlations and block inference      |
-| Trained direction/rare-event classifiers | Missing                                   | Independent research workflow, baselines, weighted candidates and validation-only thresholds           |
-| Unsupervised anomalies                   | Missing                                   | Four causal-at-observation methods; no invented supervised accuracy                                    |
-| SQL, analytical export and Lab UI        | Missing                                   | Named read-only queries, immutable local runs, CSVs, bounded contracts and separate web navigation     |
+| Capability                               | Starting state                                  | Extension                                                                                                        |
+| ---------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Data quality and feature extraction      | Implemented in `store.py` / `features.py`       | Reused unchanged; dedicated `Store.readonly()` avoids schema creation                                            |
+| Regression and interval evaluation       | Implemented; four trainable candidates per coin | Read existing frozen evidence; separate historical selection, final-period evaluation and prospective monitoring |
+| Chronological splits                     | Implemented in regression                       | Extracted `evaluation_splits()` and reused it with `training_slice()`                                            |
+| EDA, statistical inference, correlations | Partial manual six-month study                  | Reproducible distributions, statistics, calendar-aligned rolling correlations and block inference                |
+| Trained direction/rare-event classifiers | Missing                                         | Independent research workflow, baselines, weighted candidates and validation-only thresholds                     |
+| Unsupervised anomalies                   | Missing                                         | Four causal-at-observation methods; no invented supervised accuracy                                              |
+| SQL, analytical export and Lab UI        | Missing                                         | Named read-only queries, immutable local runs, CSVs, bounded contracts and separate web navigation               |
 
 The standalone, untracked `ml/experiments/six_month_study.py` was subsequently reviewed and removed at the owner's request. Its return/volatility calculations duplicated existing features and Analytics Lab, bypassed source/completion verification and could join returns across missing days. Use the verified analytics command and existing feature extractor instead of maintaining a second script.
 
@@ -59,15 +59,15 @@ ANALYTICS_LAB_ENABLED=true
 
 Run `npm run build -w shared`, then `node --env-file=backend/.env.local --import tsx backend/src/server.ts`; start Vite separately with `npm run dev:web`. Open `http://127.0.0.1:3000/analytics`. Node reads only the selected process environment; a normal `npm run dev` does not implicitly load `.env.local`.
 
-The endpoint `GET /api/analytics/:symbol` requires the enable flag, non-production mode, a loopback socket address, a loopback Host and, when present, a loopback browser Origin. Forwarding headers do not grant access. **Production always returns disabled**, even with the flag set. No CSV/raw-data/model-artifact HTTP endpoint exists. The web navigation remains visible with an honest disabled state. This gate is deliberately independent of Gemini flags.
+The endpoint `GET /api/analytics/:symbol` requires the enable flag, non-production mode, a loopback socket address, a loopback Host and, when present, a loopback browser Origin. Forwarding headers do not grant access. **Production always returns disabled**, even with the flag set. No CSV/raw-data/model-artifact HTTP endpoint exists. The web navigation remains visible with an honest disabled state. This local-access gate does not affect numerical predictions.
 
-The existing `FUTURE_ML_DATABASE_PATH` identifies the same source registry; changing it also affects Future Analysis, so keep both features on the intended database. A read transaction keeps the research snapshot consistent and can delay offline SQLite writers; run analytics when lifecycle jobs are idle. Normal market and Mongo portfolio requests do not use this transaction. Keep SQLite outside OneDrive/network sync for regular operation. WAL mode is refused because file-stamp validation assumes the lifecycle's rollback journal.
+The existing `ML_DATABASE_PATH` identifies the same source registry; changing it also affects Price Predictions, so keep both features on the intended database. A read transaction keeps the research snapshot consistent and can delay offline SQLite writers; run analytics when lifecycle jobs are idle. Normal market and Mongo portfolio requests do not use this transaction. Keep SQLite outside OneDrive/network sync for regular operation. WAL mode is refused because file-stamp validation assumes the lifecycle's rollback journal.
 
 ## 3. Data quality and exploratory statistics
 
 `Store.verified_frame()` verifies dataset/source hashes and metadata, UTC daily completion, positive finite prices, valid OHLC ranges and source provenance. Moves above the lifecycle's 80% absolute-return threshold require an [exact, independently verified historical observation review](HISTORICAL_ANOMALY_REVIEWS.md). Source-bound approvals are audited and do not remove the observation from statistics or approve a model. Statistical outliers **inside verified data are retained**, never clipped or deleted.
 
-Returns use `close[t]/close[t-1]-1`, only inside contiguous segments. Gaps start new windows; prices are never filled. Coverage, missing days and stale last-completed-candle status remain separate. A stale but verified history is valid for explicitly dated exploration; it is not a current approved forecast. At most 6,000 observations per asset are accepted by this release.
+Returns use `close[t]/close[t-1]-1`, only inside contiguous segments. Gaps start new windows; prices are never filled. Coverage, missing days and stale last-completed-candle status remain separate. A stale but verified history is valid for explicitly dated exploration; it is not a current numeric forecast. At most 6,000 observations per asset are accepted by this release.
 
 The report contains sample mean/median, sample variance/std (`ddof=1`), 5/25/75/95 percentiles, bias-corrected skewness and Fisher excess kurtosis. Undefined small/constant-sample quantities are null. Histogram counts account for all observed returns. Rolling volatility uses fourteen daily returns. The last 180 calendar days are sampled every seven days for lightweight charts; values remain daily quantities, not weekly compounded returns. Missing calendar samples remain gaps in the plots.
 

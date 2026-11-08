@@ -102,13 +102,13 @@ export function AnalyticsLab() {
           <Database size={30} />
           <h2>Research report unavailable</h2>
           <p>{reasons[response?.reason ?? ''] ?? 'The local analytics report is unavailable.'}</p>
-          <p>Future Analysis and normal market data remain available.</p>
+          <p>Price Predictions and normal market data remain available.</p>
         </section>
       ) : (
         <>
           <Notice>
-            Historical research, not an approved forecast. No trading signals, fraud probabilities
-            or causal claims.{' '}
+            Historical model evaluation; selection does not prove forecast reliability. No trading
+            signals, fraud probabilities or causal claims.{' '}
             {response?.status === 'stale'
               ? 'The dataset or report is stale; use its dated coverage.'
               : 'Results refer only to the recorded snapshot.'}
@@ -533,9 +533,9 @@ export function AnalyticsLab() {
               <div className="eyebrow">05 / EXISTING REGISTRY & MONITORING</div>
               <h2 id="regression">Regression performance</h2>
               <p className="analytics-caption">
-                Existing frozen registry versions only. Historical selection and genuinely
-                prospective outcomes remain separate. Analytics never approves, promotes or
-                publishes a model.
+                Candidates from the latest comparable training run are shown together. Model
+                selection uses historical error; final-period and prospective results are separate.
+                Weak performance does not block a forecast.
               </p>
               {!data.regressions.length ? (
                 <p>No registered regression evidence is available.</p>
@@ -551,7 +551,9 @@ export function AnalyticsLab() {
                         <th>Return MAE / RMSE</th>
                         <th>Baseline RMSE</th>
                         <th>Price MAE / RMSE (USDT)</th>
-                        <th>Fold wins</th>
+                        <th>Selection direction accuracy</th>
+                        <th>Final-period price RMSE / baseline (USDT)</th>
+                        <th>Final direction accuracy</th>
                         <th>Registry status</th>
                       </tr>
                     </thead>
@@ -569,12 +571,17 @@ export function AnalyticsLab() {
                           <td>
                             {numeric(r.priceMaeUsdt, 2)} / {numeric(r.priceRmseUsdt, 2)}
                           </td>
+                          <td>{pct(r.directionalAccuracy)}</td>
                           <td>
-                            {r.foldWins}/{r.foldRmses.length}
+                            {r.finalEvaluation
+                              ? `${numeric(r.finalEvaluation.priceRmseUsdt, 2)} / ${numeric(r.finalEvaluation.baselinePriceRmseUsdt, 2)}`
+                              : 'Not measured separately'}
                           </td>
+                          <td>{pct(r.finalEvaluation?.directionalAccuracy)}</td>
                           <td>
-                            {r.status} ·{' '}
-                            {r.historicalPass ? 'historical gate passed' : 'historical gate failed'}
+                            {r.selected
+                              ? 'Selected for forecast'
+                              : 'Candidate / historical version'}
                           </td>
                         </tr>
                       ))}
@@ -629,6 +636,18 @@ export function AnalyticsLab() {
                       ? `nominal ${pct(r.interval.nominalCoverage)}, measured ${pct(r.interval.empiricalCoverage)}, relative width at reference ${pct(2 * r.interval.radiusReturn)}, ${r.interval.calibrationSamples} OOS residuals / ${r.interval.validationSamples} selection observations; ${r.interval.status}`
                       : 'unavailable for this version'}
                     . Dataset <code>{r.datasetFingerprint}</code>.
+                    {r.finalEvaluation && (
+                      <>
+                        {' '}
+                        Final-period evaluation: {r.finalEvaluation.evaluationStart.slice(
+                          0,
+                          10,
+                        )} to {r.finalEvaluation.evaluationEnd.slice(0, 10)},{' '}
+                        {r.finalEvaluation.samples} observations, price MAE{' '}
+                        {numeric(r.finalEvaluation.priceMaeUsdt, 2)} USDT. This period was excluded
+                        from model ranking.
+                      </>
+                    )}
                   </p>
                 ))}
                 <p>
@@ -688,8 +707,8 @@ export function AnalyticsLab() {
         </>
       )}
       <div className="analytics-footnote">
-        <BarChart3 size={15} /> Deterministic Python research · no Gemini requests · no production
-        approval changes
+        <BarChart3 size={15} /> Deterministic local Python evaluation · no external AI service · no
+        prediction approval changes
       </div>
     </>
   );

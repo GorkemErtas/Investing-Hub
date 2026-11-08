@@ -3,21 +3,16 @@ import { assets, type Symbol } from '../../shared/contracts';
 import { analyticsResponseFixture } from '../../shared/tests/analytics-fixtures';
 
 async function fixture(page: Page) {
-  let calls = 0,
-    paid = 0;
-  await page.route('**/api/future-analysis/*/review', (r) => {
-    paid++;
-    return r.fulfill({ status: 500, json: { error: { code: 'UNEXPECTED' } } });
-  });
+  let calls = 0;
   await page.route('**/api/analytics/**', (r) => {
     calls++;
     expect(r.request().method()).toBe('GET');
     const symbol = new URL(r.request().url()).pathname.split('/').at(-1) as Symbol;
     return r.fulfill({ json: analyticsResponseFixture(symbol) });
   });
-  return { calls: () => calls, paid: () => paid };
+  return { calls: () => calls };
 }
-test('Analytics Lab renders quantitative research, filters, provenance and keeps Future Analysis separate', async ({
+test('Analytics Lab renders quantitative research, filters, provenance and keeps Price Predictions independent', async ({
   page,
 }) => {
   const f = await fixture(page);
@@ -38,7 +33,6 @@ test('Analytics Lab renders quantitative research, filters, provenance and keeps
   await expect(page.getByText('No qualifying observed alerts in this view.')).toBeVisible();
   await page.getByLabel('Alert method').selectOption('all');
   await expect(page.getByRole('cell', { name: '4.000 / 3.000' })).toBeVisible();
-  expect(f.paid()).toBe(0);
   expect(f.calls()).toBeGreaterThanOrEqual(1);
   await page.getByLabel('Research target').selectOption('direction');
   await page.screenshot({ path: 'test-results/analytics-desktop.png', fullPage: true });

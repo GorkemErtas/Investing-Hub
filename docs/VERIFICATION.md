@@ -1,6 +1,8 @@
+> Historical verification record. Current implementation, measured models and operating instructions are in [Price Predictions](PRICE_PREDICTIONS.md) and [the ML guide](../ml/README.md). Older commands below are not current procedures.
+
 # Verification and remaining limitations
 
-Current Future Analysis results, actual per-asset readiness and mocked-provider limitations are in [Future Analysis verification](FUTURE_VERIFICATION.md). The application migration record below remains historical.
+Current numerical forecasts, measured model results and verification are in [Price Predictions](PRICE_PREDICTIONS.md). The application migration record below remains historical.
 
 For the 2026-11-06 dynamic ML lifecycle change and its regression results, see [ML verification](ML_VERIFICATION.md). The results below describe the earlier 2026-11-02 application migration.
 

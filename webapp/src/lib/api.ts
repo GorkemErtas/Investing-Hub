@@ -7,7 +7,6 @@ import {
   type Interval,
   type Symbol,
 } from '@investing-hub/shared/contracts';
-import { futureAnalysisSchema } from '@investing-hub/shared/future-analysis';
 import { analyticsResponseSchema } from '@investing-hub/shared/analytics';
 
 async function get<T>(
@@ -52,52 +51,6 @@ export const usePrediction = (symbol: Symbol) =>
     queryKey: ['prediction', symbol],
     queryFn: ({ signal }) => get(`/predictions/${symbol}`, predictionSchema, signal),
     staleTime: 300000,
-    retry: 1,
-  });
-
-export async function requestFutureReview(
-  symbol: Symbol,
-  signal: AbortSignal,
-  mode: 'approved' | 'experimental' = 'approved',
-) {
-  const response = await fetch(`/api/future-analysis/${symbol}/review`, {
-    method: 'POST',
-    signal: AbortSignal.any([signal, AbortSignal.timeout(65000)]),
-    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      allowPaid: true,
-      requestId: crypto.randomUUID(),
-      ...(mode === 'experimental' ? { mode } : {}),
-    }),
-    cache: 'no-store',
-  });
-  if (!response.ok)
-    throw new Error(
-      response.status === 429
-        ? 'Review request limit reached. Please wait before trying again.'
-        : 'The review service is unavailable. Your ML forecast remains unchanged.',
-    );
-  const parsed = futureAnalysisSchema.safeParse(await response.json());
-  if (!parsed.success || parsed.data.symbol !== symbol || parsed.data.mode !== mode)
-    throw new Error('The review did not pass validation. Your ML forecast remains unchanged.');
-  return parsed.data;
-}
-
-export const useFutureAnalysis = (symbol: Symbol, mode: 'approved' | 'experimental' = 'approved') =>
-  useQuery({
-    queryKey: ['future-analysis', symbol, mode],
-    queryFn: ({ signal }) =>
-      get(
-        `/future-analysis/${symbol}${mode === 'experimental' ? '?mode=experimental' : ''}`,
-        futureAnalysisSchema.refine(
-          (value) => value.symbol === symbol && value.mode === mode && value.research.data === null,
-        ),
-        signal,
-        'Future Analysis',
-      ),
-    staleTime: 60000,
-    refetchInterval: 300000,
-    refetchIntervalInBackground: false,
     retry: 1,
   });
 
