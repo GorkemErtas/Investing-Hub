@@ -1,7 +1,5 @@
 # Legacy mobile endpoint compatibility matrix
 
-Analytics Lab adds only an explicitly enabled loopback development GET `/api/analytics/:symbol`. Production returns a disabled analytical response. It does not replace any market, account, mobile or prediction contract, and exposes no training/CSV mutation route. See [Analytics Lab](DATA_ANALYTICS.md).
-
 Inventory verified against every `app.get/post/put/delete` in the initial `backend/server.js` and every mobile HTTP caller. New clients use `/api`; insecure legacy URLs are retired, not aliased. Private identity always comes from a verified bearer token, never a path/query/body user ID.
 
 | Legacy method/path                                          | Mobile caller / purpose                                      | Replacement / decision                                                                                        |
@@ -42,3 +40,5 @@ Inventory verified against every `app.get/post/put/delete` in the initial `backe
 Public `/api/health`, `/api/markets`, `/api/candles/:symbol`, `/api/predictions/:symbol` preserve the modern web API. `/api/me` adds authenticated profile inspection/session validation. Features that require Mongo, SMTP or Firebase return explicit service-unavailable errors when their adapter is disabled; public market routes remain available.
 
 The single numerical prediction route is GET `/api/predictions/:symbol` for every shared symbol. It retains `symbol`, `target`, `horizon`, `predictionTimestamp`, `sourceDataTimestamp`, `modelVersion`, `predictedValue`, `evaluationReference`, `status` and `reason`, adding explicit target/model provenance. New responses use `experimental` or `unavailable`. The decoder accepts the old `disabled_unvalidated` state for existing client fixtures, without publishing that state in the new pipeline. Retired `/api/future-analysis/*` GET/review POST and research/news APIs return 404. Web `/future-analysis` redirects to `/predictions`; `/research` is removed.
+
+Model evaluation is an internal Python/SQLite responsibility, with no dashboard or HTTP export. Removed analytical and research URLs return 404. Daily updates publish the same numerical prediction contract; HTTP handlers never start a job. See [daily operations](DAILY_UPDATES.md).

@@ -1,4 +1,6 @@
-> Historical verification record. Current implementation, measured models and operating instructions are in [Price Predictions](PRICE_PREDICTIONS.md) and [the ML guide](../ml/README.md). Older commands below are not current procedures.
+> Archived subsystem: this feature and its commands were removed from the MVP. This document retains its original measured results for audit only.
+
+> Historical verification record. Current implementation, measured models and operating instructions are in [Price Predictions](../PRICE_PREDICTIONS.md) and [the ML guide](../../ml/README.md). Older commands below are not current procedures.
 
 # Analytics Lab verification and actual findings
 
@@ -83,4 +85,4 @@ The release bounds histories to 6,000 rows/asset, registry comparison to 100 ver
 
 Classification probabilities are uncalibrated; model comparisons are inspected historical research. Future proof of usefulness requires new prespecified evaluation data. Unsupervised scores do not establish fraud/loss. Production forecast and Gemini consent, cost, source and no-shared-result-cache boundaries are preserved. All Analytics Lab access is disabled in production; live provider calls, native-device builds, Docker deployment and public data redistribution were not performed. Temporary owned preview/browser processes were closed.
 
-For execution, scientific assumptions, SQL business questions, Excel/Power Query/DAX examples, electricity-domain transfer and practical exercises, use [DATA_ANALYTICS.md](DATA_ANALYTICS.md). No required implementation phase is left as a proposal; gathering missing verified assets, collecting future evaluation evidence and operational/commercial approvals remain separate work.
+For execution, scientific assumptions, SQL business questions, Excel/Power Query/DAX examples, electricity-domain transfer and practical exercises, use the former `DATA_ANALYTICS.md` guide in historical commit `5ca6783`. No required implementation phase is left as a proposal; gathering missing verified assets, collecting future evaluation evidence and operational/commercial approvals remain separate work.

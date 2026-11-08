@@ -1,3 +1,5 @@
+> Current final MVP checks are in [MVP verification](MVP_VERIFICATION.md). The records below describe earlier releases.
+
 > Historical verification record. Current implementation, measured models and operating instructions are in [Price Predictions](PRICE_PREDICTIONS.md) and [the ML guide](../ml/README.md). Older commands below are not current procedures.
 
 # Verification and remaining limitations

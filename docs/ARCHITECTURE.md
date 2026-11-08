@@ -19,9 +19,9 @@ flowchart LR
   API -. optional .-> Mongo[(Existing MongoDB)]
   API -. optional .-> Mail[SMTP verification]
   API -. optional .-> FCM[Firebase delivery]
-  Binance[Binance official archives / completed UTC daily klines] --> CLI[ml: finite Python CLI jobs]
-  CLI --> Local[(Local SQLite datasets / registry / forecast ledger)]
-  CLI --> Reports[Development selection / prospective shadow evaluation]
+  Task[Opt-in Windows daily task at 00:15 UTC] --> Daily[Existing CLI: sync / validate / reconcile / predict / verify]
+  Daily --> SQLite
+  Daily --> Forecast
 ```
 
 ## Boundaries
@@ -36,9 +36,9 @@ flowchart LR
 - `mobileapp` owns native navigation, platform APIs and secure-token/preferences adapters. Its typed client validates contracts, scopes private data to the session and pauses polling in the background. Existing market, portfolio and authentication contracts remain compatible; the prediction contract supports numeric experimental values and explicit unavailability.
 - `ml` owns completed UTC datasets, shared past-only features, comparable chronological training/evaluation, deterministic per-coin selection and the existing immutable forecast ledger. Ridge/Random Forest/Gradient Boosting and a CPU PyTorch LSTM are real candidates. `predict` publishes one numerical snapshot. No performance approval gates or duplicate publication paths exist. Historical artifacts/records are preserved; see [methodology](../ml/README.md).
 
-## Package/build strategy
+`ml/daily.py` orchestrates the existing CLI operations under the same database file lock as manual writes. Generic checksum-protected atomic JSON lives in `ml/json_store.py`. The optional PowerShell scheduler contains no models or duplicate inference path; it invokes the repository virtualenv using absolute paths. Internal evaluation stays in SQLite and the `evaluate` CLI. [Daily operations](DAILY_UPDATES.md) documents UTC scheduling, bounded execution/logging and recovery.
 
-Analytics Lab adds an offline research path without another database/registry: `ml/analytics` reads the existing SQLite via `Store.readonly()`, reuses features and the shared chronological split plan, and emits ignored immutable analytical JSON/CSVs. A bounded checksum/schema/registry-stamp reader in `backend/src/analytics` serves only aggregate report data on localhost in explicitly enabled development mode; production denies access. `shared/analytics.ts` validates semantic counts, chronology, availability and limits. `/analytics` is a separate React page; numerical predictions remain independent of analytical scores. See [analytics architecture and scientific methods](DATA_ANALYTICS.md).
+## Package/build strategy
 
 Root npm workspaces are `shared`, `backend`, `webapp`. A single root lock resolves those packages. Mobile has its own npm manifest/lock to preserve Expo SDK 53's supported React 19.0 version without duplicating React inside the native bundle. Shared has no React dependency. Node, Vite and Metro consume the same built ESM files; TypeScript uses source type declarations. Build shared before importing it at runtime. Expo's resolver could not map Node-style relative `.js` specifiers back to source `.ts`, so native source exports were replaced by the common compiled artifact.
 

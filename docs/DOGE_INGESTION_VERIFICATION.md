@@ -1,3 +1,5 @@
+> Historical ingestion verification; references to former application features below describe that earlier release. Current daily operation is documented in [daily updates](DAILY_UPDATES.md).
+
 # DOGE historical ingestion verification
 
 Verified 2026-11-07 on the existing `feat/analytics-lab` branch. The initial working tree was clean. This fix extends the canonical Python validator/Store lifecycle; it adds no provider, database reset, model approval, scheduler or automatic forecast publication.

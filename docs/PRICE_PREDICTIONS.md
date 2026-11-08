@@ -1,3 +1,5 @@
+> Historical measured training run before the final MVP cleanup. The model metrics remain preserved; current operation and verification are documented in [daily updates](DAILY_UPDATES.md). The older UI/test descriptions below are historical.
+
 # Price Predictions: measured local run, 2026-11-08
 
 The application now has one local numerical forecast pipeline and no third-party generative AI integration. This is a measured experiment record, not a claim of investment performance or future reliability.
@@ -90,4 +92,4 @@ Browser tests use explicitly synthetic fixtures; actual market-data training and
 
 ## Operating order and limits
 
-See [local CLI commands](../ml/README.md): `sync`, `train`, `evaluate`, `select`, `predict`, `status`, with optional `analytics` and `reconcile`. HTTP serves the already-generated snapshot through `/api/predictions/:symbol`. Backend/database path settings must identify the same database; a later database mutation requires republishing. Daily targets expire normally, so the verification does not schedule future forecasts or promise persistent freshness. Models/data are local and must be generated explicitly after setup. CPU timings and scores are environment-specific. No paid request, deployment or main-branch merge was performed.
+See [local CLI commands](../ml/README.md): `sync`, `train`, `evaluate`, `select`, `predict`, `status`, with optional `reconcile`. HTTP serves the already-generated snapshot through `/api/predictions/:symbol`. Backend/database path settings must identify the same database; a later database mutation requires republishing. Daily targets expire normally, so the verification does not schedule future forecasts or promise persistent freshness. Models/data are local and must be generated explicitly after setup. CPU timings and scores are environment-specific. No paid request, deployment or main-branch merge was performed.
