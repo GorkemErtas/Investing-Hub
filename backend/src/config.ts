@@ -37,6 +37,7 @@ const schema = z.object({
       ),
     ),
   FUTURE_GEMINI_SEARCH_ENABLED: z.enum(["true", "false"]).default("false"),
+  FUTURE_GEMINI_REVIEW_ENABLED: z.enum(["true", "false"]).optional(),
   FUTURE_REVIEW_TTL_SECONDS: z.coerce
     .number()
     .int()
@@ -168,6 +169,11 @@ export function parseConfig(env: NodeJS.ProcessEnv) {
   }
   if (c.MARKET_STALE_SECONDS <= c.MARKET_CACHE_SECONDS)
     throw new Error("Stale window must exceed cache duration.");
-  return { ...c, origins };
+  return {
+    ...c,
+    FUTURE_GEMINI_REVIEW_ENABLED:
+      c.FUTURE_GEMINI_REVIEW_ENABLED ?? c.FUTURE_GEMINI_SEARCH_ENABLED,
+    origins,
+  };
 }
 export type Config = ReturnType<typeof parseConfig>;

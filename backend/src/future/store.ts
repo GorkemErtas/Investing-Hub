@@ -55,7 +55,7 @@ const diagnostic = z.strictObject({
     "sdk_or_network_error",
   ]),
 });
-// No grounded result, source, Search Suggestion, prompt or ML payload is persisted.
+// No AI report, prompt or ML payload is persisted; legacy diagnostics remain readable.
 export const stateSchema = z
   .strictObject({
     version: z.literal(1),

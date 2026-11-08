@@ -37,7 +37,7 @@ async function fixtures(page: Page, ready = true, disabled = false) {
       result.forecastFingerprint = fixtureFingerprint(result.ml, result.mlFreshness, mode);
     }
     if (disabled)
-      result.research = { status: 'disabled', reason: 'paid_search_disabled', data: null };
+      result.research = { status: 'disabled', reason: 'paid_review_disabled', data: null };
     if (req.method() === 'POST') {
       paidCalls++;
       expect(req.postDataJSON()).toEqual({
@@ -56,7 +56,7 @@ async function fixtures(page: Page, ready = true, disabled = false) {
   });
   return { calls: () => paidCalls };
 }
-test('one coherent report keeps ML authoritative and requests grounded review only after consent', async ({
+test('one coherent report keeps ML authoritative and requests ML-only AI interpretation only after consent', async ({
   page,
 }) => {
   const fixture = await fixtures(page);
@@ -76,18 +76,15 @@ test('one coherent report keeps ML authoritative and requests grounded review on
   await expect(page.getByRole('heading', { name: /bullish scenario/i })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'What to monitor' })).toBeVisible();
   await expect(
-    page.getByRole('link', { name: /TEST FIXTURE Bitcoin project announcement/ }),
-  ).toHaveAttribute('href', 'https://publisher.example.com/test-fixture');
-  const suggestions = page.locator('iframe');
-  await expect(suggestions).toHaveAttribute(
-    'sandbox',
-    'allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation',
-  );
-  await expect(page.frameLocator('iframe').getByRole('link')).toHaveAttribute(
-    'href',
-    'https://www.google.com/search?q=TEST+FIXTURE',
-  );
-  await expect(page.frameLocator('iframe').getByRole('link')).toBeVisible();
+    page.getByText(
+      'AI interpretation of supplied ML data. No live research, current news or web sources.',
+    ),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'AI interpretation & limitations' }),
+  ).toBeVisible();
+  await expect(page.locator('iframe')).toHaveCount(0);
+  await expect(page.locator('.future-report a[href^="http"]')).toHaveCount(0);
   expect(fixture.calls()).toBe(1);
   expect(
     await page.evaluate(() => JSON.stringify({ ...localStorage, ...sessionStorage })),
@@ -122,19 +119,19 @@ test('all canonical assets are selectable and consent/report clear when changing
   await expect(page.getByRole('checkbox')).not.toBeChecked();
   await expect(page.locator('iframe')).toHaveCount(0);
 });
-test('missing ML supports research without price range or predicted direction', async ({
+test('missing ML disables paid interpretation without inventing a forecast or report', async ({
   page,
 }) => {
-  await fixtures(page, false);
+  const fixture = await fixtures(page, false);
   await page.goto('/future-analysis?mode=approved&symbol=SOLUSDT');
   await expect(page.getByRole('heading', { name: 'No validated ML forecast' })).toBeVisible();
-  await page.getByRole('checkbox').check();
-  await page.getByRole('button', { name: 'Request critical review' }).click();
-  await expect(page.getByText('HIGH UNCERTAINTY', { exact: true })).toBeVisible();
+  await expect(page.getByRole('checkbox')).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Request critical review' })).toBeDisabled();
   await expect(page.getByRole('img', { name: /Calibrated interval/ })).toHaveCount(0);
   await expect(page.locator('.future-direction')).toHaveCount(0);
-  await expect(page.getByRole('heading', { name: /bullish scenario/i })).toBeVisible();
+  expect(fixture.calls()).toBe(0);
 });
+
 test('paid review disabled by default while validated ML remains visible', async ({ page }) => {
   const fixture = await fixtures(page, true, true);
   await page.goto('/future-analysis?mode=approved');
@@ -198,6 +195,12 @@ test('experimental mode is the default for all eight coins without performance a
   await expect(page.getByText('CONFLICTING EVIDENCE', { exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: '101.00', exact: false })).toBeVisible();
   expect(fixture.calls()).toBe(1);
+  await expect(
+    page.getByText(
+      'AI interpretation of experimental ML data. No live research, current news or web sources.',
+    ),
+  ).toBeVisible();
+  await expect(page.locator('iframe')).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: 'test-results/future-experimental-mobile.png', fullPage: true });
   await page.getByRole('combobox', { name: 'Forecast mode' }).selectOption('approved');

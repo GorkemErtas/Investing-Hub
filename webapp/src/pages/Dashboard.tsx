@@ -117,7 +117,8 @@ export function Dashboard({
               Honest forecasts.
             </h2>
             <p>
-              Explore an ML outlook, critical grounded review, scenarios and the evidence behind it.
+              Explore an ML outlook, AI interpretation of ML data, scenarios and the evidence behind
+              it.
             </p>
             <Link to={`/future-analysis?symbol=${symbol}`}>
               Open Future Analysis <ArrowRight size={16} />

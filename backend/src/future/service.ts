@@ -3,7 +3,7 @@ import {
   analysisMlResultSchema,
   type ForecastMode,
   type FutureAnalysis,
-  type GroundedReport,
+  type AiReviewReport,
 } from "@investing-hub/shared/future-analysis";
 import type { Symbol } from "@investing-hub/shared/contracts";
 import type { Config } from "../config.js";
@@ -46,8 +46,8 @@ export function createFutureService(
   const store =
     dependencies.store ?? new FutureStore(config.FUTURE_STORAGE_PATH);
   const gate = () =>
-    config.FUTURE_GEMINI_SEARCH_ENABLED !== "true"
-      ? "paid_search_disabled"
+    config.FUTURE_GEMINI_REVIEW_ENABLED !== "true"
+      ? "paid_review_disabled"
       : !config.GEMINI_API_KEY || config.GEMINI_KEY_ROTATED !== "true"
         ? "credentials_not_configured"
         : config.GEMINI_MODEL !== "gemini-3.5-flash-lite"
@@ -56,8 +56,8 @@ export function createFutureService(
   const limitations = [
     "Only the immutable ML ledger supplies numeric forecasts, return, interval and direction. Experimental results are not validated or approved.",
     "Historical interval coverage is empirical development/selection evidence, not a guaranteed future probability.",
-    "Gemini critically reviews the supplied ML evidence; context labels do not validate forecast accuracy. Sources are attributed reporting, not independent fact checking.",
-    "Grounded results and Search Suggestions are returned only to the submitting request. They are not stored, shared by symbol or included in ordinary GET responses.",
+    "AI interpretation of supplied ML data only, without live research, news or external sources. Labels do not validate forecast accuracy.",
+    "AI reports are returned only to the submitting request. They are not stored, shared by symbol or included in ordinary GET responses.",
   ];
   async function read(
     symbol: Symbol,
@@ -92,8 +92,12 @@ export function createFutureService(
       mlFreshness: numeric.freshness,
       ml: numeric.result,
       research: {
-        status: gate() ? "disabled" : "not_requested",
-        reason: gate(),
+        status: gate()
+          ? "disabled"
+          : !numeric.result.data
+            ? "unavailable"
+            : "not_requested",
+        reason: gate() ?? (!numeric.result.data ? "ml_unavailable" : null),
         data: null,
       },
       conflict: null,
@@ -102,7 +106,7 @@ export function createFutureService(
   }
   function combine(
     base: FutureAnalysis,
-    report: GroundedReport | null,
+    report: AiReviewReport | null,
     reason: string | null,
   ): FutureAnalysis {
     return futureAnalysisSchema.parse({
@@ -129,7 +133,7 @@ export function createFutureService(
     mode: ForecastMode = "approved",
   ): Promise<FutureAnalysis> {
     const base = await read(symbol, mode);
-    if (gate()) return base;
+    if (gate() || !base.ml.data) return base;
     let release: (() => Promise<void>) | undefined,
       state: Awaited<ReturnType<FutureStore["read"]>> | undefined;
     const started = performance.now();
@@ -160,7 +164,6 @@ export function createFutureService(
       state.attemptedIds[identity] = now();
       for (const counter of [state.day, state.month]) {
         counter.requests++;
-        counter.unknownQueryRequests++;
         counter.unknownCostRequests++;
       }
       await store.write(state); // Durable reservation; no user report is cached.
@@ -212,16 +215,9 @@ export function createFutureService(
       for (const counter of [state.day, state.month]) {
         counter.inputTokens += result.inputTokens;
         counter.outputTokens += result.outputTokens;
-        if (report.searchQueryCount !== null) {
-          counter.unknownQueryRequests--;
-          counter.searchQueries += report.searchQueryCount;
-        }
-        if (result.usageKnown && report.searchQueryCount !== null)
-          counter.unknownCostRequests--;
+        if (result.usageKnown) counter.unknownCostRequests--;
         counter.estimatedUsd +=
-          (result.inputTokens * 0.3) / 1e6 +
-          (result.outputTokens * 2.5) / 1e6 +
-          (report.searchQueryCount ?? 0) * 0.014;
+          (result.inputTokens * 0.3) / 1e6 + (result.outputTokens * 2.5) / 1e6;
       }
       state.cooldowns[symbol] = now() + 60000;
       state.lastFailure = null;

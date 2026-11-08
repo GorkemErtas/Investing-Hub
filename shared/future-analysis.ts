@@ -340,9 +340,7 @@ export const reviewContentSchema = z.strictObject({
   ]),
   executiveSummary: z.string().min(20).max(1200),
   criticalReview: z.string().min(20).max(1800),
-  developments: z.array(z.string().min(12).max(600)).max(6),
-  risks: z.array(z.string().min(12).max(600)).max(6),
-  upcomingEvents: z.array(z.string().min(12).max(600)).max(4),
+  risks: z.array(z.string().min(12).max(600)).min(1).max(6),
   scenarios: z.strictObject({
     bullish: z.string().min(15).max(700),
     base: z.string().min(15).max(700),
@@ -353,92 +351,15 @@ export const reviewContentSchema = z.strictObject({
 });
 export type ReviewContent = z.infer<typeof reviewContentSchema>;
 
-// Extract verbatim sections locally, so formatting never needs another model
-// call and every displayed statement remains traceable to the original text.
-export function reviewFromGroundedText(
-  text: string,
-  identity: Pick<ReviewContent, "symbol" | "mlModelId" | "forecastFingerprint">,
-): ReviewContent {
-  const headings = [
-    ...text.matchAll(
-      /^[ \t]*(?:#{1,6}[ \t]+)?(?:\*\*)?(Summary|Critical review|Developments|Risks|Upcoming events|Bullish scenario|Base scenario|Bearish scenario|Conditional recommendations|Limitations):?(?:\*\*)?:?[ \t]*\r?$/gim,
-    ),
-  ];
-  const sections = new Map<string, string>();
-  headings.forEach((heading, index) => {
-    const name = heading[1].toLowerCase();
-    if (sections.has(name)) throw new Error("Duplicate review section");
-    sections.set(
-      name,
-      text
-        .slice(
-          heading.index! + heading[0].length,
-          headings[index + 1]?.index ?? text.length,
-        )
-        .trim(),
-    );
-  });
-  const section = (name: string) => sections.get(name) ?? "";
-  const items = (name: string) =>
-    section(name)
-      .split(/\r?\n/)
-      .map((line) => line.trim().replace(/^[-*][ \t]+/, ""))
-      .filter(Boolean);
-  return reviewContentSchema.parse({
-    ...identity,
-    horizon: "1d",
-    reviewStatus:
-      text.match(/^Review status:[ \t]*([A-Z_]+)[ \t]*\r?$/m)?.[1] ??
-      "HIGH_UNCERTAINTY",
-    overallOutlook:
-      text.match(/^Overall outlook:[ \t]*([a-z_]+)[ \t]*\r?$/m)?.[1] ?? "mixed",
-    executiveSummary: section("summary"),
-    criticalReview: section("critical review"),
-    developments: items("developments"),
-    risks: items("risks"),
-    upcomingEvents: items("upcoming events"),
-    scenarios: {
-      bullish: section("bullish scenario"),
-      base: section("base scenario"),
-      bearish: section("bearish scenario"),
-    },
-    recommendations: items("conditional recommendations"),
-    limitations: items("limitations"),
-  });
-}
-export const groundedReportSchema = z
+export const aiReviewReportSchema = z
   .strictObject({
     symbol: symbolSchema,
-    provider: z.literal("gemini_google_search"),
+    provider: z.literal("gemini_ml_review"),
+    basis: z.literal("ml_only"),
     model: z.string().min(1).max(100),
     generatedAt: timestamp,
     expiresAt: timestamp,
     text: z.string().min(30).max(16000),
-    sources: z
-      .array(
-        z.strictObject({
-          id: z.string().regex(/^source-\d+$/),
-          title: z.string().min(1).max(300),
-          url: sourceUrlSchema,
-          publishedAt: z.null(),
-          retrievedAt: timestamp,
-        }),
-      )
-      .min(1)
-      .max(16),
-    citations: z
-      .array(
-        z.strictObject({
-          startByte: z.number().int().nonnegative(),
-          endByte: z.number().int().positive(),
-          quote: z.string().min(1).max(4000),
-          sourceIds: z.array(z.string()).min(1).max(16),
-        }),
-      )
-      .min(1)
-      .max(64),
-    searchSuggestionsHtml: z.string().min(1).max(40000),
-    searchQueryCount: z.number().int().nonnegative().nullable(),
     content: reviewContentSchema,
   })
   .superRefine((value, ctx) => {
@@ -446,39 +367,18 @@ export const groundedReportSchema = z
       ctx.addIssue({ code: "custom", message });
     if (Date.parse(value.expiresAt) <= Date.parse(value.generatedAt))
       issue("Invalid report expiry");
-    const ids = new Set(value.sources.map((source) => source.id)),
-      bytes = new TextEncoder().encode(value.text);
-    if (ids.size !== value.sources.length) issue("Duplicate sources");
-    for (const source of value.sources)
-      if (source.retrievedAt !== value.generatedAt)
-        issue("Invalid source retrieval time");
-    for (const citation of value.citations) {
-      try {
-        if (
-          citation.endByte > bytes.length ||
-          citation.startByte >= citation.endByte ||
-          new TextDecoder("utf-8", { fatal: true }).decode(
-            bytes.slice(citation.startByte, citation.endByte),
-          ) !== citation.quote ||
-          citation.sourceIds.some((id) => !ids.has(id))
-        )
-          issue("Invalid grounding support span/reference");
-      } catch {
-        issue("Invalid UTF-8 grounding span");
-      }
-    }
     try {
-      const original = value.text.trimStart().startsWith("{")
-        ? reviewContentSchema.parse(JSON.parse(value.text))
-        : reviewFromGroundedText(value.text, value.content);
-      if (JSON.stringify(original) !== JSON.stringify(value.content))
-        issue("Review must match the unmodified grounded response");
+      if (
+        JSON.stringify(reviewContentSchema.parse(JSON.parse(value.text))) !==
+        JSON.stringify(value.content)
+      )
+        issue("Review must match the original structured response");
     } catch {
-      issue("Invalid structured grounded response");
+      issue("Invalid structured response");
     }
     if (value.content.symbol !== value.symbol) issue("Wrong reviewed asset");
   });
-export type GroundedReport = z.infer<typeof groundedReportSchema>;
+export type AiReviewReport = z.infer<typeof aiReviewReportSchema>;
 export const researchResultSchema = z
   .strictObject({
     status: z.enum([
@@ -490,7 +390,7 @@ export const researchResultSchema = z
       "insufficient_evidence",
     ]),
     reason: z.string().min(1).max(160).nullable(),
-    data: groundedReportSchema.nullable(),
+    data: aiReviewReportSchema.nullable(),
   })
   .superRefine((value, ctx) => {
     if (
@@ -549,10 +449,7 @@ export const futureAnalysisSchema = z
         report.content.forecastFingerprint !== value.forecastFingerprint)
     )
       issue("Review is bound to a different ML forecast");
-    if (
-      !value.ml.data &&
-      report?.content.reviewStatus === "SUPPORTED_BY_CONTEXT"
-    )
-      issue("Cannot support an unavailable ML prediction");
+    if (!value.ml.data && report)
+      issue("Cannot interpret an unavailable ML prediction");
   });
 export type FutureAnalysis = z.infer<typeof futureAnalysisSchema>;

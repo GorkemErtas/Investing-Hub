@@ -8,7 +8,6 @@ import {
   experimentalFixture,
   mlFixture,
   reviewFixture,
-  textReviewFixture,
   testNow,
 } from "../../shared/tests/future-fixtures";
 import { parseConfig } from "../src/config";
@@ -133,7 +132,7 @@ describe("read-only experimental forecasts", () => {
       "forecast_expired_or_noncausal",
     );
   });
-  it("passes the exact experimental forecast to consented review and never persists grounding", async () => {
+  it("passes the exact experimental forecast to consented review and never persists private interpretation", async () => {
     const f = await setup();
     const research = vi.fn<ResearchProvider["research"]>(async (context) => ({
       report: reviewFixture(context.ml, context.fingerprint),
@@ -167,98 +166,62 @@ describe("read-only experimental forecasts", () => {
     expect(saved).not.toContain("publisher.example.com");
     expect(saved).not.toContain(before.ml.data!.modelId);
   });
-  it.each([true, false])(
-    "reviews experimental mode through the default provider and real SDK (forecast available: %s)",
-    async (ready) => {
-      const f = await setup();
-      if (!ready)
-        await f.publish({
-          ...f.publication,
-          forecasts: assets.map((asset) =>
-            mlFixture(asset.symbol, testNow, false),
-          ),
-        });
-      const service = createFutureService(f.config, { now: () => testNow });
-      const before = await service.read("BTCUSDT", "experimental");
-      expect(before.ml.status).toBe(ready ? "experimental" : "unavailable");
-      const report = textReviewFixture(before.ml, before.forecastFingerprint);
-      const fetch = vi.fn(
-        async (_url: unknown, _init: RequestInit) =>
-          new Response(
-            JSON.stringify({
-              candidates: [
-                {
-                  content: { role: "model", parts: [{ text: report.text }] },
-                  groundingMetadata: {
-                    groundingChunks: report.sources.map((source) => ({
-                      web: { uri: source.url, title: source.title },
-                    })),
-                    groundingSupports: report.citations.map((citation) => ({
-                      segment: {
-                        startIndex: citation.startByte,
-                        endIndex: citation.endByte,
-                        text: citation.quote,
-                        partIndex: 0,
-                      },
-                      groundingChunkIndices: [0],
-                    })),
-                    searchEntryPoint: {
-                      renderedContent: report.searchSuggestionsHtml,
-                    },
-                    webSearchQueries: ["TEST FIXTURE Bitcoin"],
-                  },
-                },
-              ],
-              usageMetadata: {
-                promptTokenCount: 100,
-                candidatesTokenCount: 150,
-              },
-            }),
-            { status: 200, headers: { "content-type": "application/json" } },
-          ),
+  it("reviews the exact experimental evidence through the real SDK without Search or citations", async () => {
+    const f = await setup(),
+      service = createFutureService(f.config, { now: () => testNow });
+    const before = await service.read("BTCUSDT", "experimental");
+    const report = reviewFixture(before.ml, before.forecastFingerprint);
+    let wire: Record<string, any> = {};
+    const fetch = vi.fn(async (_url: unknown, init: RequestInit) => {
+      wire = JSON.parse(String(init.body));
+      return new Response(
+        JSON.stringify({
+          candidates: [
+            { content: { role: "model", parts: [{ text: report.text }] } },
+          ],
+          usageMetadata: { promptTokenCount: 100, candidatesTokenCount: 150 },
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
       );
-      vi.stubGlobal("fetch", fetch);
-      const result = await service.review(
-        "BTCUSDT",
-        randomUUID(),
-        "experimental",
-      );
-      expect(fetch).toHaveBeenCalledOnce();
-      const [url, init] = fetch.mock.calls[0];
-      expect(url).toBe(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent",
-      );
-      const wire = JSON.parse(String(init.body));
-      expect(wire.generationConfig).not.toHaveProperty("responseMimeType");
-      expect(wire.generationConfig).not.toHaveProperty("responseJsonSchema");
-      const evidence = JSON.parse(wire.contents[0].parts[0].text);
-      expect(evidence.mlEvidence).toEqual(before.ml);
-      expect(evidence.forecastFingerprint).toBe(before.forecastFingerprint);
-      expect(result.mode).toBe("experimental");
-      expect(result.ml).toEqual(before.ml);
-      expect(result.research.status).toBe("available");
-      expect(result.research.data?.text).toBe(report.text);
-      expect(result.research.data?.citations).toEqual(report.citations);
-      expect(result.research.data?.searchSuggestionsHtml).toBe(
-        report.searchSuggestionsHtml,
-      );
-      const state = await new FutureStore(f.config.FUTURE_STORAGE_PATH).read();
-      expect(state.day).toMatchObject({
-        requests: 1,
-        inputTokens: 100,
-        outputTokens: 150,
-        searchQueries: 1,
-        unknownQueryRequests: 0,
-        unknownCostRequests: 0,
-      });
-      expect(state.day.estimatedUsd).toBeCloseTo(
-        (100 * 0.3) / 1e6 + (150 * 2.5) / 1e6 + 0.014,
-      );
-      expect(result.research.data?.content.forecastFingerprint).toBe(
-        before.forecastFingerprint,
-      );
-    },
-  );
+    });
+    vi.stubGlobal("fetch", fetch);
+    const result = await service.review(
+      "BTCUSDT",
+      randomUUID(),
+      "experimental",
+    );
+    expect(fetch).toHaveBeenCalledOnce();
+    expect(wire).not.toHaveProperty("tools");
+    expect(wire.generationConfig.responseMimeType).toBe("application/json");
+    const evidence = JSON.parse(wire.contents[0].parts[0].text);
+    expect(evidence.mlEvidence).toEqual(before.ml);
+    expect(evidence.mlEvidence.data.validation).toEqual(
+      before.ml.data!.validation,
+    );
+    expect(result.mode).toBe("experimental");
+    expect(result.ml).toEqual(before.ml);
+    expect(result.research.status).toBe("available");
+    expect(result.research.data?.basis).toBe("ml_only");
+    expect(result.research.data).not.toHaveProperty("citations");
+    expect(result.research.data?.content.forecastFingerprint).toBe(
+      before.forecastFingerprint,
+    );
+    const state = await new FutureStore(f.config.FUTURE_STORAGE_PATH).read();
+    expect(state.day).toMatchObject({
+      requests: 1,
+      inputTokens: 100,
+      outputTokens: 150,
+      searchQueries: 0,
+      unknownQueryRequests: 0,
+      unknownCostRequests: 0,
+    });
+    expect(state.day.estimatedUsd).toBeCloseTo(
+      (100 * 0.3) / 1e6 + (150 * 2.5) / 1e6,
+    );
+    expect(JSON.stringify(state)).not.toMatch(
+      /TEST FIXTURE|executiveSummary|forecastFingerprint/,
+    );
+  });
   it("keeps experimental numbers when Gemini fails and withholds reviews of changed forecasts", async () => {
     const f = await setup();
     let fail = true;

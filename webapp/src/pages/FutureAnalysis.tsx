@@ -1,14 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import {
-  ArrowRight,
-  Check,
-  ExternalLink,
-  FlaskConical,
-  LockKeyhole,
-  RefreshCw,
-  Search,
-} from 'lucide-react';
+import { ArrowRight, Check, FlaskConical, LockKeyhole, RefreshCw } from 'lucide-react';
 import { assets, symbolSchema, type Symbol } from '@investing-hub/shared/contracts';
 import type {
   FutureAnalysis as Analysis,
@@ -41,24 +33,28 @@ const reasons: Record<string, string> = {
   invalid_ml_export: 'The ML publication could not be validated.',
   forecast_expired_or_noncausal: 'The forecast is expired or its timing failed validation.',
   model_or_dataset_validation_failed: 'Model or data integrity checks did not pass.',
-  paid_search_disabled: 'Optional paid Gemini and Google Search review is disabled.',
-  credentials_not_configured: 'Optional research credentials are not configured on the server.',
-  model_capability_unverified: 'Search support for the configured model has not been verified.',
-  insufficient_evidence:
-    'The review lacked sufficient valid grounding or did not pass the review gate.',
+  paid_review_disabled: 'Optional paid Gemini ML review is disabled.',
+  ml_unavailable: 'AI interpretation requires an available ML forecast.',
+  credentials_not_configured: 'Optional review credentials are not configured on the server.',
+  model_capability_unverified: 'The configured Gemini model has not been enabled for review.',
+  insufficient_evidence: 'The AI response did not pass the ML review validation checks.',
   forecast_changed_during_review:
     'The ML evidence changed during review. The returned interpretation was withheld.',
-  budget: 'The research usage budget has been reached.',
+  budget: 'The review usage budget has been reached.',
   cooldown: 'A recent request or provider cooldown prevents another paid review.',
   busy: 'Another paid review is running. Please try again later.',
-  timeout: 'The research request timed out; the ML result is preserved.',
-  provider: 'Gemini research is unavailable; the ML result is preserved.',
-  storage: 'Research accounting storage is unavailable. No new paid request can be made.',
+  timeout: 'The review request timed out; the ML result is preserved.',
+  provider: 'Gemini review is unavailable; the ML result is preserved.',
+  storage: 'Review accounting storage is unavailable. No new paid request can be made.',
 };
 const reasonText = (reason: string | null) =>
   reason ? (reasons[reason] ?? 'Validated analysis is not available yet.') : '';
 const reviewLabel = (status?: ReviewContent['reviewStatus']) =>
-  status ? status.replaceAll('_', ' ') : 'NOT REVIEWED';
+  status === 'SUPPORTED_BY_CONTEXT'
+    ? 'ML ASSUMPTIONS CONSISTENT'
+    : status
+      ? status.replaceAll('_', ' ')
+      : 'NOT REVIEWED';
 
 function PriceForecast({ forecast }: { forecast: NumericForecast | ExperimentalForecast }) {
   const interval = forecast.interval,
@@ -326,10 +322,10 @@ export function FutureAnalysis() {
           <h1>
             Future Analysis<span className="heading-dot">.</span>
           </h1>
-          <p>One outlook. Quantitative evidence, critically reviewed in context.</p>
+          <p>One outlook. Original ML evidence with an optional AI interpretation.</p>
         </div>
         <span className="pill research-pill">
-          <FlaskConical size={15} /> Evidence-led research
+          <FlaskConical size={15} /> AI review of ML data
         </span>
       </div>
       <article className="panel future-report" aria-label={`${asset.name} Future Analysis report`}>
@@ -417,20 +413,21 @@ export function FutureAnalysis() {
                 {content
                   ? 'The outlook, under review'
                   : forecast
-                    ? `${asset.name}: a quantitative outlook awaiting context`
+                    ? `${asset.name}: a quantitative outlook awaiting AI interpretation`
                     : `${asset.name}: more evidence is needed`}
               </h2>
               <p>
                 {content?.executiveSummary ??
                   (forecast
                     ? mode === 'experimental'
-                      ? 'An unapproved candidate supplies an immutable experimental point forecast. Optional grounded review can critique its limitations and current context; it cannot validate the model or change its numbers.'
-                      : 'An independently approved model supplies the price forecast below. Optional grounded review can challenge its assumptions, identify conflicts and explore conditions that could invalidate it.'
-                    : 'No eligible numeric forecast is available. A grounded review can still research current conditions, but it cannot create a price range or directional prediction.')}
+                      ? 'An unapproved candidate supplies an immutable experimental point forecast. Optional AI interpretation can critique its supplied evidence and limitations; it cannot validate the model or change its numbers.'
+                      : 'An independently approved model supplies the price forecast below. Optional AI interpretation can challenge its assumptions, identify conflicts and explore conditions that could invalidate it.'
+                    : 'No eligible numeric forecast is available. AI interpretation is available when an ML forecast is present.')}
               </p>
               {content && (
                 <p className="future-caption">
-                  Context assessment: {content.overallOutlook.replaceAll('_', ' ')}. This is an
+                  ML evidence assessment:{' '}
+                  {content.overallOutlook.replace('context_', '').replaceAll('_', ' ')}. This is an
                   interpretation of evidence, not proof of forecasting accuracy.
                 </p>
               )}
@@ -476,37 +473,17 @@ export function FutureAnalysis() {
             <section className="future-section" aria-labelledby="future-review-title">
               <div className="future-section-heading">
                 <span>02</span>
-                <h2 id="future-review-title">Critical review & current context</h2>
-                <span className="pill">GEMINI + GOOGLE SEARCH</span>
+                <h2 id="future-review-title">Critical analysis of ML evidence</h2>
+                <span className="pill">ML DATA ONLY</span>
               </div>
               {content ? (
                 <>
                   <p>{content.criticalReview}</p>
-                  {content.developments.length > 0 && (
-                    <div className="future-subsection">
-                      <h3>Important developments</h3>
-                      <ul>
-                        {content.developments.map((text) => (
-                          <li key={text}>{text}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
                   {content.risks.length > 0 && (
                     <div className="future-subsection">
                       <h3>Key risks & uncertainty</h3>
                       <ul>
                         {content.risks.map((text) => (
-                          <li key={text}>{text}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {content.upcomingEvents.length > 0 && (
-                    <div className="future-subsection">
-                      <h3>Events to monitor</h3>
-                      <ul>
-                        {content.upcomingEvents.map((text) => (
                           <li key={text}>{text}</li>
                         ))}
                       </ul>
@@ -525,24 +502,26 @@ export function FutureAnalysis() {
                   <input
                     type="checkbox"
                     checked={consent}
-                    disabled={running || current?.research.status === 'disabled'}
+                    disabled={running || !forecast || current?.research.status === 'disabled'}
                     onChange={(event) => setConsent(event.target.checked)}
                   />
-                  <span>I request a paid Gemini + Google Search review of this report.</span>
+                  <span>I request a paid Gemini interpretation of the supplied ML data.</span>
                 </label>
                 <button
                   className="button primary"
-                  disabled={!consent || running || current?.research.status === 'disabled'}
+                  disabled={
+                    !consent || running || !forecast || current?.research.status === 'disabled'
+                  }
                   onClick={() => void runReview()}
                 >
-                  <Search size={15} />
+                  <FlaskConical size={15} />
                   {running ? 'Reviewing evidence…' : 'Request critical review'}
                   <ArrowRight size={14} />
                 </button>
                 <p className="future-caption">
-                  User-initiated only. Search can incur query charges. Results remain in this view
-                  and are cleared when you leave or change coins; no shared report cache or
-                  automatic paid retry is used.
+                  One user-initiated Gemini call, billed for token usage. No live research. Results
+                  remain in this view and are cleared when you leave or change coins; no shared
+                  report cache or automatic paid retry is used.
                 </p>
               </div>
               {reviewError && <Notice>{reviewError}</Notice>}
@@ -588,57 +567,24 @@ export function FutureAnalysis() {
               </>
             )}
             {review && (
-              <section
-                className="future-section future-sources"
-                aria-labelledby="future-sources-title"
-              >
+              <section className="future-section" aria-labelledby="future-basis-title">
                 <div className="future-section-heading">
                   <span>05</span>
-                  <h2 id="future-sources-title">Sources & provenance</h2>
+                  <h2 id="future-basis-title">AI interpretation & limitations</h2>
                 </div>
-                <p className="future-caption">
-                  Review generated {utc(review.generatedAt)} · {review.model}. Source publication
-                  dates are not independently verified; retrieval time is shown separately.
+                <p>
+                  AI interpretation of {mode === 'experimental' ? 'experimental' : 'supplied'} ML
+                  data. No live research, current news or web sources.
                 </p>
-                <ol>
-                  {review.sources.map((source) => (
-                    <li key={source.id}>
-                      <a href={source.url} target="_blank" rel="noopener noreferrer">
-                        {source.title}
-                        <ExternalLink size={13} />
-                      </a>
-                      <p>Publication: unknown · Retrieved {utc(source.retrievedAt)}</p>
-                    </li>
-                  ))}
-                </ol>
-                <iframe
-                  className="future-search-suggestions"
-                  title="Google Search Suggestions"
-                  srcDoc={review.searchSuggestionsHtml}
-                  sandbox="allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
-                  referrerPolicy="no-referrer"
-                />
-                <details className="future-methodology">
-                  <summary>Evidence-linked support & limitations</summary>
-                  <ul>
-                    {review.citations.map((citation, index) => (
-                      <li key={index}>
-                        <q>{citation.quote}</q>{' '}
-                        {citation.sourceIds.map((id) => {
-                          const source = review.sources.find((item) => item.id === id)!;
-                          return (
-                            <a key={id} href={source.url} target="_blank" rel="noopener noreferrer">
-                              [{review.sources.indexOf(source) + 1}]
-                            </a>
-                          );
-                        })}
-                      </li>
-                    ))}
-                  </ul>
+                <p className="future-caption">
+                  Generated {utc(review.generatedAt)} / {review.model}. The original ML forecast and
+                  direction remain unchanged.
+                </p>
+                <ul>
                   {content!.limitations.map((text) => (
-                    <p key={text}>{text}</p>
+                    <li key={text}>{text}</li>
                   ))}
-                </details>
+                </ul>
               </section>
             )}
             <footer className="future-report-footer">
@@ -656,8 +602,8 @@ export function FutureAnalysis() {
         )}
       </article>
       <Notice>
-        Research is conditional and uncertainty-aware. Historical results are not guarantees,
-        context labels are not validated trading signals, and no real trades are placed.
+        Research is conditional and uncertainty-aware. Historical results are not guarantees, AI
+        interpretation labels are not validated trading signals, and no real trades are placed.
       </Notice>
     </>
   );

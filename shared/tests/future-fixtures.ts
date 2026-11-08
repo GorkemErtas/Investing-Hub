@@ -5,11 +5,11 @@ import {
   mlResultSchema,
   experimentalResultSchema,
   type AnalysisMlResult,
-  groundedReportSchema,
+  aiReviewReportSchema,
   futureAnalysisSchema,
   type NumericForecast,
   type MlResult,
-  type GroundedReport,
+  type AiReviewReport,
   type ReviewContent,
 } from "../future-analysis.js";
 
@@ -151,7 +151,7 @@ export function reviewFixture(
   status: ReviewContent["reviewStatus"] = ml.data
     ? "CONFLICTING_EVIDENCE"
     : "HIGH_UNCERTAINTY",
-): GroundedReport {
+): AiReviewReport {
   const asset = assets.find((item) => item.symbol === ml.symbol)!;
   const content: ReviewContent = {
     symbol: ml.symbol,
@@ -160,98 +160,36 @@ export function reviewFixture(
     forecastFingerprint: fingerprint,
     reviewStatus: status,
     overallOutlook: "mixed",
-    executiveSummary: `TEST FIXTURE Reported ${asset.name} context is mixed and requires caution.`,
+    executiveSummary: `TEST FIXTURE ${asset.name} experimental ML evidence is uncertain and requires caution.`,
     criticalReview: `TEST FIXTURE ${asset.name} evidence may conflict with the supplied model; context does not establish forecasting accuracy.`,
-    developments: [
-      `TEST FIXTURE Reported ${asset.name} project maintenance was announced.`,
-    ],
     risks: [
-      `TEST FIXTURE Reported ${asset.name} security risk remains under review.`,
+      "TEST FIXTURE Historical selection and small forward samples can overstate predictive performance.",
     ],
-    upcomingEvents: [],
     scenarios: {
       bullish:
-        "TEST FIXTURE Adoption could strengthen if independently confirmed.",
+        "TEST FIXTURE The model assumptions could hold if future evaluation supports them.",
       base: "TEST FIXTURE Mixed evidence could leave uncertainty unresolved.",
-      bearish: "TEST FIXTURE A confirmed incident could undermine the outlook.",
+      bearish:
+        "TEST FIXTURE Model assumptions could fail under a different volatility regime.",
     },
     recommendations: [
-      "TEST FIXTURE Monitor official confirmations and wait for more evidence.",
+      "TEST FIXTURE Monitor prospective evaluation before relying on the estimate.",
     ],
     limitations: [
-      "TEST FIXTURE Reported claims are not independently verified.",
+      "TEST FIXTURE AI interpretation of experimental ML data only; no live research.",
     ],
   };
   const text = JSON.stringify(content),
     generatedAt = iso(now);
-  return groundedReportSchema.parse({
+  return aiReviewReportSchema.parse({
     symbol: ml.symbol,
-    provider: "gemini_google_search",
+    provider: "gemini_ml_review",
+    basis: "ml_only",
     model: "gemini-3.5-flash-lite",
     generatedAt,
     expiresAt: iso(now + 900000),
     text,
     content,
-    sources: [
-      {
-        id: "source-0",
-        title: `TEST FIXTURE ${asset.name} project announcement`,
-        url: "https://publisher.example.com/test-fixture",
-        publishedAt: null,
-        retrievedAt: generatedAt,
-      },
-    ],
-    citations: [
-      {
-        startByte: 0,
-        endByte: Buffer.byteLength(text),
-        quote: text,
-        sourceIds: ["source-0"],
-      },
-    ],
-    searchSuggestionsHtml:
-      '<div><a target="_blank" href="https://www.google.com/search?q=TEST+FIXTURE">Google Search TEST FIXTURE</a></div>',
-    searchQueryCount: 1,
-  });
-}
-export function textReviewFixture(
-  ml: AnalysisMlResult,
-  fingerprint = fixtureFingerprint(ml),
-  now = testNow,
-): GroundedReport {
-  const report = reviewFixture(ml, fingerprint, now),
-    content = report.content;
-  const bullets = (items: string[]) =>
-    items.map((item) => `- ${item}`).join("\n");
-  const text = [
-    `Review status: ${content.reviewStatus}\nOverall outlook: ${content.overallOutlook}`,
-    `## Summary\n${content.executiveSummary}`,
-    `## Critical review\n${content.criticalReview}`,
-    `## Developments\n${bullets(content.developments)}`,
-    `## Risks\n${bullets(content.risks)}`,
-    `## Upcoming events\n${bullets(content.upcomingEvents)}`,
-    `## Bullish scenario\n${content.scenarios.bullish}`,
-    `## Base scenario\n${content.scenarios.base}`,
-    `## Bearish scenario\n${content.scenarios.bearish}`,
-    `## Conditional recommendations\n${bullets(content.recommendations)}`,
-    `## Limitations\n${bullets(content.limitations)}`,
-  ].join("\n\n");
-  return groundedReportSchema.parse({
-    ...report,
-    text,
-    citations: [
-      ...content.developments,
-      ...content.risks,
-      ...content.upcomingEvents,
-    ].map((quote) => {
-      const start = text.indexOf(quote);
-      return {
-        startByte: Buffer.byteLength(text.slice(0, start)),
-        endByte: Buffer.byteLength(text.slice(0, start + quote.length)),
-        quote,
-        sourceIds: ["source-0"],
-      };
-    }),
   });
 }
 export function analysisFixture(
@@ -262,7 +200,7 @@ export function analysisFixture(
 ) {
   const ml = mlFixture(symbol, now, ready),
     fingerprint = fixtureFingerprint(ml),
-    report = reviewed ? reviewFixture(ml, fingerprint, now) : null;
+    report = reviewed && ready ? reviewFixture(ml, fingerprint, now) : null;
   return futureAnalysisSchema.parse({
     schemaVersion: "future-analysis-v1",
     symbol,

@@ -3,50 +3,46 @@ import { assets, symbolSchema } from "../contracts.js";
 import {
   futureAnalysisSchema,
   numericForecastSchema,
-  groundedReportSchema,
+  aiReviewReportSchema,
   reviewContentSchema,
-  reviewFromGroundedText,
 } from "../future-analysis.js";
 import {
   analysisFixture,
   numericFixture,
   mlFixture,
   reviewFixture,
-  textReviewFixture,
 } from "./future-fixtures";
 
 describe("Future Analysis trust boundaries", () => {
-  it("extracts the existing report sections verbatim from grounded plain text", () => {
-    const report = textReviewFixture(mlFixture());
-    expect(reviewFromGroundedText(report.text, report.content)).toEqual(
-      report.content,
-    );
-    expect(report.content).toEqual(reviewFixture(mlFixture()).content);
-    for (const text of [
-      report.text.replaceAll("## ", ""),
-      report.text
-        .replaceAll("## ", "")
-        .replace(/^(Summary|Risks)$/gm, "**$1:**"),
-    ])
-      expect(reviewFromGroundedText(text, report.content)).toEqual(
-        report.content,
-      );
-    expect(
-      groundedReportSchema.safeParse({
-        ...report,
+  it("requires an ML-only report without fabricated sources or modified presentation", () => {
+    const report = reviewFixture(mlFixture());
+    expect(aiReviewReportSchema.parse(report).basis).toBe("ml_only");
+    for (const patch of [
+      { basis: "live_research" },
+      { provider: "gemini_google_search" },
+      { sources: [] },
+      { citations: [] },
+      { searchSuggestionsHtml: "invented" },
+      {
         content: {
           ...report.content,
           executiveSummary:
-            "This statement was invented and never appeared in the research.",
+            "This invented statement does not match the response.",
         },
-      }).success,
-    ).toBe(false);
-    expect(() =>
-      reviewFromGroundedText(
-        report.text + "\n\n## Summary\nDuplicate summary.",
-        report.content,
-      ),
-    ).toThrow();
+      },
+    ])
+      expect(
+        aiReviewReportSchema.safeParse({ ...report, ...patch }).success,
+      ).toBe(false);
+    for (const patch of [
+      { risks: [] },
+      { developments: ["Invented current news."] },
+      { upcomingEvents: ["Invented event."] },
+      { correctedPrice: 120 },
+    ])
+      expect(
+        reviewContentSchema.safeParse({ ...report.content, ...patch }).success,
+      ).toBe(false);
   });
   it.each(assets)("supports the canonical $symbol asset", (asset) => {
     expect(symbolSchema.parse(asset.symbol)).toBe(asset.symbol);
@@ -112,27 +108,6 @@ describe("Future Analysis trust boundaries", () => {
         .success,
     ).toBe(false);
   });
-  it("checks exact grounding byte spans and genuine source references", () => {
-    const report = reviewFixture(mlFixture());
-    expect(
-      groundedReportSchema.safeParse({
-        ...report,
-        citations: [{ ...report.citations[0], sourceIds: ["fabricated"] }],
-      }).success,
-    ).toBe(false);
-    expect(
-      groundedReportSchema.safeParse({
-        ...report,
-        citations: [{ ...report.citations[0], quote: "fabricated quote" }],
-      }).success,
-    ).toBe(false);
-    expect(
-      groundedReportSchema.safeParse({
-        ...report,
-        sources: [{ ...report.sources[0], url: "javascript:alert(1)" }],
-      }).success,
-    ).toBe(false);
-  });
   it("binds a review to the same symbol, model and forecast fingerprint", () => {
     const response = analysisFixture("BTCUSDT", undefined, true, true),
       data = response.research.data!;
@@ -155,5 +130,6 @@ describe("Future Analysis trust boundaries", () => {
     const researchOnly = analysisFixture("SOLUSDT", undefined, false, true);
     expect(researchOnly.ml.data).toBeNull();
     expect(researchOnly.conflict).toBeNull();
+    expect(researchOnly.research.data).toBeNull();
   });
 });
