@@ -1,6 +1,33 @@
 import { createHash } from "node:crypto";
 export const hash = (text: string) =>
   createHash("sha256").update(text).digest("hex");
+
+export const evidenceStages = [
+  "missing_candidate",
+  "missing_grounding_chunks",
+  "missing_grounding_supports",
+  "missing_search_entry_point",
+  "response_content",
+  "search_suggestions",
+  "json_parse",
+  "review_schema",
+  "report_schema",
+  "source_url",
+  "source_metadata",
+  "source_identity",
+  "citation_offset",
+  "citation_reference",
+  "review_fingerprint",
+  "review_identity",
+  "unsafe_review",
+  "unsupported_structured_claims",
+] as const;
+export type EvidenceStage = (typeof evidenceStages)[number];
+export interface GroundingDiagnostic {
+  chunks: number;
+  supports: number;
+  searchEntryPoint: boolean;
+}
 type SafeCategory =
   | Lowercase<FutureError["code"]>
   | "bad_request"
@@ -11,6 +38,8 @@ type SafeCategory =
   | "server_error"
   | "sdk_or_network_error";
 export class FutureError extends Error {
+  stage: EvidenceStage | null = null;
+  grounding: GroundingDiagnostic | null = null;
   constructor(
     public code:
       | "STORAGE"
@@ -28,6 +57,11 @@ export class FutureError extends Error {
   ) {
     super(code);
   }
+}
+export function insufficient(stage: EvidenceStage): FutureError {
+  const error = new FutureError("INSUFFICIENT_EVIDENCE");
+  error.stage = stage;
+  return error;
 }
 export function failure(
   error: unknown,

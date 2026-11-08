@@ -3,7 +3,7 @@ import { join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import { hostname } from "node:os";
 import { z } from "zod";
-import { FutureError, hash } from "./errors.js";
+import { evidenceStages, FutureError, hash } from "./errors.js";
 
 const usage = z.strictObject({
   key: z.string().max(10),
@@ -16,6 +16,15 @@ const usage = z.strictObject({
   estimatedUsd: z.number().finite().nonnegative(),
 });
 const diagnostic = z.strictObject({
+  stage: z.enum(evidenceStages).nullable().default(null),
+  grounding: z
+    .strictObject({
+      chunks: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+      supports: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+      searchEntryPoint: z.boolean(),
+    })
+    .nullable()
+    .default(null),
   code: z.enum([
     "STORAGE",
     "BUSY",

@@ -12,7 +12,7 @@ import {
 import { parseConfig } from "../src/config";
 import { createApp } from "../src/app";
 import { createFutureService } from "../src/future/service";
-import { FutureStore } from "../src/future/store";
+import { FutureStore, emptyState, stateSchema } from "../src/future/store";
 import { createMlReader } from "../src/future/ml-reader";
 import {
   createResearchProvider,
@@ -351,7 +351,12 @@ describe("grounding and deterministic review gate", () => {
       if (mode === "suggestions")
         metadata.searchEntryPoint.renderedContent = "<script>alert(1)</script>";
       if (mode === "identity")
-        metadata.groundingChunks[0].web.title = "Unrelated company";
+        metadata.groundingSupports[0].segment = {
+          startIndex: 0,
+          endIndex: 1,
+          text: "{",
+          partIndex: 0,
+        };
       expect(() =>
         parseGrounding(
           response,
@@ -444,6 +449,197 @@ describe("grounding and deterministic review gate", () => {
   });
 });
 describe("official SDK request and sanitized diagnostics", () => {
+  it("accepts provider domain titles and redirect URLs with genuine asset-specific support", async () => {
+    const f = setup();
+    const response = sdkResponse();
+    response.candidates[0].groundingMetadata.groundingChunks[0].web = {
+      title: "publisher.example.com",
+      uri: "https://vertexaisearch.cloud.google.com/grounding-api-redirect/TEST-FIXTURE",
+    };
+    const report = reviewFixture(context().ml);
+    response.candidates[0].groundingMetadata.groundingSupports = [
+      ...report.content.developments,
+      ...report.content.risks,
+    ].map((quote) => {
+      const start = report.text.indexOf(quote);
+      return {
+        segment: {
+          startIndex: Buffer.byteLength(report.text.slice(0, start)),
+          endIndex: Buffer.byteLength(
+            report.text.slice(0, start + quote.length),
+          ),
+          text: quote,
+          partIndex: 0,
+        },
+        groundingChunkIndices: [0],
+      };
+    });
+    const fetch = vi.fn(
+      async () =>
+        new Response(JSON.stringify(response), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+    );
+    vi.stubGlobal("fetch", fetch);
+    const service = createFutureService(f.config, {
+      ml: f.ml,
+      store: f.store,
+      now: f.now,
+    });
+    const result = await service.review("BTCUSDT", randomUUID());
+    expect(result.research.status).toBe("available");
+    expect(result.research.data?.sources[0]).toMatchObject({
+      title: "publisher.example.com",
+      url: response.candidates[0].groundingMetadata.groundingChunks[0].web.uri,
+    });
+    expect(result.ml).toEqual(mlFixture());
+    expect(fetch).toHaveBeenCalledOnce();
+  });
+  it.each([
+    "missing_candidate",
+    "missing_grounding_chunks",
+    "missing_grounding_supports",
+    "missing_search_entry_point",
+    "json_parse",
+    "review_schema",
+    "source_url",
+    "citation_offset",
+    "citation_reference",
+    "unsupported_structured_claims",
+    "review_fingerprint",
+  ] as const)(
+    "saves only safe diagnostics for HTTP 200 rejected at %s",
+    async (stage) => {
+      const f = setup();
+      const ctx = context();
+      const response = sdkResponse(
+        stage === "review_fingerprint"
+          ? { ...ctx, fingerprint: "a".repeat(64) }
+          : ctx,
+      );
+      const candidate = response.candidates[0];
+      const metadata = candidate.groundingMetadata;
+      if (stage === "missing_candidate") response.candidates = [];
+      if (stage === "missing_grounding_chunks") metadata.groundingChunks = [];
+      if (stage === "missing_grounding_supports")
+        metadata.groundingSupports = [];
+      if (stage === "missing_search_entry_point")
+        metadata.searchEntryPoint.renderedContent = "";
+      if (stage === "source_url")
+        metadata.groundingChunks[0].web.uri = "http://localhost/PRIVATE_URL";
+      if (stage === "citation_offset")
+        metadata.groundingSupports[0].segment.endIndex++;
+      if (stage === "citation_reference")
+        metadata.groundingSupports[0].groundingChunkIndices = [99];
+      if (stage === "json_parse" || stage === "review_schema") {
+        const original = candidate.content.parts[0].text;
+        const serialized =
+          stage === "json_parse"
+            ? original.slice(0, -1)
+            : JSON.stringify({
+                ...JSON.parse(original),
+                horizon: "PRIVATE_SCHEMA_VALUE",
+              });
+        candidate.content.parts[0].text = serialized;
+        metadata.groundingSupports[0].segment.text = serialized;
+        metadata.groundingSupports[0].segment.endIndex =
+          Buffer.byteLength(serialized);
+      }
+      if (stage === "unsupported_structured_claims") {
+        const text = candidate.content.parts[0].text;
+        const quote = reviewFixture(ctx.ml).content.executiveSummary;
+        const start = text.indexOf(quote);
+        metadata.groundingSupports[0].segment = {
+          startIndex: Buffer.byteLength(text.slice(0, start)),
+          endIndex: Buffer.byteLength(text.slice(0, start + quote.length)),
+          text: quote,
+          partIndex: 0,
+        };
+      }
+      const fetch = vi.fn(
+        async () =>
+          new Response(JSON.stringify(response), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          }),
+      );
+      vi.stubGlobal("fetch", fetch);
+      const service = createFutureService(f.config, {
+        ml: f.ml,
+        store: f.store,
+        now: f.now,
+      });
+      const result = await service.review("BTCUSDT", randomUUID());
+      expect(result.research.reason).toBe("insufficient_evidence");
+      expect(result.ml).toEqual(mlFixture());
+      expect(fetch).toHaveBeenCalledOnce();
+      const state = await f.store.read();
+      expect(state.lastFailure).toEqual({
+        code: "INSUFFICIENT_EVIDENCE",
+        category: "insufficient_evidence",
+        httpStatus: 200,
+        elapsedMs: expect.any(Number),
+        stage,
+        grounding: {
+          chunks:
+            stage === "missing_candidate" ? 0 : metadata.groundingChunks.length,
+          supports:
+            stage === "missing_candidate"
+              ? 0
+              : metadata.groundingSupports.length,
+          searchEntryPoint:
+            stage !== "missing_candidate" &&
+            !!metadata.searchEntryPoint.renderedContent,
+        },
+      });
+      expect(state.day.requests).toBe(1);
+      expect(state.day.unknownCostRequests).toBe(1);
+      const saved = await readFile(join(f.directory, "state.json"), "utf8");
+      expect(saved).not.toMatch(
+        /TEST FIXTURE|PRIVATE_|publisher|vertexaisearch/,
+      );
+      expect(saved).not.toContain(f.config.GEMINI_API_KEY);
+      expect(saved).not.toContain(ctx.fingerprint);
+      expect(saved).not.toContain(ctx.ml.data!.modelId);
+    },
+  );
+  it("reads older accounting diagnostics without resetting reservations or accepting private diagnostic fields", () => {
+    const legacy = {
+      ...emptyState(),
+      day: { ...emptyState().day, requests: 2, unknownCostRequests: 2 },
+      lastFailure: {
+        code: "INSUFFICIENT_EVIDENCE",
+        category: "insufficient_evidence",
+        httpStatus: 200,
+        elapsedMs: 4400,
+      },
+    };
+    const parsed = stateSchema.parse(legacy);
+    expect(parsed.day.requests).toBe(2);
+    expect(parsed.day.unknownCostRequests).toBe(2);
+    expect(parsed.lastFailure).toMatchObject({ stage: null, grounding: null });
+    expect(
+      stateSchema.safeParse({
+        ...legacy,
+        lastFailure: { ...legacy.lastFailure, stage: "PRIVATE_RESPONSE" },
+      }).success,
+    ).toBe(false);
+    expect(
+      stateSchema.safeParse({
+        ...legacy,
+        lastFailure: {
+          ...legacy.lastFailure,
+          grounding: {
+            chunks: 1,
+            supports: 1,
+            searchEntryPoint: true,
+            text: "PRIVATE_CONTENT",
+          },
+        },
+      }).success,
+    ).toBe(false);
+  });
   it("sends Google Search and projected JSON schema through the real SDK with one attempt", async () => {
     const f = setup();
     let wire: Record<string, any> = {};

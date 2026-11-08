@@ -26,6 +26,8 @@ export async function main(args = process.argv.slice(2), env = process.env) {
           httpStatus: safe.httpStatus,
           category: safe.category,
           elapsedMs: safe.elapsedMs,
+          stage: safe.stage,
+          grounding: safe.grounding,
         },
       }),
     );

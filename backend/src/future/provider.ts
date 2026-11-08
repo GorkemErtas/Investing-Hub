@@ -9,7 +9,12 @@ import {
 } from "@investing-hub/shared/future-analysis";
 import { z } from "zod";
 import type { Config } from "../config.js";
-import { failure, FutureError } from "./errors.js";
+import {
+  failure,
+  FutureError,
+  insufficient,
+  type GroundingDiagnostic,
+} from "./errors.js";
 import {
   fingerprint,
   validateReview,
@@ -41,13 +46,13 @@ export function parseGrounding(
 ): GroundedReport {
   const candidate = response.candidates?.[0],
     metadata = candidate?.groundingMetadata;
-  if (
-    !candidate ||
-    !metadata?.groundingChunks?.length ||
-    !metadata.groundingSupports?.length ||
-    !metadata.searchEntryPoint?.renderedContent
-  )
-    throw new FutureError("INSUFFICIENT_EVIDENCE");
+  if (!candidate) throw insufficient("missing_candidate");
+  if (!metadata?.groundingChunks?.length)
+    throw insufficient("missing_grounding_chunks");
+  if (!metadata.groundingSupports?.length)
+    throw insufficient("missing_grounding_supports");
+  if (!metadata.searchEntryPoint?.renderedContent)
+    throw insufficient("missing_search_entry_point");
   const parts = candidate.content?.parts ?? [],
     offsets = new Map<number, number>();
   let text = "",
@@ -67,13 +72,18 @@ export function parseGrounding(
     text.length > 16000 ||
     !/\b(?:reported|uncertain|risk|catalyst)\b/i.test(text)
   )
-    throw new FutureError("INSUFFICIENT_EVIDENCE");
+    throw insufficient("response_content");
   const generatedAt = new Date(now).toISOString();
   validateSuggestions(metadata.searchEntryPoint.renderedContent);
+  const invalidSourceUrls = new Set<number>();
   const sources = metadata.groundingChunks.map((chunk, index) => {
     const url = sourceUrlSchema.safeParse(chunk.web?.uri),
       title = chunk.web?.title;
-    if (!url.success || !title || title.length > 300) return null;
+    if (!url.success) {
+      invalidSourceUrls.add(index);
+      return null;
+    }
+    if (!title || title.length > 300) return null;
     return {
       id: `source-${index}`,
       title,
@@ -87,29 +97,40 @@ export function parseGrounding(
       index = segment?.partIndex ?? 0;
     if (
       !segment ||
+      !Number.isInteger(index) ||
       !Number.isInteger(segment.startIndex ?? 0) ||
       !Number.isInteger(segment.endIndex) ||
+      (segment.startIndex ?? 0) < 0 ||
+      segment.endIndex! <= (segment.startIndex ?? 0) ||
       !offsets.has(index)
     )
-      throw new FutureError("INSUFFICIENT_EVIDENCE");
+      throw insufficient("citation_offset");
     const startByte = offsets.get(index)! + (segment.startIndex ?? 0),
       endByte = offsets.get(index)! + segment.endIndex!;
     const ids = support.groundingChunkIndices ?? [];
     if (
       !ids.length ||
-      ids.some((i) => !Number.isInteger(i) || i < 0 || !sources[i])
+      ids.some((i) => !Number.isInteger(i) || i < 0 || i >= sources.length)
     )
-      throw new FutureError("INSUFFICIENT_EVIDENCE");
+      throw insufficient("citation_reference");
+    if (ids.some((i) => invalidSourceUrls.has(i)))
+      throw insufficient("source_url");
+    if (ids.some((i) => !sources[i])) throw insufficient("source_metadata");
     const part = parts[index].text!,
       bytes = new TextEncoder().encode(part);
-    const quote = new TextDecoder("utf-8", { fatal: true }).decode(
-      bytes.slice(segment.startIndex ?? 0, segment.endIndex),
-    );
+    let quote: string;
+    try {
+      quote = new TextDecoder("utf-8", { fatal: true }).decode(
+        bytes.slice(segment.startIndex ?? 0, segment.endIndex),
+      );
+    } catch {
+      throw insufficient("citation_offset");
+    }
     if (
       segment.endIndex! > bytes.length ||
-      (segment.text && quote !== segment.text)
+      (segment.text !== undefined && quote !== segment.text)
     )
-      throw new FutureError("INSUFFICIENT_EVIDENCE");
+      throw insufficient("citation_offset");
     return {
       startByte,
       endByte,
@@ -119,9 +140,19 @@ export function parseGrounding(
   });
   const used = new Set(citations.flatMap((item) => item.sourceIds));
   const accepted = sources.filter((source) => source && used.has(source.id));
-  if (!accepted.some((source) => source && identity.test(source.title)))
-    throw new FutureError("INSUFFICIENT_EVIDENCE");
-  return groundedReportSchema.parse({
+  // Google may return a publisher domain as the title. Check asset relevance
+  // against the genuinely supported text instead of requiring an article title.
+  if (!citations.some((citation) => identity.test(citation.quote)))
+    throw insufficient("source_identity");
+  let content: unknown;
+  try {
+    content = JSON.parse(text);
+  } catch {
+    throw insufficient("json_parse");
+  }
+  const reviewed = reviewContentSchema.safeParse(content);
+  if (!reviewed.success) throw insufficient("review_schema");
+  const report = groundedReportSchema.safeParse({
     symbol,
     provider: "gemini_google_search",
     model,
@@ -132,8 +163,10 @@ export function parseGrounding(
     citations,
     searchSuggestionsHtml: metadata.searchEntryPoint.renderedContent,
     searchQueryCount: metadata.webSearchQueries?.length ?? null,
-    content: reviewContentSchema.parse(JSON.parse(text)),
+    content: reviewed.data,
   });
+  if (!report.success) throw insufficient("report_schema");
+  return report.data;
 }
 function wireSchema(value: Record<string, unknown>): Record<string, unknown> {
   const result: Record<string, unknown> = {};
@@ -170,6 +203,7 @@ export function createResearchProvider(
       const started = performance.now();
       let httpStatus: number | null = null;
       let retryAfterSeconds = 0;
+      let grounding: GroundingDiagnostic | null = null;
       try {
         if (config.GEMINI_MODEL !== "gemini-3.5-flash-lite")
           throw new FutureError("PERMISSION_REQUIRED");
@@ -179,7 +213,9 @@ export function createResearchProvider(
           context.fingerprint !==
             fingerprint(ml, context.freshness, context.mode)
         )
-          throw new FutureError("INSUFFICIENT_EVIDENCE");
+          throw insufficient(
+            ml.symbol !== symbol ? "review_identity" : "review_fingerprint",
+          );
         const asset = assets.find((item) => item.symbol === symbol)!;
         const client = new GoogleGenAI({
           apiKey: config.GEMINI_API_KEY,
@@ -227,6 +263,12 @@ export function createResearchProvider(
             abortSignal: signal,
           },
         });
+        const metadata = response.candidates?.[0]?.groundingMetadata;
+        grounding = {
+          chunks: metadata?.groundingChunks?.length ?? 0,
+          supports: metadata?.groundingSupports?.length ?? 0,
+          searchEntryPoint: !!metadata?.searchEntryPoint?.renderedContent,
+        };
         return {
           report: validateReview(
             parseGrounding(
@@ -249,6 +291,7 @@ export function createResearchProvider(
       } catch (error) {
         const safe = failure(error, Math.round(performance.now() - started));
         safe.httpStatus ??= httpStatus;
+        safe.grounding ??= grounding;
         safe.retryAfterSeconds = Math.max(
           safe.retryAfterSeconds,
           retryAfterSeconds,

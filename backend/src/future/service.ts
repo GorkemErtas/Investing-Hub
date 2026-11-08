@@ -241,6 +241,8 @@ export function createFutureService(
           httpStatus: safe.httpStatus,
           category: safe.category,
           elapsedMs: safe.elapsedMs,
+          stage: safe.stage,
+          grounding: safe.grounding,
         };
         if (!["BUDGET", "COOLDOWN"].includes(safe.code))
           state.cooldowns[symbol] =

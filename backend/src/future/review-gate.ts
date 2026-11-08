@@ -5,7 +5,7 @@ import {
   type ForecastMode,
 } from "@investing-hub/shared/future-analysis";
 import type { Symbol } from "@investing-hub/shared/contracts";
-import { hash, FutureError } from "./errors.js";
+import { hash, insufficient } from "./errors.js";
 
 export interface ReviewContext {
   symbol: Symbol;
@@ -32,7 +32,7 @@ export function validateSuggestions(suggestions: string): void {
       suggestions,
     )
   )
-    throw new FutureError("INSUFFICIENT_EVIDENCE");
+    throw insufficient("search_suggestions");
   const links = [...suggestions.matchAll(/\bhref\s*=\s*["']([^"']+)["']/gi)];
   if (
     !links.length ||
@@ -48,24 +48,27 @@ export function validateSuggestions(suggestions: string): void {
       }
     })
   )
-    throw new FutureError("INSUFFICIENT_EVIDENCE");
+    throw insufficient("search_suggestions");
 }
 export function validateReview(
   input: GroundedReport,
   context: ReviewContext,
 ): GroundedReport {
-  const report = groundedReportSchema.parse(input),
+  const parsed = groundedReportSchema.safeParse(input);
+  if (!parsed.success) throw insufficient("report_schema");
+  const report = parsed.data,
     content = report.content;
   validateSuggestions(report.searchSuggestionsHtml);
+  if (content.forecastFingerprint !== context.fingerprint)
+    throw insufficient("review_fingerprint");
   if (
     report.symbol !== context.symbol ||
     content.symbol !== context.symbol ||
     content.horizon !== "1d" ||
     content.mlModelId !== (context.ml.data?.modelId ?? null) ||
-    content.forecastFingerprint !== context.fingerprint ||
     (!context.ml.data && content.reviewStatus === "SUPPORTED_BY_CONTEXT")
   )
-    throw new FutureError("INSUFFICIENT_EVIDENCE");
+    throw insufficient("review_identity");
   const prose = [
     content.executiveSummary,
     content.criticalReview,
@@ -83,7 +86,7 @@ export function validateReview(
       ),
     )
   )
-    throw new FutureError("INSUFFICIENT_EVIDENCE");
+    throw insufficient("unsafe_review");
   // Every externally researched development, risk and event needs genuine support
   // inside its original serialized response, never a model-supplied URL list.
   const supported = (text: string) => {
@@ -103,6 +106,6 @@ export function validateReview(
       ...content.upcomingEvents,
     ].every(supported)
   )
-    throw new FutureError("INSUFFICIENT_EVIDENCE");
+    throw insufficient("unsupported_structured_claims");
   return report;
 }
