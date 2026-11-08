@@ -20,7 +20,7 @@ FROM coverage LEFT JOIN versions USING(symbol) ORDER BY symbol LIMIT 8;
 
 -- name: versions
 -- Business question: which frozen regression candidates exist? No artifacts.
-SELECT id, status, metadata FROM models WHERE symbol=:symbol ORDER BY id LIMIT 100;
+SELECT id, status, metadata FROM models WHERE symbol=:symbol ORDER BY json_extract(metadata,'$.trained_at') DESC,id LIMIT 100;
 
 -- name: evaluated
 -- Business question: which genuine prospective forecasts have observed outcomes?

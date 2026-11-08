@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet('Daily', 'Weekly')]
+    [ValidateSet('Sync', 'Validate', 'Train', 'Evaluate', 'Select', 'Predict', 'Reconcile', 'Status', 'Analytics')]
     [string]$Task,
     [string]$DatabasePath = $env:INVESTING_HUB_ML_DB
 )

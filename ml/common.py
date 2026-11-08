@@ -54,7 +54,7 @@ def digest(value: bytes) -> str:
 
 def symbol_check(symbol: str) -> str:
     if symbol not in SYMBOLS:
-        raise ValueError(f'Unsupported research symbol: {symbol}')
+        raise ValueError(f'Unsupported prediction symbol: {symbol}')
     return symbol
 
 
@@ -64,23 +64,16 @@ def load_config(path: Path | None = None) -> dict:
         config['symbols'] = list(SYMBOLS)
     if not config['symbols'] or not set(config['symbols']).issubset(SYMBOLS):
         raise ValueError('Invalid configured symbols')
-    if config['window_mode'] not in ('rolling', 'expanding'):
-        raise ValueError('window_mode must be rolling or expanding')
-    if config['walk_forward_splits'] < 2 or config['min_train_samples'] < 30:
-        raise ValueError('Insufficient walk-forward/training samples')
-    if not 1 <= config['minimum_fold_wins'] <= config['walk_forward_splits'] or config['fold_days'] < 2:
-        raise ValueError('Invalid fold size or minimum fold wins')
-    years = config['training_years']
-    if not years or len(set(years)) != len(years) or any(y not in (None, 1, 2, 3) for y in years):
-        raise ValueError('Training windows must be unique full-history/null, 3, 2 or 1 years')
-    if not 0 < config['max_absolute_daily_return'] <= 0.8:
-        raise ValueError('Invalid daily-return anomaly threshold')
-    if not 0 <= config['required_relative_rmse_improvement'] < 1:
-        raise ValueError('Invalid improvement threshold')
-    if config['min_forward_samples'] < 30 or config['max_model_age_days'] < 1:
-        raise ValueError('Forward evaluation requires at least 30 samples and a positive model age')
-    # All previously inspected periods are development data, including 2026.
-    if day(config['development_end_exclusive']) != day('2027-01-01'):
-        raise ValueError('Development cutoff is frozen at 2027-01-01; 2026 is already inspected')
+    for key in ('walk_forward_splits', 'fold_days', 'holdout_days', 'min_train_samples', 'lookback', 'lstm_hidden', 'lstm_epochs', 'lstm_batch_size'):
+        if not isinstance(config[key], int) or config[key] < 1:
+            raise ValueError('Invalid positive training configuration: '+key)
+    if config['walk_forward_splits'] < 2 or config['min_train_samples'] < 30 or config['fold_days'] < 2 or config['holdout_days'] < 2:
+        raise ValueError('Insufficient chronological evaluation samples')
+    if not 1 <= config['lookback'] <= 64 or not 1 <= config['lstm_hidden'] <= 64:
+        raise ValueError('Unsupported bounded LSTM dimensions')
+    if not 0 < config['max_absolute_daily_return'] <= .8 or not 0 <= config['selection_tolerance'] <= .05:
+        raise ValueError('Invalid integrity threshold or selection tolerance')
+    if not 0 < config['lstm_learning_rate'] <= .1:
+        raise ValueError('Invalid learning rate')
     day(config['start_date'])
     return config

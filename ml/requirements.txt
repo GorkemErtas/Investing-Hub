@@ -7,3 +7,6 @@ python-dateutil==4.0.0
 pytz==2026.6
 tzdata==2026.6
 threadpoolctl==3.7.0
+
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.14.1+cpu

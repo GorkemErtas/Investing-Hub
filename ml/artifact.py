@@ -1,7 +1,6 @@
 """Data-only inference artifacts: no pickle, joblib, imports or executable code.
 
-Only the three fixed sklearn candidates can be exported. Tree traversal and
-linear inference operate on bounded, validated numeric JSON arrays.
+Fixed sklearn and CPU LSTM weights use bounded, validated numeric JSON arrays.
 """
 from __future__ import annotations
 
@@ -80,9 +79,14 @@ def predict(artifact: dict | str, x) -> np.ndarray:
         if len(artifact) > 32 * 1024 * 1024:
             raise ValueError('Oversized numeric artifact')
         artifact = json.loads(artifact)
-    if (artifact['format'] != 'numeric-sklearn-v1' or artifact['features'] != FEATURES or
+    if (artifact['format'] not in ('numeric-sklearn-v1', 'numeric-lstm-v1') or artifact['features'] != FEATURES or
             artifact['feature_version'] != FEATURE_VERSION):
         raise ValueError('Feature/artifact contract mismatch')
+    if artifact['format'] == 'numeric-lstm-v1':
+        if artifact['algorithm'] != 'lstm':
+            raise ValueError('Invalid LSTM algorithm')
+        from lstm import predict_artifact
+        return predict_artifact(artifact, x)
     x = np.asarray(x, dtype=float)
     if x.ndim != 2 or x.shape[1] != len(FEATURES) or not np.isfinite(x).all():
         raise ValueError('Invalid inference features')

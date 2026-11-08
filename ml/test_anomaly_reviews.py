@@ -13,7 +13,7 @@ from features import validate_candles, prepare
 from forecast import generate
 from ingestion import sync, import_legacy
 from store import fingerprint
-from train import train_models, candidates
+from train import train_models, select_best
 from test_lifecycle import DatabaseTests, config
 from test_pipeline import candles
 
@@ -221,17 +221,17 @@ class ReviewPolicyTests(DatabaseTests):
         frame,_,_=self.store.verified_frame('DOGEUSDT',now)
         prepared,_=prepare(frame,now_ms=now,symbol='DOGEUSDT',sources=self.store.candle_sources('DOGEUSDT'))
         self.assertEqual(len(prepared),685)
-        cfg=config();cfg['training_years']=[None]
-        with self.store.transaction(), patch('train.candidates',return_value={'ridge':candidates(42)['ridge']}):
+        cfg=config()
+        with self.store.transaction():
             registered=train_models(self.store,'DOGEUSDT',cfg,now)
         with self.store.transaction():
-            prediction=generate(self.store,'DOGEUSDT',cfg,now+1,registered[0]['model_id'])
+            select_best(self.store,'DOGEUSDT',cfg,now+1)
+            prediction=generate(self.store,'DOGEUSDT',cfg,now+1)
         self.assertEqual(prediction['status'],'pending')
-        self.assertIsNone(self.store.active('DOGEUSDT'))
-        self.assertEqual(json.loads(prediction['details'])['model_status_at_generation'],'candidate')
+        self.assertIsNotNone(self.store.active('DOGEUSDT'))
+        self.assertEqual(json.loads(prediction['details'])['model_status_at_generation'],'active')
         self.policy['reviews']=[];self.save_policy()
-        with self.assertRaises(AnomalyReviewError):
-            generate(self.store,'DOGEUSDT',cfg,now+2,registered[0]['model_id'])
+        self.assertEqual(generate(self.store,'DOGEUSDT',cfg,now+2)['status'],'unavailable')
         with self.assertRaises(AnomalyReviewError):
             train_models(self.store,'DOGEUSDT',cfg,now+2)
 

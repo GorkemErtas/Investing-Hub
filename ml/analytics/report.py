@@ -27,23 +27,40 @@ def code_hash():
 def registry_models(store, symbol, features, now):
     regressions, monitoring, evaluated = [], [], []
     sql_ids = {r['id'] for r in query(store, 'evaluated', symbol=symbol, now=now)}
-    # Read bounded metadata; store.model additionally verifies artifact integrity.
-    for item in query(store, 'versions', symbol=symbol):
-        model = store.model(item['id'])
+    # Current comparable candidates are shown together; historical rows remain in SQLite.
+    versions = [store.model(item['id']) for item in query(store, 'versions', symbol=symbol)]
+    current = [m for m in versions if m['metadata'].get('pipeline_version') == 'price-predictions-v1']
+    comparison = max(current, key=lambda m: (m['metadata']['trained_at'], m['metadata']['comparison_id']))['metadata']['comparison_id'] if current else None
+    for model in versions:
         meta = model['metadata']
         folds = meta.get('walk_forward', [])
         validation = meta.get('validation_metrics')
-        if validation and folds:
+        if validation and folds and (comparison is None or meta.get('comparison_id') == comparison):
             regressions.append({'modelId': model['id'], 'model': meta.get('algorithm', 'unknown'), 'version': model['id'],
                 'status': model['status'], 'phase': 'historical_selection', 'datasetFingerprint': meta['dataset_fingerprint'],
                 'featureVersion': meta['feature_version'], 'trainedAt': stamp(meta['trained_at']),
                 'trainStart': stamp(meta['training_range']['source_start']), 'trainEnd': stamp(meta['training_range']['target_end']),
-                'evaluationStart': stamp(folds[-1]['evaluation_source_start']), 'evaluationEnd': stamp(folds[-1]['evaluation_target_end']),
+                'evaluationStart': stamp(folds[0]['evaluation_source_start']) if meta.get('comparison_id') else stamp(folds[-1]['evaluation_source_start']), 'evaluationEnd': stamp(folds[-1]['evaluation_target_end']),
                 'samples': validation['samples'], 'returnMae': validation['return_mae'], 'returnRmse': validation['return_rmse'],
                 'priceMaeUsdt': validation['price_mae_usdt'], 'priceRmseUsdt': validation['price_rmse_usdt'],
                 'baselineRmse': meta['baseline_metrics']['return_rmse'], 'foldRmses': [f['metrics']['return_rmse'] for f in folds],
                 'foldWins': meta.get('walk_forward_wins', sum(f['metrics']['return_rmse'] < f['no_change']['return_rmse'] for f in folds)),
-                'historicalPass': bool(meta.get('historical_pass', False)), 'interval': meta.get('interval_calibration')})
+                'interval': meta.get('interval_calibration'),
+                'selected': model['status'] == 'active' and bool(meta.get('comparison_id')),
+                'comparisonId': meta.get('comparison_id'),
+                'directionalAccuracy': validation.get('directional_accuracy'),
+                'finalEvaluation': ({
+                    'evaluationStart': stamp(meta['final_evaluation']['evaluation_source_start']),
+                    'evaluationEnd': stamp(meta['final_evaluation']['evaluation_target_end']),
+                    'samples': meta['final_evaluation']['metrics']['samples'],
+                    'returnMae': meta['final_evaluation']['metrics']['return_mae'],
+                    'returnRmse': meta['final_evaluation']['metrics']['return_rmse'],
+                    'priceMaeUsdt': meta['final_evaluation']['metrics']['price_mae_usdt'],
+                    'priceRmseUsdt': meta['final_evaluation']['metrics']['price_rmse_usdt'],
+                    'directionalAccuracy': meta['final_evaluation']['metrics']['directional_accuracy'],
+                    'baselineReturnRmse': meta['final_evaluation']['no_change']['return_rmse'],
+                    'baselinePriceRmseUsdt': meta['final_evaluation']['no_change']['price_rmse_usdt'],
+                } if meta.get('final_evaluation') else None)})
         observations = forward_rows(store, model, now)
         # The canonical filter remains authoritative, even if SQL is broadened later.
         observations = [r for r in observations if r['id'] in sql_ids]
@@ -117,7 +134,7 @@ def build_report(store, database, now, config=None):
             result['regressions'], result['monitoring'], evaluated = registry_models(store, symbol, features, now)
             result['deterioration'] = query(store, 'deterioration', evaluated=canonical(evaluated))
             result['findings'] = [f"{len(frame)} verified daily candles; {quality['missing_days']} missing observations; data is {result['dataset']['freshness']}.",
-                f"{len(labeled)} labeled past-only feature rows; classifiers are historical research, never approved forecasts.",
+                f"{len(labeled)} labeled past-only feature rows; classifiers are historical research, separate from the price forecasting candidates.",
                 f"{len(events)} method alerts (a date can trigger several methods); no verified anomaly labels exist.",
                 'No prospective evaluation is available.' if not evaluated else f'{len(evaluated)} genuine evaluated ledger forecasts; shadow and active origins remain separate.',
                 'Correlation is association, not causation. Empirical interval coverage does not guarantee future coverage.']
@@ -146,6 +163,6 @@ def build_report(store, database, now, config=None):
             'Circular block boundaries are synthetic resampling devices. Pointwise confidence intervals are not multiplicity-adjusted; Holm applies to the primary p-value family.',
             'Model output scores are uncalibrated; Brier assesses probability error, not proof of calibration. AP is average precision, not trapezoidal PR-AUC.',
             'Outliers are retained. Alerts are observed at t, not forecasts of t+1, fraud, electricity theft or technical losses.',
-            'Research does not alter registry state, approve models, reconcile outcomes, publish forecasts or call Gemini.']}
+            'Research does not alter registry state, select models, reconcile outcomes or publish forecasts.']}
     canonical(report)  # Reject every remaining NaN/Infinity before persistence.
     return report, all_evaluated, all_events
