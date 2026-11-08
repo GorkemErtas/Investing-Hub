@@ -4,7 +4,7 @@ import {
   groundedReportSchema,
   sourceUrlSchema,
   reviewContentSchema,
-  mlResultSchema,
+  analysisMlResultSchema,
   type GroundedReport,
 } from "@investing-hub/shared/future-analysis";
 import { z } from "zod";
@@ -173,10 +173,11 @@ export function createResearchProvider(
       try {
         if (config.GEMINI_MODEL !== "gemini-3.5-flash-lite")
           throw new FutureError("PERMISSION_REQUIRED");
-        const ml = mlResultSchema.parse(context.ml);
+        const ml = analysisMlResultSchema.parse(context.ml);
         if (
           ml.symbol !== symbol ||
-          context.fingerprint !== fingerprint(ml, context.freshness)
+          context.fingerprint !==
+            fingerprint(ml, context.freshness, context.mode)
         )
           throw new FutureError("INSUFFICIENT_EVIDENCE");
         const asset = assets.find((item) => item.symbol === symbol)!;

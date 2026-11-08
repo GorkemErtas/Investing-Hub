@@ -172,6 +172,7 @@ export function createFutureService(
           dependencies.provider ?? createResearchProvider(config, now);
         const context: ReviewContext = {
           symbol,
+          mode: base.mode,
           ml: structuredClone(base.ml),
           freshness: base.mlFreshness,
           fingerprint: base.forecastFingerprint,
@@ -190,6 +191,7 @@ export function createFutureService(
       }
       const context: ReviewContext = {
         symbol,
+        mode: base.mode,
         ml: base.ml,
         freshness: base.mlFreshness,
         fingerprint: base.forecastFingerprint,

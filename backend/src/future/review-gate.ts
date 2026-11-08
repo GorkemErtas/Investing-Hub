@@ -9,6 +9,7 @@ import { hash, FutureError } from "./errors.js";
 
 export interface ReviewContext {
   symbol: Symbol;
+  mode: ForecastMode;
   ml: AnalysisMlResult;
   freshness: "fresh" | "stale" | "unavailable";
   fingerprint: string;

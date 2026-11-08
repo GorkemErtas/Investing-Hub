@@ -85,7 +85,13 @@ afterEach(async () => {
 const context = (symbol: Symbol = "BTCUSDT", ready = true): ReviewContext => {
   const ml = mlFixture(symbol, testNow, ready),
     freshness = ready ? "fresh" : "unavailable";
-  return { symbol, ml, freshness, fingerprint: fingerprint(ml, freshness) };
+  return {
+    symbol,
+    mode: "approved",
+    ml,
+    freshness,
+    fingerprint: fingerprint(ml, freshness),
+  };
 };
 function sdkResponse(ctx = context()) {
   const report = reviewFixture(ctx.ml, ctx.fingerprint);
@@ -464,6 +470,27 @@ describe("official SDK request and sanitized diagnostics", () => {
     ).not.toMatch(/\$schema|format|pattern|minLength/);
     expect(fetch).toHaveBeenCalledTimes(1);
   });
+  it.each(["approved", "experimental"] as const)(
+    "rejects a fingerprint from the other mode before requesting Gemini (%s)",
+    async (mode) => {
+      const f = setup();
+      const ctx = { ...context("BTCUSDT", false), mode };
+      ctx.fingerprint = fingerprint(
+        ctx.ml,
+        ctx.freshness,
+        mode === "approved" ? "experimental" : "approved",
+      );
+      const fetch = vi.fn();
+      vi.stubGlobal("fetch", fetch);
+      await expect(
+        createResearchProvider(f.config, f.now).research(
+          ctx,
+          new AbortController().signal,
+        ),
+      ).rejects.toMatchObject({ code: "INSUFFICIENT_EVIDENCE" });
+      expect(fetch).not.toHaveBeenCalled();
+    },
+  );
   it.each([
     [400, "bad_request"],
     [401, "unauthenticated"],
