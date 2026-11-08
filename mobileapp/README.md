@@ -33,7 +33,7 @@ Public data is deduplicated; polling pauses on background/hidden tabs and screen
 
 `npm --prefix mobileapp run typecheck`, `npm --prefix mobileapp test`, `npm --prefix mobileapp run doctor`, `npm --prefix mobileapp run lint`, and `npm --prefix mobileapp run test:browser` (builds a separate fixture-only browser export).
 
-From mobileapp with a valid production URL: `npx expo export --platform android --output-dir dist-android`, or `--platform web --output-dir dist-web` for preview. Native validation: `android/gradlew.bat :app:assembleDebug --no-daemon --console=plain` on Windows. Bundle/export success does not prove native compilation or device behavior. See [actual verification and blockers](../docs/VERIFICATION.md).
+From mobileapp with a valid production URL: `npx expo export --platform android --output-dir dist-android`, or `--platform web --output-dir dist-web` for preview. Native validation: `android/gradlew.bat :app:assembleDebug --no-daemon --console=plain` on Windows. Bundle/export success does not prove native compilation or device behavior. See [current verification](../docs/MVP_VERIFICATION.md) and [historical native blockers](../docs/history/VERIFICATION.md).
 
 ## Local numerical predictions
 

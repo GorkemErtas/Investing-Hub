@@ -1,4 +1,6 @@
-> Historical verification record. Current implementation, measured models and operating instructions are in [Price Predictions](PRICE_PREDICTIONS.md) and [the ML guide](../ml/README.md). Older commands below are not current procedures.
+> Archived migration/verification record. Commands and branch statements below describe an earlier release. Current setup is in [README](../../README.md), [ML operations](../../ml/README.md) and [current verification](../MVP_VERIFICATION.md).
+
+> Historical verification record. Current implementation, measured models and operating instructions are in [Price Predictions](../PRICE_PREDICTIONS.md) and [the ML guide](../../ml/README.md). Older commands below are not current procedures.
 
 # Dynamic ML lifecycle verification
 
@@ -6,7 +8,7 @@ Run date: 2026-11-06, Windows/PowerShell, Python 3.13.14, Node 26.13.0. Work sta
 
 ## Architecture and change inventory
 
-The starting audit, contracts, temporal boundaries, migration risks and suggested Conventional Commit groups are in [ML_LIFECYCLE.md](ML_LIFECYCLE.md). Windows commands, scheduling, rollback, licensing and failure recovery are in [ml/README.md](../ml/README.md).
+The starting audit, contracts, temporal boundaries, migration risks and suggested Conventional Commit groups are in [ML_LIFECYCLE.md](../ML_LIFECYCLE.md). Windows commands, scheduling, rollback, licensing and failure recovery are in [ml/README.md](../../ml/README.md).
 
 Added:
 
@@ -66,7 +68,7 @@ Both symbols cover **2017-08-17 through 2026-11-05 UTC**. Acquisition used **222
 
 Ridge, Random Forest and Gradient Boosting were each fitted with full history and rolling 3/2/1-year histories. All 24 candidate reports include exact training ranges, feature/config/code/environment fingerprints, parameters, four historical fold results and numeric artifact checksums. The maximum export/inference parity error was `1.214306433183765e-17`, below the required `1e-12`.
 
-Historical selection return RMSE is reported against no-change on identical dates. Best BTC selection result: full-history Ridge `0.02072454` vs baseline `0.02086239`, with 2/4 fold wins. Best ETH selection result: 3-year Random Forest `0.02851760` vs baseline `0.02884427`, with 2/4 wins. Neither meets the required 2% selection improvement and 3/4 wins. No candidate is approved/active. See [all 24 results](../ml/reports/LIFECYCLE_2026-11-06.md) and [full research metadata](../ml/reports/lifecycle-2026-11-06.json).
+Historical selection return RMSE is reported against no-change on identical dates. Best BTC selection result: full-history Ridge `0.02072454` vs baseline `0.02086239`, with 2/4 fold wins. Best ETH selection result: 3-year Random Forest `0.02851760` vs baseline `0.02884427`, with 2/4 wins. Neither meets the required 2% selection improvement and 3/4 wins. No candidate is approved/active. See [all 24 results](../../ml/reports/LIFECYCLE_2026-11-06.md) and [full research metadata](../../ml/reports/lifecycle-2026-11-06.json).
 
 Four 90-target historical blocks end on 2026-02-04, 2026-05-06, 2026-08-05 and 2026-11-04. Training labels strictly precede evaluation features and unused origins separate blocks. The first three blocks are development consistency checks; the final block is model selection. Previously inspected 2026 observations are never called an untouched test. Prospective shadow predictions were recorded before their 2026-11-06 UTC closing target. Actuals are still null: future time cannot be simulated in real evaluation. The code requires at least 30 prospective observations and, for replacement, at least 30 paired incumbent target dates. This conservative rule intentionally prevents immediate promotion.
 
@@ -88,4 +90,4 @@ Four 90-target historical blocks end on 2026-02-04, 2026-05-06, 2026-08-05 and 2
 5. Design and review a separate Express publication adapter with recency/status checks if public forecasts are later authorized. Local activation alone must not change the current null response.
 6. Implement Gemini only in a later task, with retrieved/verified sources, publication-time provenance, prompt/data controls and separation of explanation from numerical inference. Calibration requires independent evidence; it remains null.
 
-Commit groups in dependency order are listed in [ML_LIFECYCLE.md](ML_LIFECYCLE.md#suggested-conventional-commit-groups). Initial verification preceded staging and committing; see Git history for the subsequent owner-requested commits.
+Commit groups in dependency order are listed in [ML_LIFECYCLE.md](../ML_LIFECYCLE.md#suggested-conventional-commit-groups). Initial verification preceded staging and committing; see Git history for the subsequent owner-requested commits.

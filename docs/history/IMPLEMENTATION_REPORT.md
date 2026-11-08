@@ -1,3 +1,5 @@
+> Archived migration/verification record. Commands and branch statements below describe an earlier release. Current setup is in [README](../../README.md), [ML operations](../../ml/README.md) and [current verification](../MVP_VERIFICATION.md).
+
 # Consolidation implementation report
 
 Implemented locally on the initial `main` branch. All modifications remain unstaged and uncommitted. Git history and configuration were preserved. No live database mutation, external messaging, publication, app-store build or deployment was performed.

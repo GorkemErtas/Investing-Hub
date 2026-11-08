@@ -10,7 +10,23 @@ Work stayed on `feat/analytics-lab`. No real scheduled task was installed, no pa
 - Added the finite `daily` CLI sequence, an OS-released database job lock, bounded safe logs/read-only status, extended `run.ps1`, and opt-in `schedule.ps1` management. No dependency was added; existing numerical dependencies are still required by pandas/scikit-learn/PyTorch.
 - Replaced active operating documentation and archived the original measured analytical findings under `historical-experiments`; ignored old research exports and existing SQLite records were not deleted.
 
-## Actual results
+## Structural cleanup verification
+
+The subsequent cleanup on the same feature branch established this release's baseline before editing: 52 Python tests, 91 npm tests, typecheck/lint/build, eight web browser cases, four mobile unit tests and the mobile browser workflow all passed. The same checks passed after cleanup; the mobile workflow additionally verifies independent gainer/loser filters after their duplicate components were consolidated into typed `MarketMovers.tsx`.
+
+Removed only demonstrated leftovers: the unused rolling-window training helper and split-wrapper anchor, duplicate Python CLI entry scripts, ten unreferenced client assets, a retired navigation badge style, unused imports/styles, unused per-directory Docker ignore files (both Dockerfiles use the root context), and the unused web environment example. Six backend/root development-tool declarations were removed from the web manifest and lockfile: `@types/cors`, `@types/express`, `@types/supertest`, `supertest`, `concurrently`, `tsx`. Their genuine backend/root consumers retain them; no package version was upgraded. Generated IDE cache state is ignored and untracked while its local file is preserved.
+
+The daily orchestrator now loads its configuration once inside its existing lock/log boundary and calls the authoritative CLI dispatcher directly. It no longer needs a nested stateful forwarding callback or constructs a provider for non-sync steps. The chronological split algorithm, every hyperparameter, purge check and selection formula remain unchanged. Existing verification/security checks at file, provider and model boundaries were retained because they protect distinct trust/concurrency boundaries.
+
+Read-only before/after verification proved **bit-for-bit equal numerical inference for all eight coins, exactly equal chronological evaluation-index plans, an unchanged original SQLite file and every table hash, and an unchanged original publication**. No real model was trained or selected. The existing 152 model records, 272 forecast records, artifacts, backups and user configuration were preserved. Stored training-source hashes still identify the original fit's code; a future explicitly requested fit will correctly record the cleaned source's new hash.
+
+The real PowerShell `Daily` runner also succeeded against an isolated SQLite backup copy and produced eight forecasts with the original model identities and numerical values. A separately started compiled backend returned eight responses identical to the saved publication and 404 for retired analytical/research/inference routes. The browser suites started the web client successfully. Scheduler scripts/settings were unchanged and their isolated mock/cross-process tests passed; no real scheduled task was inspected, installed, removed or modified. Machine verification files stay ignored under `ml/data`.
+
+Migration audits, old staging instructions and earlier verification records now live in `docs/history`; measured experiments and archived ONNX artifacts remain. Active setup, API, architecture, ML, scheduler and deployment guides remain directly linked from README. Existing bookmark redirects, legacy Mongo decoding, historical registry statuses and native platform adapters were preserved because they still support navigation, stored records or mobile behavior. Shared contracts, account/portfolio domain logic, provider caching and security middleware required no structural rewrite.
+
+Remaining debt is explicit: several retained mobile screens are still JavaScript, live Mongo/SMTP/FCM and native Android/iOS/device behavior were not exercised by this cleanup, and actual scheduled clock execution remains operator-controlled. No production deployment, paid API call or main merge was performed.
+
+## Verification results
 
 | Verification                           | Result                                                                                                                                                                                                      |
 | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -34,7 +50,7 @@ Work stayed on `feat/analytics-lab`. No real scheduled task was installed, no pa
 
 The desktop and narrow-screen prediction page were visually inspected. Browser regressions use synthetic fixtures; the real local run below is separate evidence. Negative-path tests intentionally emit sanitized failure logs.
 
-## Real local daily execution
+## Original MVP daily execution (before structural cleanup)
 
 A consistent SQLite backup was taken before the run into ignored `ml/data/backups`. `powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File .\ml\run.ps1 -Task Daily` succeeded independently of the application servers:
 
