@@ -14,6 +14,10 @@ const symbols = [
   'LINKUSDT',
 ];
 async function fixtures(page: Page) {
+  await page.addInitScript(() => {
+    if (localStorage.getItem('ih:language:v1') === null)
+      localStorage.setItem('ih:language:v1', JSON.stringify('en-US'));
+  });
   await page.route('**/api/predictions/**', (route) =>
     route.fulfill({
       json: predictionFixture(
@@ -139,7 +143,7 @@ test('portfolio accounting, oversell protection, history replay and persistence'
   await expect(
     page.locator('.stat-card').filter({ hasText: 'Remaining cost basis' }).locator('.stat-value'),
   ).toHaveText('101.00');
-  await page.getByRole('button', { name: /Remove buy BTCUSDT/ }).click();
+  await page.getByRole('button', { name: /Remove Buy BTCUSDT/ }).click();
   await expect(page.getByRole('status').filter({ hasText: 'supports a later sale' })).toBeVisible();
   await page.reload();
   await page.locator('.portfolio-toolbar select').selectOption('1');
@@ -170,6 +174,7 @@ test('learning quiz and disabled forecast presentation', async ({ page }) => {
 });
 
 test('mobile navigation, responsive layout and provider outage', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('ih:language:v1', JSON.stringify('en-US')));
   await page.setViewportSize({ width: 390, height: 844 });
   await page.route('**/api/markets', (route) =>
     route.fulfill({ status: 503, json: { error: { code: 'MARKET_UNAVAILABLE' } } }),

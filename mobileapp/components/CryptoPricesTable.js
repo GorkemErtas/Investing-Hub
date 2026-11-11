@@ -1,3 +1,6 @@
+import { formatUtc, formatPrice, formatPercent } from "../services/format";
+import { i18n } from "../services/i18n";
+import { useTranslation } from "react-i18next";
 import React, { useState } from "react";
 import {
   View,
@@ -18,6 +21,7 @@ import { useTheme } from "../context/ThemeContext";
 /*Final update 20.06.2025*/
 
 const CryptoPricesTable = () => {
+  useTranslation();
   const [selectedCrypto, setSelectedCrypto] = useState(null);
   const [viewMode, setViewMode] = useState("list");
   const [searchQuery, setSearchQuery] = useState("");
@@ -79,46 +83,63 @@ const CryptoPricesTable = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Crypto Prices (USDT)</Text>
-      {error ? <Text accessibilityRole="alert">{error}</Text> : null}
+      <Text style={styles.title}>
+        {i18n.t("cryptoPricesTable.cryptoPricesUsdt")}
+      </Text>
+      {error ? <Text accessibilityRole="alert">{i18n.t(error)}</Text> : null}
       {meta ? (
         <Text>
-          {meta.stale || error ? "Stale quotes" : "Public market data"} ? Source{" "}
-          {meta.sourceTime} ? Fetched {meta.fetchedAt}
+          {meta.stale || error
+            ? i18n.t("cryptoPricesTable.staleQuotes")
+            : i18n.t("cryptoPricesTable.publicMarketData")}{" "}
+          {i18n.t("cryptoPricesTable.source")} {formatUtc(meta.sourceTime)}{" "}
+          {i18n.t("cryptoPricesTable.fetched")}
+          {formatUtc(meta.fetchedAt)}
         </Text>
       ) : null}
-      {!cryptoData.length ? <Text>No market data available.</Text> : null}
+      {!cryptoData.length ? (
+        <Text>{i18n.t("cryptoPricesTable.noMarketDataAvailable")}</Text>
+      ) : null}
 
       <TextInput
         style={styles.searchInput}
-        placeholder="Search by symbol"
+        placeholder={i18n.t("cryptoPricesTable.searchBySymbol")}
+        accessibilityLabel={i18n.t("cryptoPricesTable.searchBySymbol")}
         placeholderTextColor={isDarkMode ? "#94a3b8" : "#888"}
         value={searchQuery}
         onChangeText={setSearchQuery}
       />
 
       <View style={styles.headerRow}>
-        <Text style={styles.headerCell}>Symbol</Text>
-        <Text style={styles.headerCell}>Price</Text>
-        <Text style={styles.headerCell}>Daily</Text>
-        <Text style={styles.headerCell}>Action</Text>
+        <Text style={styles.headerCell}>
+          {i18n.t("cryptoPricesTable.symbol")}
+        </Text>
+        <Text style={styles.headerCell}>
+          {i18n.t("cryptoPricesTable.price")}
+        </Text>
+        <Text style={styles.headerCell}>
+          {i18n.t("cryptoPricesTable.daily")}
+        </Text>
+        <Text style={styles.headerCell}>
+          {i18n.t("cryptoPricesTable.action")}
+        </Text>
       </View>
 
       {filteredData.map((item, index) => {
         const price = item.price;
-        const dailyChange = item.dailyChange?.toFixed(2) || "0.00";
+        const dailyChange = item.dailyChange ?? 0;
 
         return (
           <View key={index} style={styles.row}>
             <Text style={styles.cell}>{item.symbol}</Text>
-            <Text style={styles.cell}>{price.toLocaleString()}</Text>
+            <Text style={styles.cell}>{formatPrice(price)}</Text>
             <Text
               style={[
                 styles.cell,
                 +dailyChange > 0 ? styles.green : styles.red,
               ]}
             >
-              {dailyChange}%
+              {formatPercent(dailyChange)}
             </Text>
             <TouchableOpacity
               style={styles.detailsButton}
@@ -127,7 +148,9 @@ const CryptoPricesTable = () => {
                 setViewMode("details");
               }}
             >
-              <Text style={styles.detailsButtonText}>Details</Text>
+              <Text style={styles.detailsButtonText}>
+                {i18n.t("cryptoPricesTable.details")}
+              </Text>
             </TouchableOpacity>
           </View>
         );

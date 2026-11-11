@@ -33,6 +33,11 @@
       "types": "./predictions.ts",
       "react-native": "./dist/predictions.js",
       "default": "./dist/predictions.js"
+    },
+    "./localization": {
+      "types": "./localization.ts",
+      "react-native": "./dist/localization.js",
+      "default": "./dist/localization.js"
     }
   },
   "scripts": {

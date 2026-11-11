@@ -1,11 +1,8 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { predictionFixture } from "../../shared/tests/predictions-fixtures";
 import type { Symbol } from "../../shared/contracts";
-test("mobile preview: markets, actual candles, accounts, owned portfolio and logout isolation", async ({
-  page,
-}) => {
-  const errors: string[] = [];
-  page.on("pageerror", (error) => errors.push(error.message));
+test.use({ locale: "en-US" });
+async function fixtures(page: Page) {
   const now = new Date().toISOString();
   const symbols = [
     "BTCUSDT",
@@ -131,6 +128,18 @@ test("mobile preview: markets, actual candles, accounts, owned portfolio and log
       },
     });
   });
+  return { owner, portfolio, privateCalls: () => privateCalls };
+}
+test("mobile preview: markets, actual candles, accounts, owned portfolio and logout isolation", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    if (localStorage.getItem("ih:language:v1") === null)
+      localStorage.setItem("ih:language:v1", "en-US");
+  });
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  const { owner, portfolio, privateCalls } = await fixtures(page);
   await page.goto("/home");
   await expect(page.getByText("Crypto Dashboard", { exact: true })).toBeVisible(
     { timeout: 20000 },
@@ -162,7 +171,7 @@ test("mobile preview: markets, actual candles, accounts, owned portfolio and log
   await expect(
     page.getByText("Experimental price prediction", { exact: true }),
   ).toBeVisible();
-  await expect(page.getByText(/USDT \/ Target UTC date/)).toBeVisible();
+  await expect(page.getByText(/USDT \/ Target date/)).toBeVisible();
   await page.getByRole("tab", { name: /portfolio/i }).click();
   await expect(
     page.getByText("Log in to manage your private portfolios."),
@@ -179,8 +188,8 @@ test("mobile preview: markets, actual candles, accounts, owned portfolio and log
   await expect(
     page.getByText("Realized P/L: 48 USDT", { exact: true }),
   ).toBeVisible();
-  expect(privateCalls).toBeGreaterThan(0);
-  await page.getByRole("tab", { name: /home/i }).click();
+  expect(privateCalls()).toBeGreaterThan(0);
+  await page.getByRole("tab", { name: /Overview/i }).click();
   await page.getByLabel("Open settings menu").click();
   await page.getByText("Logout", { exact: true }).click();
   await page.getByRole("tab", { name: /portfolio/i }).click();
@@ -188,9 +197,128 @@ test("mobile preview: markets, actual candles, accounts, owned portfolio and log
     page.getByText("Log in to manage your private portfolios."),
   ).toBeVisible();
   await expect(page.getByText(portfolio.name, { exact: true })).toHaveCount(0);
-  await page.getByRole("tab", { name: /learning-hub/i }).click();
+  await page.getByRole("tab", { name: /Learning Hub/i }).click();
   await expect(page.getByText("Watch on YouTube", { exact: true })).toHaveCount(
     5,
   );
   expect(errors).toEqual([]);
+});
+
+test("Turkish guest default, immediate switching, persistence, lessons and localized errors on a narrow screen", async ({
+  page,
+}) => {
+  await fixtures(page);
+  await page.goto("/home");
+  await expect(
+    page.getByRole("combobox", { name: "Dil", exact: true }),
+  ).toHaveValue("tr-TR");
+  await expect(page.getByText("Piyasa Özeti", { exact: true })).toBeVisible({
+    timeout: 20000,
+  });
+  await expect(page.getByText(/%4,00/).first()).toBeVisible();
+  await page.screenshot({
+    path: "test-results/localization-tr-mobile.png",
+    fullPage: true,
+  });
+  await page.getByPlaceholder("Sembole göre ara").fill("ETH");
+  await page.getByText("Ayrıntılar", { exact: true }).click();
+  await page.getByText("İşlem", { exact: true }).click();
+  await expect(
+    page.getByText("Deneysel fiyat tahmini", { exact: true }),
+  ).toBeVisible();
+  const prediction = page.getByText(/USDT \/ Hedef tarih/);
+  await expect(prediction).toContainText("111,1");
+  await page.evaluate(() =>
+    localStorage.setItem("unrelated-preference", "preserved"),
+  );
+  await page
+    .getByRole("combobox", { name: "Dil", exact: true })
+    .selectOption("en-US");
+  await expect(
+    page.getByText("Experimental price prediction", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText(/USDT \/ Target date/)).toContainText("111.1");
+  await page.screenshot({
+    path: "test-results/localization-en-mobile.png",
+    fullPage: true,
+  });
+  await page.reload();
+  await expect(
+    page.getByRole("combobox", { name: "Language", exact: true }),
+  ).toHaveValue("en-US");
+  await page.getByRole("tab", { name: /Portfolio/i }).click();
+  await expect(
+    page.getByText("Log in to manage your private portfolios."),
+  ).toBeVisible({ timeout: 20000 });
+  await page
+    .getByRole("combobox", { name: "Language", exact: true })
+    .selectOption("tr-TR");
+  await expect(
+    page.getByText("Kişisel portföylerinizi yönetmek için giriş yapın."),
+  ).toBeVisible();
+  await page.getByRole("tab", { name: /Eğitim Merkezi/i }).click();
+  await expect(page.getByText("YouTube'da izle", { exact: true })).toHaveCount(
+    5,
+  );
+  await page.getByText("Bilgi testi", { exact: true }).click();
+  const quiz = page
+    .getByText("Kripto bilgi testi", { exact: true })
+    .locator("..");
+  await quiz.getByRole("button").first().click();
+  await expect(
+    quiz.getByRole("button", { name: "Sonraki soru" }),
+  ).toBeVisible();
+  await page
+    .getByRole("combobox", { name: "Dil", exact: true })
+    .selectOption("en-US");
+  await expect(
+    page
+      .getByText("Crypto Quiz", { exact: true })
+      .locator("..")
+      .getByRole("button", { name: "Next Question" }),
+  ).toBeVisible();
+  await page
+    .getByRole("combobox", { name: "Language", exact: true })
+    .selectOption("tr-TR");
+  await expect(
+    quiz.getByRole("button", { name: "Sonraki soru" }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: /Hesap/i }).click();
+  await expect(page.getByPlaceholder("E-posta", { exact: true })).toBeVisible();
+  await page
+    .getByRole("combobox", { name: "Dil", exact: true })
+    .selectOption("en-US");
+  await expect(page.getByLabel("Email", { exact: true })).toBeVisible();
+  await page.route("**/api/auth/login", (route) =>
+    route.fulfill({
+      status: 401,
+      json: {
+        error: {
+          code: "INVALID_CREDENTIALS",
+          message: "Provider text must not be displayed",
+        },
+      },
+    }),
+  );
+  await page.getByLabel("Email", { exact: true }).fill("guest@example.com");
+  await page
+    .getByLabel("Password", { exact: true })
+    .fill("invalid-test-password");
+  await page.getByText("Log In", { exact: true }).last().click();
+  await expect(page.getByRole("alert")).toContainText(
+    "Email or password is incorrect.",
+  );
+  await page
+    .getByRole("combobox", { name: "Language", exact: true })
+    .selectOption("tr-TR");
+  await expect(page.getByRole("alert")).toContainText(
+    "E-posta veya parola hatalı.",
+  );
+  await page.reload();
+  await expect(
+    page.getByRole("combobox", { name: "Dil", exact: true }),
+  ).toHaveValue("tr-TR");
+  expect(
+    await page.evaluate(() => localStorage.getItem("unrelated-preference")),
+  ).toBe("preserved");
 });

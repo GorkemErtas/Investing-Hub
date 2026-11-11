@@ -46,9 +46,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } catch {
         if (alive && generation === epoch.current) {
           setUser(null);
-          setWarning(
-            "Session could not be restored. Log in again or retry when the service is available.",
-          );
+          setWarning("authContext.sessionCouldNotBeRestoredLogIn");
         }
       } finally {
         if (alive) setLoading(false);
@@ -62,9 +60,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       epoch.current++;
       void tokenStore.clear().catch(() => {
         if (alive)
-          setWarning(
-            "Could not clear expired secure session. Please retry logout.",
-          );
+          setWarning("authContext.couldNotClearExpiredSecureSessionPlease");
       });
       if (alive) setUser(null);
     });
@@ -86,7 +82,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         unsubscribe = watchTokenRefresh((token) => {
           if (active)
             void api.pushToken(token).catch(() => {
-              if (active) setWarning("Push token could not be refreshed.");
+              if (active)
+                setWarning("authContext.pushTokenCouldNotBeRefreshed");
             });
         });
         const token = await registerForPushNotificationsAsync();
@@ -95,7 +92,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       .catch(() => {
         if (active)
           setWarning(
-            "Push registration is unavailable. Account and portfolio access remain available.",
+            "authContext.pushRegistrationIsUnavailableAccountAndPortfolio",
           );
       });
     return () => {
@@ -116,14 +113,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       await api.removePushToken();
     } catch {
-      setWarning(
-        "Logged out locally; push registration could not be removed while offline.",
-      );
+      setWarning("authContext.loggedOutLocallyPushRegistrationCouldNot");
     }
     try {
       await tokenStore.clear();
     } catch {
-      setWarning("Could not remove the secure session. Please retry logout.");
+      setWarning("authContext.couldNotRemoveTheSecureSessionPlease");
       return;
     }
     await AsyncStorage.multiRemove(["user", "token"]);

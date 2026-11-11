@@ -45,9 +45,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         if (active) setSettings(value);
       } catch {
         if (active)
-          setWarning(
-            "Saved settings could not be loaded. Original data has been preserved.",
-          );
+          setWarning("settingsContext.savedSettingsCouldNotBeLoadedOriginal");
       }
     }
     void load();
@@ -72,7 +70,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       }
       setWarning("");
     } catch (error) {
-      setWarning("Settings could not be saved. Please retry.");
+      setWarning("settingsContext.settingsCouldNotBeSavedPleaseRetry");
       throw error;
     }
   }

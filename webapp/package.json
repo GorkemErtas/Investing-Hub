@@ -21,10 +21,12 @@
   "dependencies": {
     "@investing-hub/shared": "*",
     "@tanstack/react-query": "^5.90.0",
+    "i18next": "^27.0.1",
     "lightweight-charts": "^5.0.9",
     "lucide-react": "^0.468.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-i18next": "^18.0.0",
     "react-router-dom": "^7.9.0",
     "zod": "^4.1.0"
   },

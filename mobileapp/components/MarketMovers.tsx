@@ -1,3 +1,6 @@
+import { formatUtc, formatPrice, formatPercent } from "../services/format";
+import { i18n } from "../services/i18n";
+import { useTranslation } from "react-i18next";
 import React, { useState, useCallback } from "react";
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import { Picker } from "@react-native-picker/picker";
@@ -10,6 +13,7 @@ export function MarketMovers({
 }: {
   direction: "gainers" | "losers";
 }) {
+  useTranslation();
   const gainers = direction === "gainers";
   const [timeframe, setTimeframe] = useState("daily");
   const load = useCallback(
@@ -31,46 +35,67 @@ export function MarketMovers({
   return (
     <View style={styles.container}>
       <Text style={styles.header}>
-        Top {timeframe.charAt(0).toUpperCase() + timeframe.slice(1)}{" "}
-        {gainers ? "Gainers" : "Losers"}
+        {i18n.t(
+          gainers
+            ? "marketMovers.gainersHeading"
+            : "marketMovers.losersHeading",
+          {
+            period: i18n.t(
+              timeframe === "daily"
+                ? "cryptoPricesTable.daily"
+                : "marketMovers." + timeframe.toLowerCase(),
+            ),
+          },
+        )}
       </Text>
 
       <View style={styles.pickerWrapper}>
         <Picker
+          accessibilityLabel={i18n.t("marketMovers.period")}
           selectedValue={timeframe}
           onValueChange={(itemValue) => setTimeframe(itemValue)}
           style={styles.picker}
           dropdownIconColor={isDark ? "#fff" : "#333"}
         >
-          <Picker.Item label="Daily" value="daily" />
-          <Picker.Item label="Weekly" value="weekly" />
-          <Picker.Item label="Monthly" value="monthly" />
+          <Picker.Item
+            label={i18n.t("cryptoPricesTable.daily")}
+            value="daily"
+          />
+          <Picker.Item label={i18n.t("marketMovers.weekly")} value="weekly" />
+          <Picker.Item label={i18n.t("marketMovers.monthly")} value="monthly" />
         </Picker>
       </View>
 
-      {error ? <Text accessibilityRole="alert">{error}</Text> : null}
+      {error ? <Text accessibilityRole="alert">{i18n.t(error)}</Text> : null}
       {meta && (meta.stale || error) ? (
         <Text>
-          Stale quotes | Source {meta.sourceTime} | Fetched {meta.fetchedAt}
+          {i18n.t("marketMovers.staleQuotesSource")}
+          {formatUtc(meta.sourceTime)} {i18n.t("detailsScreen.fetched")}
+          {formatUtc(meta.fetchedAt)}
         </Text>
       ) : null}
       {initialLoading ? (
         gainers ? (
           <ActivityIndicator size="large" color="#2563EB" />
         ) : (
-          <Text style={styles.emptyText}>Loading...</Text>
+          <Text style={styles.emptyText}>{i18n.t("marketMovers.loading")}</Text>
         )
       ) : rows.length === 0 ? (
-        <Text style={styles.emptyText}>No data available</Text>
+        <Text style={styles.emptyText}>
+          {i18n.t("marketMovers.noDataAvailable")}
+        </Text>
       ) : (
         rows.map((item, index) => (
           <View key={index} style={styles.card}>
             <Text style={styles.cell}>{item.symbol}</Text>
             <Text style={styles.cell}>
-              {item.price ? item.price.toLocaleString() : "Unavailable"} USDT
+              {item.price
+                ? formatPrice(item.price)
+                : i18n.t("marketMovers.unavailable")}{" "}
+              USDT
             </Text>
             <Text style={[styles.cell, styles.priceChange]}>
-              {item.change ? item.change.toFixed(2) : 0}%
+              {formatPercent(item.change ?? 0)}
             </Text>
           </View>
         ))
@@ -92,8 +117,6 @@ const getStyles = (isDark: boolean, gainers: boolean) =>
       marginBottom: 12,
       color: isDark ? "#f1f5f9" : "#111",
       textAlign: "center",
-      borderBottomWidth: 1,
-      borderBottomColor: isDark ? "#334155" : "#ccc",
       paddingBottom: 6,
     },
     pickerWrapper: {
@@ -110,17 +133,11 @@ const getStyles = (isDark: boolean, gainers: boolean) =>
       paddingHorizontal: 8,
     },
     card: {
-      backgroundColor: isDark ? "#1e293b" : "#fff",
-      borderRadius: 10,
       padding: 12,
-      marginBottom: 10,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: isDark ? "#334155" : "#dce3eb",
       flexDirection: "row",
       justifyContent: "space-between",
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.1,
-      shadowRadius: 2,
-      elevation: 2,
     },
     cell: {
       fontSize: 16,

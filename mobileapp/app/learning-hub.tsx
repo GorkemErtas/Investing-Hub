@@ -1,3 +1,5 @@
+import { i18n } from "../services/i18n";
+import { useTranslation } from "react-i18next";
 import React, { useState } from "react";
 import {
   View,
@@ -18,6 +20,7 @@ import InfoSection from "../components/InfoSection";
 import ChartQuizSection from "../components/ChartQuizSection";
 
 export default function LearningHubScreen() {
+  useTranslation();
   const { isDarkMode: isDark } = useTheme();
   const styles = getStyles(isDark);
   const [activeTab, setActiveTab] = useState("videos");
@@ -45,10 +48,13 @@ export default function LearningHubScreen() {
       />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.header}>
-          <Text style={styles.title}>Welcome to the Learning Hub</Text>
+          <Text style={styles.title}>
+            {i18n.t("learning-hub.welcomeToTheLearningHub")}
+          </Text>
           <Text style={styles.subtitle}>
-            Explore cryptocurrencies and blockchain through videos, quizzes, and
-            educational articles.
+            {i18n.t(
+              "learning-hub.exploreCryptocurrenciesAndBlockchainThroughVideosQuizzes",
+            )}
           </Text>
         </View>
 
@@ -60,19 +66,25 @@ export default function LearningHubScreen() {
               activeTab === "videos" && styles.activeTab,
             ]}
           >
-            <Text style={styles.tabButtonText}>Videos</Text>
+            <Text style={styles.tabButtonText}>
+              {i18n.t("learning-hub.videos")}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setActiveTab("quiz")}
             style={[styles.tabButton, activeTab === "quiz" && styles.activeTab]}
           >
-            <Text style={styles.tabButtonText}>Quiz</Text>
+            <Text style={styles.tabButtonText}>
+              {i18n.t("learning-hub.quiz")}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setActiveTab("info")}
             style={[styles.tabButton, activeTab === "info" && styles.activeTab]}
           >
-            <Text style={styles.tabButtonText}>Info</Text>
+            <Text style={styles.tabButtonText}>
+              {i18n.t("learning-hub.info")}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setActiveTab("chart")}
@@ -81,7 +93,9 @@ export default function LearningHubScreen() {
               activeTab === "chart" && styles.activeTab,
             ]}
           >
-            <Text style={styles.tabButtonText}>Chart</Text>
+            <Text style={styles.tabButtonText}>
+              {i18n.t("learning-hub.chart")}
+            </Text>
           </TouchableOpacity>
         </View>
 

@@ -1,20 +1,22 @@
+import { i18n } from '../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import { assets, type Symbol } from '@investing-hub/shared/contracts';
 import { usePrediction } from '../lib/api';
 import { Coin, ErrorState, Skeleton } from '../components/ui';
-import { money, utc } from '../lib/format';
+import { money, utc, date } from '../lib/format';
 
 const reasons: Record<string, string> = {
-  no_prediction_publication: 'No local forecast has been published yet.',
-  no_selected_model: 'No trained model has been selected for this coin yet.',
-  no_current_prediction: 'A new daily prediction is not available yet.',
-  dataset_stale_or_gapped: 'The source data needs an update before a forecast can be shown.',
-  prediction_expired: 'The daily forecast has expired. Waiting for an updated prediction.',
-  prediction_publication_expired: 'Waiting for an updated daily publication.',
-  registry_changed_regenerate_predictions:
-    'The local data or model changed. Waiting for an updated prediction.',
+  no_prediction_publication: 'pricePredictions.noLocalForecastHasBeenPublishedYet',
+  no_selected_model: 'pricePredictions.noTrainedModelHasBeenSelectedFor',
+  no_current_prediction: 'pricePredictions.aNewDailyPredictionIsNotAvailable',
+  dataset_stale_or_gapped: 'pricePredictions.theSourceDataNeedsAnUpdateBefore',
+  prediction_expired: 'pricePredictions.theDailyForecastHasExpiredWaitingFor',
+  prediction_publication_expired: 'pricePredictions.waitingForAnUpdatedDailyPublication',
+  registry_changed_regenerate_predictions: 'pricePredictions.theLocalDataOrModelChangedWaiting',
 };
 function PredictionCard({ symbol }: { symbol: Symbol }) {
+  useTranslation();
   const asset = assets.find((item) => item.symbol === symbol)!;
   const query = usePrediction(symbol);
   const prediction = query.data;
@@ -29,7 +31,10 @@ function PredictionCard({ symbol }: { symbol: Symbol }) {
     !!prediction.targetTimestamp &&
     Date.parse(prediction.targetTimestamp) > clock;
   return (
-    <article className="panel prediction-card" aria-label={`${asset.name} price prediction`}>
+    <article
+      className="panel prediction-card"
+      aria-label={i18n.t('common:prediction.card', { coin: asset.name })}
+    >
       <header>
         <Coin symbol={symbol} />
         <div>
@@ -41,7 +46,7 @@ function PredictionCard({ symbol }: { symbol: Symbol }) {
         <Skeleton rows={2} />
       ) : query.isError ? (
         <ErrorState
-          message="The prediction could not be loaded."
+          message={i18n.t('pricePredictions.thePredictionCouldNotBeLoaded')}
           retry={() => void query.refetch()}
         />
       ) : available ? (
@@ -50,20 +55,21 @@ function PredictionCard({ symbol }: { symbol: Symbol }) {
             {money(prediction.predictedValue!)} <small>USDT</small>
           </p>
           <p>
-            Target UTC date{' '}
-            <time dateTime={prediction.targetTimestamp!}>
-              {prediction.targetTimestamp!.slice(0, 10)}
-            </time>
+            {i18n.t('pricePredictions.targetUtcDate')}{' '}
+            <time dateTime={prediction.targetTimestamp!}>{date(prediction.targetTimestamp!)}</time>
           </p>
-          <span className="pill">Experimental prediction</span>
-          <p className="prediction-time muted">Generated {utc(prediction.predictionTimestamp)}</p>
+          <span className="pill">{i18n.t('common:prediction.experimental')}</span>
+          <p className="prediction-time muted">
+            {i18n.t('pricePredictions.generated')} {utc(prediction.predictionTimestamp)}
+          </p>
         </>
       ) : (
         <>
-          <p className="prediction-unavailable">Prediction unavailable</p>
+          <p className="prediction-unavailable">{i18n.t('common:prediction.unavailable')}</p>
           <p className="muted">
-            {reasons[prediction?.reason ?? ''] ??
-              'Valid local data and a model are required before a numeric forecast can be shown.'}
+            {i18n.t(
+              reasons[prediction?.reason ?? ''] ?? 'pricePredictions.validLocalDataAndAModelAre',
+            )}
           </p>
         </>
       )}
@@ -71,20 +77,20 @@ function PredictionCard({ symbol }: { symbol: Symbol }) {
   );
 }
 export function PricePredictions() {
+  useTranslation();
   return (
     <>
       <div className="page-heading">
         <div>
-          <div className="eyebrow">LOCAL MACHINE LEARNING</div>
+          <div className="eyebrow">{i18n.t('pricePredictions.localMachineLearning')}</div>
           <h1>
-            Price Predictions<span className="heading-dot">.</span>
+            {i18n.t('common:nav.predictions')}
+            <span className="heading-dot">.</span>
           </h1>
-          <p>
-            Next-day closing price estimates from the selected model for each coin. Prices in USDT.
-          </p>
+          <p>{i18n.t('pricePredictions.nextDayClosingPriceEstimatesFromThe')}</p>
         </div>
       </div>
-      <p className="prediction-note">Experimental predictions can be inaccurate.</p>
+      <p className="prediction-note">{i18n.t('common:prediction.note')}</p>
       <div className="prediction-grid">
         {assets.map((asset) => (
           <PredictionCard key={asset.symbol} symbol={asset.symbol} />

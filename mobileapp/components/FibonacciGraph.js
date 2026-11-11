@@ -1,3 +1,10 @@
+import {
+  formatChartTick,
+  formatAmount,
+  formatPercent,
+} from "../services/format";
+import { i18n } from "../services/i18n";
+import { useTranslation } from "react-i18next";
 import React, { useState, useCallback } from "react";
 import {
   View,
@@ -14,6 +21,7 @@ import { fibonacciLevels as calculateLevels } from "@investing-hub/shared/analys
 import { useTheme } from "../context/ThemeContext";
 
 const FibonacciGraph = ({ cryptoSymbol }) => {
+  useTranslation();
   const [timeframe, setTimeframe] = useState("7");
   const { isDarkMode } = useTheme();
 
@@ -30,27 +38,39 @@ const FibonacciGraph = ({ cryptoSymbol }) => {
   const error =
     resource.error ||
     (resource.data?.meta.stale
-      ? "Provider candles are stale. Analysis is unavailable until fresh data returns."
+      ? "fibonacciGraph.providerCandlesAreStaleAnalysisIsUnavailable"
       : "");
   const period =
     timeframe === "1" ? 24 : timeframe === "365" ? 52 : Number(timeframe);
   const candles =
     resource.data?.data.filter((c) => c.completed).slice(-period) ?? [];
   const ohlcData = candles.map((c) => c.close);
-  const labels = candles.map((c) =>
-    new Date(c.openTime).toISOString().slice(0, 10),
+  const labels = candles.map((c, i) =>
+    i % Math.ceil(candles.length / 3) === 0
+      ? formatChartTick(c.openTime, timeframe === "1")
+      : "",
   );
   const fibonacciLevels = calculateLevels(candles).map((level) => ({
-    label: `${level.ratio * 100}%`,
+    label: formatPercent(level.ratio * 100),
     value: level.price,
   }));
 
   const styles = getStyles(isDarkMode);
 
   if (loading) return <ActivityIndicator size="large" color="#3b82f6" />;
-  if (error) return <Text style={styles.errorText}>Error: {error}</Text>;
+  if (error)
+    return (
+      <Text style={styles.errorText}>
+        {i18n.t("fibonacciGraph.error")}
+        {i18n.t(error)}
+      </Text>
+    );
   if (!candles.length)
-    return <Text>No completed candles available for analysis.</Text>;
+    return (
+      <Text>
+        {i18n.t("fibonacciGraph.noCompletedCandlesAvailableForAnalysis")}
+      </Text>
+    );
 
   return (
     <ScrollView style={styles.container}>
@@ -66,20 +86,23 @@ const FibonacciGraph = ({ cryptoSymbol }) => {
           >
             <Text style={styles.timeframeText}>
               {tf === "1"
-                ? "24 closed hours"
+                ? i18n.t("fibonacciGraph.24ClosedHours")
                 : tf === "7"
-                  ? "7 closed days"
+                  ? i18n.t("fibonacciGraph.7ClosedDays")
                   : tf === "30"
-                    ? "30 closed days"
-                    : "52 closed weeks"}
+                    ? i18n.t("fibonacciGraph.30ClosedDays")
+                    : i18n.t("fibonacciGraph.52ClosedWeeks")}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
       <View style={styles.chartContainer}>
-        <Text style={styles.chartTitle}>Fibonacci Retracement</Text>
+        <Text style={styles.chartTitle}>
+          {i18n.t("fibonacciGraph.fibonacciRetracement")}
+        </Text>
         <LineChart
+          formatYLabel={(value) => formatAmount(Number(value))}
           data={{
             labels: labels,
             datasets: [

@@ -1,3 +1,5 @@
+import { i18n } from '../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import { useEffect, useRef, useState } from 'react';
 import {
   AreaSeries,
@@ -12,7 +14,7 @@ import { CandlestickChart, ChartNoAxesCombined } from 'lucide-react';
 import { assets, type Candle, type Interval, type Symbol } from '@investing-hub/shared/contracts';
 import { useCandles } from '../lib/api';
 import { fibonacciLevels, movingAverage } from '@investing-hub/shared/analysis';
-import { money, utc } from '../lib/format';
+import { money, utc, percent } from '../lib/format';
 import { Coin, ErrorState, Notice, Skeleton, Status } from './ui';
 
 function Canvas({
@@ -26,6 +28,8 @@ function Canvas({
   theme: string;
   analysis: boolean;
 }) {
+  const { i18n: language } = useTranslation();
+  const locale = language.resolvedLanguage ?? 'tr-TR';
   const ref = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<Candle | null>(null);
   useEffect(() => {
@@ -47,7 +51,7 @@ function Canvas({
       },
       rightPriceScale: { borderVisible: false, scaleMargins: { top: 0.12, bottom: 0.23 } },
       timeScale: { borderVisible: false, timeVisible: true },
-      localization: { locale: 'en-US', priceFormatter: (price: number) => money(price) },
+      localization: { locale, priceFormatter: (price: number) => money(price) },
     });
     const time = (c: Candle) => Math.floor(c.openTime / 1000) as UTCTimestamp;
     const series =
@@ -96,7 +100,7 @@ function Canvas({
           lineWidth: 1,
           lineStyle: 2,
           axisLabelVisible: false,
-          title: `${(level.ratio * 100).toFixed(1)}%`,
+          title: percent(level.ratio * 100),
         }),
       );
     }
@@ -119,7 +123,7 @@ function Canvas({
       setHover(p.time ? (data.find((c) => time(c) === p.time) ?? null) : null);
     });
     return () => chart.remove();
-  }, [data, mode, theme, analysis]);
+  }, [data, mode, theme, analysis, locale]);
   const candle = hover ?? data.at(-1);
   return (
     <>
@@ -128,18 +132,24 @@ function Canvas({
           <>
             <span>{utc(candle.openTime)}</span>
             <span>
-              O <b>{money(candle.open)}</b>
+              {i18n.t('priceChart.o')}
+              <b>{money(candle.open)}</b>
             </span>
             <span>
-              H <b>{money(candle.high)}</b>
+              {i18n.t('priceChart.h')}
+              <b>{money(candle.high)}</b>
             </span>
             <span>
-              L <b>{money(candle.low)}</b>
+              {i18n.t('priceChart.l')}
+              <b>{money(candle.low)}</b>
             </span>
             <span>
-              C <b>{money(candle.close)}</b>
+              {i18n.t('priceChart.c')}
+              <b>{money(candle.close)}</b>
             </span>
-            <span>{candle.completed ? 'Closed' : 'In progress'}</span>
+            <span>
+              {candle.completed ? i18n.t('priceChart.closed') : i18n.t('priceChart.inProgress')}
+            </span>
           </>
         )}
       </div>
@@ -147,7 +157,7 @@ function Canvas({
         ref={ref}
         className="price-canvas"
         role="img"
-        aria-label="Interactive price and volume chart. Drag to pan and scroll to zoom. Exact recent prices are available below."
+        aria-label={i18n.t('priceChart.interactivePriceAndVolumeChartDragTo')}
       />
     </>
   );
@@ -161,6 +171,7 @@ export function PriceChart({
   onSymbol: (symbol: Symbol) => void;
   theme: string;
 }) {
+  useTranslation();
   const [interval, setInterval] = useState<Interval>('1d');
   const [mode, setMode] = useState<'candles' | 'area'>('candles');
   const [showData, setShowData] = useState(false);
@@ -169,18 +180,18 @@ export function PriceChart({
   const asset = assets.find((a) => a.symbol === symbol)!;
   const close = query.data?.data.at(-1)?.close;
   return (
-    <section className="panel chart-panel" aria-label="Asset chart">
+    <section className="panel chart-panel" aria-label={i18n.t('priceChart.assetChart')}>
       <div className="panel-heading">
         <div className="asset-heading">
           <Coin symbol={symbol} />
           <div>
-            <div className="eyebrow">MARKET EXPLORER</div>
+            <div className="eyebrow">{i18n.t('priceChart.marketExplorer')}</div>
             <label className="asset-select">
-              <span className="sr-only">Chart asset</span>
+              <span className="sr-only">{i18n.t('priceChart.chartAsset')}</span>
               <select value={symbol} onChange={(e) => onSymbol(e.target.value as Symbol)}>
                 {assets.map((a) => (
                   <option key={a.symbol} value={a.symbol}>
-                    {a.name} / USDT
+                    {a.name} {i18n.t('priceChart.usdt')}
                   </option>
                 ))}
               </select>
@@ -189,11 +200,13 @@ export function PriceChart({
         </div>
         <div className="chart-price">
           {money(close)} <small>USDT</small>
-          <span>{asset.base} spot market</span>
+          <span>
+            {asset.base} {i18n.t('priceChart.spotMarket')}
+          </span>
         </div>
       </div>
       <div className="chart-toolbar">
-        <div className="segmented" aria-label="Candle interval">
+        <div className="segmented" aria-label={i18n.t('priceChart.candleInterval')}>
           {(['15m', '1h', '4h', '1d', '1w', '1M'] as Interval[]).map((i) => (
             <button
               key={i}
@@ -201,13 +214,13 @@ export function PriceChart({
               className={interval === i ? 'selected' : ''}
               onClick={() => setInterval(i)}
             >
-              {i === '1M' ? '1mo' : i}
+              {i18n.t('common:chart.interval.' + i)}
             </button>
           ))}
         </div>
         <div className="segmented">
           <button
-            aria-label="Candlestick chart"
+            aria-label={i18n.t('priceChart.candlestickChart')}
             aria-pressed={mode === 'candles'}
             className={mode === 'candles' ? 'selected' : ''}
             onClick={() => setMode('candles')}
@@ -215,7 +228,7 @@ export function PriceChart({
             <CandlestickChart size={17} />
           </button>
           <button
-            aria-label="Area chart"
+            aria-label={i18n.t('priceChart.areaChart')}
             aria-pressed={mode === 'area'}
             className={mode === 'area' ? 'selected' : ''}
             onClick={() => setMode('area')}
@@ -230,9 +243,10 @@ export function PriceChart({
           aria-pressed={analysis}
           onClick={() => setAnalysis(!analysis)}
         >
-          {analysis ? 'Hide' : 'Show'} SMA 20 & Fibonacci levels
+          {analysis ? i18n.t('priceChart.hide') : i18n.t('priceChart.show')}{' '}
+          {i18n.t('priceChart.sma20FibonacciLevels')}
         </button>
-        <span>Closed candles · descriptive indicators</span>
+        <span>{i18n.t('priceChart.closedCandlesDescriptiveIndicators')}</span>
       </div>
       {query.isPending ? (
         <Skeleton rows={5} />
@@ -246,12 +260,12 @@ export function PriceChart({
             analysis={analysis}
           />
           {query.data.meta.stale || query.isError ? (
-            <Notice>Showing last available candles. Prices may be out of date.</Notice>
+            <Notice>{i18n.t('priceChart.showingLastAvailableCandlesPricesMayBe')}</Notice>
           ) : null}
         </>
       ) : (
         <ErrorState
-          message="We couldn't retrieve candles from the public provider. No sample prices are substituted."
+          message={i18n.t('priceChart.weCouldnTRetrieveCandlesFromThe')}
           retry={() => void query.refetch()}
         />
       )}
@@ -262,22 +276,24 @@ export function PriceChart({
           onClick={() => setShowData(!showData)}
           aria-expanded={showData}
         >
-          {showData ? 'Hide' : 'View'} price data
+          {i18n.t(showData ? 'priceChart.hideData' : 'priceChart.viewData')}
         </button>
       </div>
       {showData && query.data && (
         <div className="table-scroll">
           <table>
-            <caption className="sr-only">Last ten candles, UTC; prices in USDT</caption>
+            <caption className="sr-only">
+              {i18n.t('priceChart.lastTenCandlesUtcPricesInUsdt')}
+            </caption>
             <thead>
               <tr>
-                <th>UTC open</th>
-                <th>Open</th>
-                <th>High</th>
-                <th>Low</th>
-                <th>Close</th>
-                <th>Base volume</th>
-                <th>Status</th>
+                <th>{i18n.t('priceChart.utcOpen')}</th>
+                <th>{i18n.t('common:chart.open')}</th>
+                <th>{i18n.t('common:chart.high')}</th>
+                <th>{i18n.t('common:chart.low')}</th>
+                <th>{i18n.t('priceChart.close')}</th>
+                <th>{i18n.t('priceChart.baseVolume')}</th>
+                <th>{i18n.t('priceChart.status')}</th>
               </tr>
             </thead>
             <tbody>
@@ -289,7 +305,9 @@ export function PriceChart({
                   <td>{money(c.low)}</td>
                   <td>{money(c.close)}</td>
                   <td>{money(c.volume)}</td>
-                  <td>{c.completed ? 'Closed' : 'In progress'}</td>
+                  <td>
+                    {c.completed ? i18n.t('priceChart.closed') : i18n.t('priceChart.inProgress')}
+                  </td>
                 </tr>
               ))}
             </tbody>

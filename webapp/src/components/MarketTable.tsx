@@ -1,3 +1,5 @@
+import { i18n } from '../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { ArrowDownUp, Search, Star } from 'lucide-react';
 import { assets, type Market, type Symbol } from '@investing-hub/shared/contracts';
@@ -18,6 +20,7 @@ export function MarketTable({
   selected: Symbol;
   onSelect: (s: Symbol) => void;
 }) {
+  useTranslation();
   const [search, setSearch] = useState('');
   const [onlyWatch, setOnlyWatch] = useState(false);
   const [sort, setSort] =
@@ -43,47 +46,49 @@ export function MarketTable({
     <section className="panel markets-panel">
       <div className="panel-heading">
         <div>
-          <h2>Market overview</h2>
-          <p>One place for your next perspective.</p>
+          <h2>{i18n.t('marketTable.marketOverview')}</h2>
+          <p>{i18n.t('marketTable.onePlaceForYourNextPerspective')}</p>
         </div>
-        <span className="pill">USDT pairs</span>
+        <span className="pill">{i18n.t('marketTable.usdtPairs')}</span>
       </div>
       <div className="market-controls">
         <div className="under-tabs">
           <button className={!onlyWatch ? 'active' : ''} onClick={() => setOnlyWatch(false)}>
-            All assets <span>{data.length}</span>
+            {i18n.t('marketTable.allAssets')}
+            <span>{data.length}</span>
           </button>
           <button className={onlyWatch ? 'active' : ''} onClick={() => setOnlyWatch(true)}>
             <Star size={13} />
-            Watchlist <span>{watchlist.length}</span>
+            {i18n.t('marketTable.watchlist')}
+            <span>{watchlist.length}</span>
           </button>
         </div>
         <label className="search-field">
           <Search size={16} />
-          <span className="sr-only">Search assets</span>
+          <span className="sr-only">{i18n.t('marketTable.searchAssets')}</span>
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search assets…"
+            placeholder={i18n.t('marketTable.searchAssets2')}
           />
         </label>
       </div>
       <div className="table-scroll">
         <table className="market-table">
           <caption className="sr-only">
-            Tracked exchange pairs. All prices and quote volumes in USDT.
+            {i18n.t('marketTable.trackedExchangePairsAllPricesAndQuote')}
           </caption>
           <thead>
             <tr>
               <th>
-                <span className="sr-only">Watch</span>
+                <span className="sr-only">{i18n.t('marketTable.watch')}</span>
               </th>
-              <th>Asset</th>
+              <th>{i18n.t('marketTable.asset')}</th>
               {(
                 [
-                  ['price', 'Price'],
-                  ['change24h', '24h change'],
-                  ['quoteVolume', '24h quote volume'],
+                  ['price', i18n.t('marketTable.price')],
+                  ['change24h', i18n.t('marketTable.24hChange')],
+                  ['quoteVolume', i18n.t('marketTable.24hQuoteVolume')],
                 ] as const
               ).map(([key, label]) => (
                 <th
@@ -96,7 +101,7 @@ export function MarketTable({
                   </button>
                 </th>
               ))}
-              <th>24h range</th>
+              <th>{i18n.t('marketTable.24hRange')}</th>
               <th />
             </tr>
           </thead>
@@ -109,7 +114,12 @@ export function MarketTable({
                     <button
                       className={`icon-button star ${watchlist.includes(m.symbol) ? 'starred' : ''}`}
                       onClick={() => onWatch(m.symbol)}
-                      aria-label={`${watchlist.includes(m.symbol) ? 'Remove' : 'Add'} ${a.name} ${watchlist.includes(m.symbol) ? 'from' : 'to'} watchlist`}
+                      aria-label={i18n.t(
+                        watchlist.includes(m.symbol)
+                          ? 'marketTable.watchRemove'
+                          : 'marketTable.watchAdd',
+                        { coin: a.name },
+                      )}
                       aria-pressed={watchlist.includes(m.symbol)}
                     >
                       <Star size={16} />
@@ -144,7 +154,8 @@ export function MarketTable({
                   </td>
                   <td>
                     <Link className="text-button" to={`/predictions?symbol=${m.symbol}`}>
-                      Price Predictions <span aria-hidden="true">↗</span>
+                      {i18n.t('common:nav.predictions')}
+                      <span aria-hidden="true">↗</span>
                     </Link>
                   </td>
                 </tr>
@@ -155,14 +166,14 @@ export function MarketTable({
         {filtered.length === 0 && (
           <div className="empty-state">
             <Search size={24} />
-            <strong>No matching assets</strong>
-            <p>Try another search or add assets to your watchlist.</p>
+            <strong>{i18n.t('marketTable.noMatchingAssets')}</strong>
+            <p>{i18n.t('marketTable.tryAnotherSearchOrAddAssetsTo')}</p>
           </div>
         )}
       </div>
       <div className="table-footer">
-        {filtered.length} of {data.length} tracked pairs
-        <span>Exchange volume ≠ market capitalization</span>
+        {i18n.t('marketTable.count', { shown: filtered.length, total: data.length })}
+        <span>{i18n.t('marketTable.exchangeVolumeMarketCapitalization')}</span>
       </div>
     </section>
   );

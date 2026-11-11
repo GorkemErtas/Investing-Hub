@@ -1,3 +1,5 @@
+import { i18n } from "../services/i18n";
+import { useTranslation } from "react-i18next";
 import React from "react";
 import { View, Text, StyleSheet, Image } from "react-native";
 import { useAuth } from "../context/AuthContext";
@@ -6,9 +8,10 @@ import boyAvatar from "../assets/images/boy_3984629.png";
 import girlAvatar from "../assets/images/girl_3984664.png";
 
 const WelcomeBanner = () => {
+  useTranslation();
   const { user } = useAuth();
   const { isDarkMode: isDark } = useTheme();
-  const firstName = user?.firstName || "Guest";
+  const firstName = user?.firstName || i18n.t("welcomeBanner.guest");
   const avatar = user?.gender === "girl" ? girlAvatar : boyAvatar;
   const styles = getStyles(isDark);
 
@@ -16,7 +19,9 @@ const WelcomeBanner = () => {
     <View style={styles.banner}>
       <Image source={avatar} style={styles.avatar} />
       <View>
-        <Text style={styles.greeting}>Welcome back,</Text>
+        <Text style={styles.greeting}>
+          {i18n.t("welcomeBanner.welcomeBack")}
+        </Text>
         <Text style={styles.name}>{firstName} 👋</Text>
       </View>
     </View>

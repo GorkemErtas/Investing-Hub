@@ -1,3 +1,5 @@
+import { i18n, userError } from "../services/i18n";
+import { useTranslation } from "react-i18next";
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -18,6 +20,7 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 
 export default function AuthScreen() {
+  useTranslation();
   const router = useRouter();
   const { login } = useAuth();
   const { isDarkMode: isDark } = useTheme();
@@ -34,17 +37,15 @@ export default function AuthScreen() {
         if (active)
           setAccountStatus(
             !c.accounts
-              ? "Account services are unavailable. Public markets and learning remain available."
+              ? "auth.accountServicesAreUnavailablePublicMarketsAnd"
               : !c.registration
-                ? "Email registration is unavailable; existing verified users can log in."
+                ? "auth.emailRegistrationIsUnavailableExistingVerifiedUsers"
                 : "",
           );
       })
       .catch(() => {
         if (active)
-          setAccountStatus(
-            "Account service is unavailable. Check the API connection.",
-          );
+          setAccountStatus("auth.accountServiceIsUnavailableCheckTheApi");
       });
     return () => {
       active = false;
@@ -70,11 +71,17 @@ export default function AuthScreen() {
 
   const handleRegister = async () => {
     if (!firstName || !lastName || !email || !password || !confirmPassword) {
-      Alert.alert("Error", "Please fill in all fields.");
+      Alert.alert(
+        i18n.t("auth.errorTitle"),
+        i18n.t("auth.pleaseFillInAllFields"),
+      );
       return;
     }
     if (password !== confirmPassword) {
-      Alert.alert("Error", "Passwords do not match");
+      Alert.alert(
+        i18n.t("auth.errorTitle"),
+        i18n.t("auth.passwordsDoNotMatch"),
+      );
       return;
     }
 
@@ -87,13 +94,20 @@ export default function AuthScreen() {
         email,
         password,
       });
-      Alert.alert("Success", "Check your email for the verification code.");
+      Alert.alert(
+        i18n.t("auth.successTitle"),
+        i18n.t("auth.checkYourEmailForTheVerificationCode"),
+      );
       setStep("verify");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Account request failed.");
+      setError(
+        err instanceof Error ? userError(err) : "auth.accountRequestFailed",
+      );
       Alert.alert(
-        "Error",
-        err instanceof Error ? err.message : "Registration failed",
+        i18n.t("auth.errorTitle"),
+        err instanceof Error
+          ? i18n.t(userError(err))
+          : i18n.t("auth.registrationFailed"),
       );
     } finally {
       setLoading(false);
@@ -102,23 +116,30 @@ export default function AuthScreen() {
 
   const handleVerifyEmail = async () => {
     if (!email || !verificationCode) {
-      Alert.alert("Error", "Please enter your email and verification code.");
+      Alert.alert(
+        i18n.t("auth.errorTitle"),
+        i18n.t("auth.pleaseEnterYourEmailAndVerificationCode"),
+      );
       return;
     }
 
     setError("");
     setLoading(true);
     try {
-      const res = await api.verify({ email, verificationCode });
-      Alert.alert("Success", res.message);
+      await api.verify({ email, verificationCode });
+      Alert.alert(i18n.t("auth.successTitle"), i18n.t("auth.verified"));
       setIsLogin(true);
       setStep("register");
       resetFields();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Account request failed.");
+      setError(
+        err instanceof Error ? userError(err) : "auth.accountRequestFailed",
+      );
       Alert.alert(
-        "Error",
-        err instanceof Error ? err.message : "Verification failed",
+        i18n.t("auth.errorTitle"),
+        err instanceof Error
+          ? i18n.t(userError(err))
+          : i18n.t("auth.verificationFailed"),
       );
     } finally {
       setLoading(false);
@@ -127,7 +148,10 @@ export default function AuthScreen() {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert("Error", "Email and password are required.");
+      Alert.alert(
+        i18n.t("auth.errorTitle"),
+        i18n.t("auth.emailAndPasswordAreRequired"),
+      );
       return;
     }
 
@@ -137,14 +161,23 @@ export default function AuthScreen() {
       const res = await api.login({ email, password });
       await login(res.user, res.token);
       Alert.alert(
-        "Success",
-        `Welcome, ${res.user.firstName} ${res.user.lastName}`,
+        i18n.t("auth.successTitle"),
+        i18n.t("auth.welcome", {
+          name: res.user.firstName + " " + res.user.lastName,
+        }),
       );
       resetFields();
       router.replace("/home");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Account request failed.");
-      Alert.alert("Error", err instanceof Error ? err.message : "Login failed");
+      setError(
+        err instanceof Error ? userError(err) : "auth.accountRequestFailed",
+      );
+      Alert.alert(
+        i18n.t("auth.errorTitle"),
+        err instanceof Error
+          ? i18n.t(userError(err))
+          : i18n.t("auth.loginFailed"),
+      );
     } finally {
       setLoading(false);
     }
@@ -156,14 +189,14 @@ export default function AuthScreen() {
       style={styles.container}
     >
       <View style={styles.authBox}>
-        {accountStatus ? <Text>{accountStatus}</Text> : null}
-        {error ? <Text accessibilityRole="alert">{error}</Text> : null}
+        {accountStatus ? <Text>{i18n.t(accountStatus)}</Text> : null}
+        {error ? <Text accessibilityRole="alert">{i18n.t(error)}</Text> : null}
         <View style={styles.tabs}>
           <TouchableOpacity
             onPress={() => setIsLogin(true)}
             style={isLogin ? styles.activeTab : styles.inactiveTab}
           >
-            <Text style={styles.tabText}>Log In</Text>
+            <Text style={styles.tabText}>{i18n.t("auth.logIn")}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => {
@@ -172,7 +205,7 @@ export default function AuthScreen() {
             }}
             style={!isLogin ? styles.activeTab : styles.inactiveTab}
           >
-            <Text style={styles.tabText}>Sign Up</Text>
+            <Text style={styles.tabText}>{i18n.t("common:action.signUp")}</Text>
           </TouchableOpacity>
         </View>
 
@@ -184,7 +217,8 @@ export default function AuthScreen() {
         ) : isLogin ? (
           <>
             <TextInput
-              placeholder="Email"
+              placeholder={i18n.t("auth.email")}
+              accessibilityLabel={i18n.t("auth.email")}
               placeholderTextColor="#888"
               value={email}
               onChangeText={setEmail}
@@ -192,7 +226,8 @@ export default function AuthScreen() {
               keyboardType="email-address"
             />
             <TextInput
-              placeholder="Password"
+              placeholder={i18n.t("auth.password")}
+              accessibilityLabel={i18n.t("auth.password")}
               placeholderTextColor="#888"
               value={password}
               onChangeText={setPassword}
@@ -200,27 +235,30 @@ export default function AuthScreen() {
               secureTextEntry
             />
             <TouchableOpacity onPress={handleLogin} style={styles.button}>
-              <Text style={styles.buttonText}>Log In</Text>
+              <Text style={styles.buttonText}>{i18n.t("auth.logIn")}</Text>
             </TouchableOpacity>
           </>
         ) : step === "register" ? (
           <>
             <TextInput
-              placeholder="First Name"
+              placeholder={i18n.t("auth.firstName")}
+              accessibilityLabel={i18n.t("auth.firstName")}
               placeholderTextColor="#888"
               value={firstName}
               onChangeText={setFirstName}
               style={styles.input}
             />
             <TextInput
-              placeholder="Last Name"
+              placeholder={i18n.t("auth.lastName")}
+              accessibilityLabel={i18n.t("auth.lastName")}
               placeholderTextColor="#888"
               value={lastName}
               onChangeText={setLastName}
               style={styles.input}
             />
             <TextInput
-              placeholder="Email"
+              placeholder={i18n.t("auth.email")}
+              accessibilityLabel={i18n.t("auth.email")}
               placeholderTextColor="#888"
               value={email}
               onChangeText={setEmail}
@@ -228,7 +266,8 @@ export default function AuthScreen() {
               keyboardType="email-address"
             />
             <TextInput
-              placeholder="Password"
+              placeholder={i18n.t("auth.password")}
+              accessibilityLabel={i18n.t("auth.password")}
               placeholderTextColor="#888"
               value={password}
               onChangeText={setPassword}
@@ -236,7 +275,8 @@ export default function AuthScreen() {
               secureTextEntry
             />
             <TextInput
-              placeholder="Confirm Password"
+              placeholder={i18n.t("auth.confirmPassword")}
+              accessibilityLabel={i18n.t("auth.confirmPassword")}
               placeholderTextColor="#888"
               value={confirmPassword}
               onChangeText={setConfirmPassword}
@@ -244,13 +284,16 @@ export default function AuthScreen() {
               secureTextEntry
             />
             <TouchableOpacity onPress={handleRegister} style={styles.button}>
-              <Text style={styles.buttonText}>Sign Up</Text>
+              <Text style={styles.buttonText}>
+                {i18n.t("common:action.signUp")}
+              </Text>
             </TouchableOpacity>
           </>
         ) : (
           <>
             <TextInput
-              placeholder="Verification Code"
+              placeholder={i18n.t("auth.verificationCode")}
+              accessibilityLabel={i18n.t("auth.verificationCode")}
               placeholderTextColor="#888"
               value={verificationCode}
               onChangeText={setVerificationCode}
@@ -258,7 +301,9 @@ export default function AuthScreen() {
               keyboardType="numeric"
             />
             <TouchableOpacity onPress={handleVerifyEmail} style={styles.button}>
-              <Text style={styles.buttonText}>Verify Email</Text>
+              <Text style={styles.buttonText}>
+                {i18n.t("auth.verifyEmail")}
+              </Text>
             </TouchableOpacity>
           </>
         )}

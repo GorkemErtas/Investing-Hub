@@ -1,3 +1,6 @@
+import { formatUtc, formatAmount } from "../services/format";
+import { i18n } from "../services/i18n";
+import { useTranslation } from "react-i18next";
 import React, { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import Svg, { Line, Rect } from "react-native-svg";
@@ -10,22 +13,31 @@ interface Candle {
   close: number;
 }
 export default function Candles({ candleData }: { candleData: Candle[] }) {
+  useTranslation();
   const [selected, setSelected] = useState<Candle | null>(null);
-  if (!candleData.length) return <Text>No candle data available.</Text>;
+  if (!candleData.length)
+    return <Text>{i18n.t("candles.noCandleDataAvailable")}</Text>;
   const high = Math.max(...candleData.map((c) => c.high)),
     low = Math.min(...candleData.map((c) => c.low));
   const range = high - low || high * 0.01;
   const y = (price: number) => 10 + ((high - price) / range) * 230;
   const current = selected ?? candleData.at(-1)!;
+  const quote = (c: Candle) =>
+    i18n.t("candles.quote", {
+      date: formatUtc(c.timestamp),
+      open: formatAmount(c.open),
+      high: formatAmount(c.high),
+      low: formatAmount(c.low),
+      close: formatAmount(c.close),
+    });
   return (
     <View>
-      <Text style={{ color: "#6b8eab" }}>
-        {new Date(current.timestamp).toISOString()} | O {current.open} H{" "}
-        {current.high} L {current.low} C {current.close} USDT
-      </Text>
+      <Text style={{ color: "#6b8eab" }}>{quote(current)}</Text>
       <ScrollView
         horizontal
-        accessibilityLabel="OHLC candlestick chart; scroll horizontally and select a candle for exact prices"
+        accessibilityLabel={i18n.t(
+          "candles.ohlcCandlestickChartScrollHorizontallyAndSelect",
+        )}
       >
         <Svg width={candleData.length * 12 + 20} height={260}>
           {candleData.map((c, i) => {
@@ -46,7 +58,7 @@ export default function Candles({ candleData }: { candleData: Candle[] }) {
                   height={Math.max(1, Math.abs(y(c.open) - y(c.close)))}
                   fill={color}
                   onPress={() => setSelected(c)}
-                  accessibilityLabel={`${new Date(c.timestamp).toISOString()} open ${c.open} high ${c.high} low ${c.low} close ${c.close}`}
+                  accessibilityLabel={quote(c)}
                 />
               </React.Fragment>
             );

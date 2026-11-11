@@ -1,3 +1,6 @@
+import { formatAmount, formatPrice } from "../services/format";
+import { i18n } from "../services/i18n";
+import { useTranslation } from "react-i18next";
 import React, { useState } from "react";
 import {
   View,
@@ -13,6 +16,7 @@ import { useTheme } from "../context/ThemeContext";
 const screenWidth = Dimensions.get("window").width;
 
 const ChartQuizSection = () => {
+  useTranslation();
   const { isDarkMode } = useTheme();
 
   const [selectedGraphIndex, setSelectedGraphIndex] = useState(0);
@@ -24,36 +28,36 @@ const ChartQuizSection = () => {
 
   const graphs = [
     {
-      title: "Bitcoin Price Chart",
+      title: i18n.t("chartQuizSection.bitcoinPriceChart"),
       labels: [
-        "Day 1",
-        "Day 2",
-        "Day 3",
-        "Day 4",
-        "Day 5",
-        "Day 6",
-        "Day 7",
-        "Day 8",
-        "Day 9",
-        "Day 10",
+        i18n.t("chartQuizSection.day1"),
+        i18n.t("chartQuizSection.day2"),
+        i18n.t("chartQuizSection.day3"),
+        i18n.t("chartQuizSection.day4"),
+        i18n.t("chartQuizSection.day5"),
+        i18n.t("chartQuizSection.day6"),
+        i18n.t("chartQuizSection.day7"),
+        i18n.t("chartQuizSection.day8"),
+        i18n.t("chartQuizSection.day9"),
+        i18n.t("chartQuizSection.day10"),
       ],
       data: [
         12000, 12500, 11500, 14000, 13500, 15000, 13000, 15500, 14500, 16000,
       ],
     },
     {
-      title: "Ethereum Price Chart",
+      title: i18n.t("chartQuizSection.ethereumPriceChart"),
       labels: [
-        "Day 1",
-        "Day 2",
-        "Day 3",
-        "Day 4",
-        "Day 5",
-        "Day 6",
-        "Day 7",
-        "Day 8",
-        "Day 9",
-        "Day 10",
+        i18n.t("chartQuizSection.day1"),
+        i18n.t("chartQuizSection.day2"),
+        i18n.t("chartQuizSection.day3"),
+        i18n.t("chartQuizSection.day4"),
+        i18n.t("chartQuizSection.day5"),
+        i18n.t("chartQuizSection.day6"),
+        i18n.t("chartQuizSection.day7"),
+        i18n.t("chartQuizSection.day8"),
+        i18n.t("chartQuizSection.day9"),
+        i18n.t("chartQuizSection.day10"),
       ],
       data: [2000, 2100, 1900, 2200, 2150, 2250, 2100, 2300, 2200, 2400],
     },
@@ -68,65 +72,135 @@ const ChartQuizSection = () => {
   const questions = [
     [
       {
-        question: "What is the highest price recorded in Bitcoin chart?",
+        question: i18n.t("chartQuizSection.whatIsTheHighestPriceRecordedIn"),
         options: [
-          `Day 1: $${currentGraph.data[0]}`,
-          `Day 5: $${currentGraph.data[4]}`,
-          `Day ${maxPriceIndex + 1}: $${maxPrice}`,
-          `Day 8: $${currentGraph.data[7]}`,
+          i18n.t("chartQuizSection.dayValue", {
+            day: 1,
+            price: formatPrice(currentGraph.data[0]),
+          }),
+          i18n.t("chartQuizSection.dayValue", {
+            day: 5,
+            price: formatPrice(currentGraph.data[4]),
+          }),
+          i18n.t("chartQuizSection.dayValue", {
+            day: maxPriceIndex + 1,
+            price: formatPrice(maxPrice),
+          }),
+          i18n.t("chartQuizSection.dayValue", {
+            day: 8,
+            price: formatPrice(currentGraph.data[7]),
+          }),
         ],
         correct: 2,
       },
       {
-        question: "What is the lowest price recorded in Bitcoin chart?",
+        question: i18n.t("chartQuizSection.whatIsTheLowestPriceRecordedIn"),
         options: [
-          `Day ${minPriceIndex + 1}: $${minPrice}`,
-          `Day 6: $${currentGraph.data[5]}`,
-          `Day 3: $${currentGraph.data[2]}`,
-          `Day 9: $${currentGraph.data[8]}`,
+          i18n.t("chartQuizSection.dayValue", {
+            day: minPriceIndex + 1,
+            price: formatPrice(minPrice),
+          }),
+          i18n.t("chartQuizSection.dayValue", {
+            day: 6,
+            price: formatPrice(currentGraph.data[5]),
+          }),
+          i18n.t("chartQuizSection.dayValue", {
+            day: 3,
+            price: formatPrice(currentGraph.data[2]),
+          }),
+          i18n.t("chartQuizSection.dayValue", {
+            day: 9,
+            price: formatPrice(currentGraph.data[8]),
+          }),
         ],
         correct: 0,
       },
       {
-        question: "Which day had the largest price increase in Bitcoin chart?",
-        options: ["Day 4", "Day 7", "Day 2", "Day 8"],
+        question: i18n.t("chartQuizSection.whichDayHadTheLargestPriceIncrease"),
+        options: [
+          i18n.t("chartQuizSection.day4"),
+          i18n.t("chartQuizSection.day7"),
+          i18n.t("chartQuizSection.day2"),
+          i18n.t("chartQuizSection.day8"),
+        ],
         correct: 0,
       },
       {
-        question: "What is the overall trend of Bitcoin chart?",
-        options: ["Uptrend", "Downtrend", "Flat", "Volatile"],
+        question: i18n.t("chartQuizSection.whatIsTheOverallTrendOfBitcoin"),
+        options: [
+          i18n.t("chartQuizSection.uptrend"),
+          i18n.t("chartQuizSection.downtrend"),
+          i18n.t("chartQuizSection.flat"),
+          i18n.t("chartQuizSection.volatile"),
+        ],
         correct: 0,
       },
     ],
     [
       {
-        question: "What is the highest price recorded in Ethereum chart?",
+        question: i18n.t("chartQuizSection.whatIsTheHighestPriceRecordedIn2"),
         options: [
-          `Day 1: $${currentGraph.data[0]}`,
-          `Day 5: $${currentGraph.data[4]}`,
-          `Day ${maxPriceIndex + 1}: $${maxPrice}`,
-          `Day 8: $${currentGraph.data[7]}`,
+          i18n.t("chartQuizSection.dayValue", {
+            day: 1,
+            price: formatPrice(currentGraph.data[0]),
+          }),
+          i18n.t("chartQuizSection.dayValue", {
+            day: 5,
+            price: formatPrice(currentGraph.data[4]),
+          }),
+          i18n.t("chartQuizSection.dayValue", {
+            day: maxPriceIndex + 1,
+            price: formatPrice(maxPrice),
+          }),
+          i18n.t("chartQuizSection.dayValue", {
+            day: 8,
+            price: formatPrice(currentGraph.data[7]),
+          }),
         ],
         correct: 2,
       },
       {
-        question: "What is the lowest price recorded in Ethereum chart?",
+        question: i18n.t("chartQuizSection.whatIsTheLowestPriceRecordedIn2"),
         options: [
-          `Day ${minPriceIndex + 1}: $${minPrice}`,
-          `Day 6: $${currentGraph.data[5]}`,
-          `Day 3: $${currentGraph.data[2]}`,
-          `Day 9: $${currentGraph.data[8]}`,
+          i18n.t("chartQuizSection.dayValue", {
+            day: minPriceIndex + 1,
+            price: formatPrice(minPrice),
+          }),
+          i18n.t("chartQuizSection.dayValue", {
+            day: 6,
+            price: formatPrice(currentGraph.data[5]),
+          }),
+          i18n.t("chartQuizSection.dayValue", {
+            day: 3,
+            price: formatPrice(currentGraph.data[2]),
+          }),
+          i18n.t("chartQuizSection.dayValue", {
+            day: 9,
+            price: formatPrice(currentGraph.data[8]),
+          }),
         ],
         correct: 0,
       },
       {
-        question: "Which day had the largest price increase in Ethereum chart?",
-        options: ["Day 4", "Day 7", "Day 2", "Day 8"],
+        question: i18n.t(
+          "chartQuizSection.whichDayHadTheLargestPriceIncrease2",
+        ),
+        options: [
+          i18n.t("chartQuizSection.day4"),
+          i18n.t("chartQuizSection.day7"),
+          i18n.t("chartQuizSection.day2"),
+          i18n.t("chartQuizSection.day8"),
+        ],
         correct: 0,
       },
       {
-        question: "What is the overall trend of Ethereum chart?",
-        options: ["Uptrend", "Downtrend", "Flat", "Volatile"],
+        question: i18n.t("chartQuizSection.whatIsTheOverallTrendOfEthereum"),
+        options: [
+          i18n.t("chartQuizSection.uptrend"),
+          i18n.t("chartQuizSection.downtrend"),
+          i18n.t("chartQuizSection.flat"),
+          i18n.t("chartQuizSection.volatile"),
+        ],
         correct: 0,
       },
     ],
@@ -161,9 +235,11 @@ const ChartQuizSection = () => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text>
-        Illustrative quiz data. These charts are not live market quotes.
+        {i18n.t("chartQuizSection.illustrativeQuizDataTheseChartsAreNot")}
       </Text>
-      <Text style={styles.title}>Interactive Coin Price Charts</Text>
+      <Text style={styles.title}>
+        {i18n.t("chartQuizSection.interactiveCoinPriceCharts")}
+      </Text>
 
       <View style={styles.graphSelection}>
         {graphs.map((graph, index) => (
@@ -182,8 +258,11 @@ const ChartQuizSection = () => {
 
       <View style={styles.chartContainer}>
         <LineChart
+          formatYLabel={(value) => formatAmount(Number(value))}
           data={{
-            labels: currentGraph.labels,
+            labels: currentGraph.labels.map((label, index) =>
+              index % 2 === 0 ? label : "",
+            ),
             datasets: [{ data: currentGraph.data }],
           }}
           width={screenWidth - 40}
@@ -222,7 +301,25 @@ const ChartQuizSection = () => {
               ]}
               disabled={isAnswered}
             >
-              <Text style={styles.optionText}>{option}</Text>
+              <Text
+                style={[
+                  styles.optionText,
+                  {
+                    color:
+                      isAnswered &&
+                      (index ===
+                        questions[selectedGraphIndex][currentQuestionIndex]
+                          .correct ||
+                        index === selectedOption)
+                        ? "#fff"
+                        : isDarkMode
+                          ? "#f8fafc"
+                          : "#172b3a",
+                  },
+                ]}
+              >
+                {option}
+              </Text>
             </TouchableOpacity>
           ),
         )}
@@ -236,7 +333,9 @@ const ChartQuizSection = () => {
               currentQuestionIndex === 0 && styles.disabledNavButton,
             ]}
           >
-            <Text style={styles.navButtonText}>Previous</Text>
+            <Text style={styles.navButtonText}>
+              {i18n.t("common:action.previous")}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={goToNextQuestion}
@@ -250,7 +349,9 @@ const ChartQuizSection = () => {
                 styles.disabledNavButton,
             ]}
           >
-            <Text style={styles.navButtonText}>Next</Text>
+            <Text style={styles.navButtonText}>
+              {i18n.t("common:action.next")}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>

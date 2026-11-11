@@ -6,6 +6,10 @@ import { View, Text, StyleSheet, Image, Platform } from "react-native";
 import { ThemeProvider, useTheme } from "../context/ThemeContext";
 import { setupForegroundNotificationHandler } from "../utils/notifications";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { LocaleProvider } from "../context/LocaleProvider";
+import { LanguageSelector } from "../components/LanguageSelector";
+import { i18n } from "../services/i18n";
+import { useTranslation } from "react-i18next";
 
 function SplashScreen() {
   return (
@@ -20,6 +24,7 @@ function SplashScreen() {
 }
 
 function LayoutTabsWithConditionalAuth() {
+  useTranslation();
   const { user, loading, warning: authWarning } = useAuth();
   const [splashVisible, setSplashVisible] = useState(true);
   const { isDarkMode, warning } = useTheme();
@@ -29,28 +34,52 @@ function LayoutTabsWithConditionalAuth() {
     return () => clearTimeout(timer);
   }, []);
 
-  if (loading || splashVisible) return <SplashScreen />;
+  if (loading || splashVisible)
+    return (
+      <>
+        <LanguageSelector />
+        <SplashScreen />
+      </>
+    );
 
   const screens = [
     <Tabs.Screen key="index" name="index" options={{ href: null }} />,
-    <Tabs.Screen key="home" name="home" />,
-    <Tabs.Screen key="portfolio" name="portfolio" />,
-    <Tabs.Screen key="learning-hub" name="learning-hub" />,
+    <Tabs.Screen
+      key="home"
+      name="home"
+      options={{ title: i18n.t("common:nav.overview") }}
+    />,
+    <Tabs.Screen
+      key="portfolio"
+      name="portfolio"
+      options={{ title: i18n.t("common:nav.portfolio") }}
+    />,
+    <Tabs.Screen
+      key="learning-hub"
+      name="learning-hub"
+      options={{ title: i18n.t("common:nav.learning") }}
+    />,
   ];
 
   screens.push(
     <Tabs.Screen
       key="auth"
       name="auth"
-      options={{ title: "Account", href: user ? null : "/auth" }}
+      options={{
+        title: i18n.t("common:nav.account"),
+        href: user ? null : "/auth",
+      }}
     />,
   );
 
   return (
     <>
-      {warning ? <Text accessibilityRole="alert">{warning}</Text> : null}
+      <LanguageSelector />
+      {warning ? (
+        <Text accessibilityRole="alert">{i18n.t(warning)}</Text>
+      ) : null}
       {authWarning ? (
-        <Text accessibilityRole="alert">{authWarning}</Text>
+        <Text accessibilityRole="alert">{i18n.t(authWarning)}</Text>
       ) : null}
       <Tabs
         key={user ? "logged-in" : "guest"}
@@ -88,11 +117,13 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <AuthProvider>
-        <ThemeProvider>
-          <LayoutTabsWithConditionalAuth />
-        </ThemeProvider>
-      </AuthProvider>
+      <LocaleProvider>
+        <AuthProvider>
+          <ThemeProvider>
+            <LayoutTabsWithConditionalAuth />
+          </ThemeProvider>
+        </AuthProvider>
+      </LocaleProvider>
     </GestureHandlerRootView>
   );
 }

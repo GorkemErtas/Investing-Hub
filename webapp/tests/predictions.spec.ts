@@ -2,6 +2,10 @@ import { test, expect, type Page } from '@playwright/test';
 import { assets, type Symbol } from '../../shared/contracts';
 import { predictionFixture } from '../../shared/tests/predictions-fixtures';
 async function fixture(page: Page, available = true, expired = false) {
+  await page.addInitScript(() => {
+    if (localStorage.getItem('ih:language:v1') === null)
+      localStorage.setItem('ih:language:v1', JSON.stringify('en-US'));
+  });
   let calls = 0;
   await page.route('**/api/predictions/**', (r) => {
     calls++;

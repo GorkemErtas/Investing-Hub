@@ -1,3 +1,15 @@
+import {
+  formatAmount,
+  formatPercent,
+  formatDecimalInput,
+  displayDecimalInput,
+  activeLocale,
+  formatPrice,
+  formatUtc,
+  formatChartTick,
+} from "../services/format";
+import { i18n, userError } from "../services/i18n";
+import { useTranslation } from "react-i18next";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
@@ -24,14 +36,15 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 
 const timeframes = {
-  "15m": "15 minutes",
-  "1h": "Hour",
-  "1d": "Day",
-  "1w": "Week",
-  "1M": "Month",
+  "15m": "common:chart.minutes",
+  "1h": "common:chart.hour",
+  "1d": "common:chart.day",
+  "1w": "common:chart.week",
+  "1M": "common:chart.month",
 };
 
 const TradePage = ({ crypto, onBack }) => {
+  useTranslation();
   const [quantity, setQuantity] = useState("");
   const [fee, setFee] = useState("0");
   const { user } = useAuth();
@@ -64,7 +77,7 @@ const TradePage = ({ crypto, onBack }) => {
           setPortfolioError("");
         }
       } catch (error) {
-        if (active) setPortfolioError(error.message);
+        if (active) setPortfolioError(userError(error));
       }
     };
     fetchPortfolios();
@@ -85,15 +98,18 @@ const TradePage = ({ crypto, onBack }) => {
   const chartData = resource.data
     ? {
         labels: resource.data.line.map((point, i, rows) =>
-          i % Math.ceil(rows.length / 6) === 0
-            ? new Date(point.time).toISOString().slice(0, 16).replace("T", " ")
+          i % Math.ceil(rows.length / 3) === 0
+            ? formatChartTick(
+                point.time,
+                timeframe === "15m" || timeframe === "1h",
+              )
             : "",
         ),
         datasets: [{ data: resource.data.line.map((point) => point.price) }],
       }
     : null;
 
-  let grossTotal = "Unavailable";
+  let grossTotal = i18n.t("marketMovers.unavailable");
   try {
     grossTotal = grossNotional(String(quantity), String(price));
   } catch {
@@ -103,13 +119,16 @@ const TradePage = ({ crypto, onBack }) => {
   const handleTrade = async () => {
     if (submitting.current) return;
     if (!user) {
-      Alert.alert("Login required", "Log in to record simulated transactions.");
+      Alert.alert(
+        i18n.t("tradePage.loginRequired"),
+        i18n.t("tradePage.logInToRecordSimulatedTransactions"),
+      );
       return;
     }
     if (!selectedPortfolioId) {
       Alert.alert(
-        "Choose a portfolio",
-        "Create a portfolio in the Portfolio tab first.",
+        i18n.t("tradePage.chooseAPortfolio"),
+        i18n.t("tradePage.createAPortfolioInThePortfolioTab"),
       );
       return;
     }
@@ -126,16 +145,16 @@ const TradePage = ({ crypto, onBack }) => {
       });
       await api.addTrade(selectedPortfolioId, body);
       Alert.alert(
-        "Saved",
-        "Simulated transaction recorded. No exchange order was placed.",
+        i18n.t("tradePage.savedTitle"),
+        i18n.t("tradePage.simulatedTransactionRecordedNoExchangeOrderWas"),
       );
       setQuantity("");
     } catch (error) {
       Alert.alert(
-        "Could not save transaction",
+        i18n.t("tradePage.couldNotSaveTransaction"),
         error.issues
-          ? "Use positive values with at most 8 decimals and a nonnegative fee."
-          : error.message,
+          ? i18n.t("tradePage.usePositiveValuesWithAtMost8")
+          : i18n.t(userError(error)),
       );
     } finally {
       submitting.current = false;
@@ -146,46 +165,51 @@ const TradePage = ({ crypto, onBack }) => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <TouchableOpacity onPress={onBack} style={styles.backButton}>
-        <Text style={styles.backButtonText}>Back</Text>
+        <Text style={styles.backButtonText}>
+          {i18n.t("common:action.back")}
+        </Text>
       </TouchableOpacity>
 
       <View style={styles.card}>
         <Text style={styles.cryptoTitle}>{crypto.symbol}</Text>
-        <Text style={styles.cryptoPrice}>
-          {crypto.price.toLocaleString()} USDT
-        </Text>
+        <Text style={styles.cryptoPrice}>{formatPrice(crypto.price)} USDT</Text>
         <Text
           style={[
             styles.cryptoChange,
             crypto?.change > 0 ? styles.positiveChange : styles.negativeChange,
           ]}
         >
-          (
-          {typeof crypto?.change === "number"
-            ? crypto.change.toFixed(2)
-            : "0.00"}
-          %)
+          {formatPercent(
+            typeof crypto?.change === "number" ? crypto.change : 0,
+          )}
         </Text>
 
         <PredictionStatus base={crypto.symbol} />
       </View>
-      {chartError ? <Text accessibilityRole="alert">{chartError}</Text> : null}
+      {chartError ? (
+        <Text accessibilityRole="alert">{i18n.t(chartError)}</Text>
+      ) : null}
       {portfolioError ? (
-        <Text accessibilityRole="alert">{portfolioError}</Text>
+        <Text accessibilityRole="alert">{i18n.t(portfolioError)}</Text>
       ) : null}
       {chartMeta ? (
         <Text>
-          {chartMeta.stale || chartError ? "Stale candles" : "Public OHLCV"} ?
-          Source {chartMeta.sourceTime} ? Fetched {chartMeta.fetchedAt}
+          {chartMeta.stale || chartError
+            ? i18n.t("detailsScreen.staleCandles")
+            : i18n.t("detailsScreen.publicOhlcv")}{" "}
+          {i18n.t("cryptoPricesTable.source")}
+          {formatUtc(chartMeta.sourceTime)}{" "}
+          {i18n.t("cryptoPricesTable.fetched")}
+          {formatUtc(chartMeta.fetchedAt)}
         </Text>
       ) : null}
 
       <TextInput
-        accessibilityLabel="Fee in USDT"
-        placeholder="Fee in USDT"
+        accessibilityLabel={i18n.t("tradePage.feeInUsdt")}
+        placeholder={i18n.t("tradePage.feeInUsdt")}
         keyboardType="decimal-pad"
-        value={fee}
-        onChangeText={setFee}
+        value={displayDecimalInput(fee)}
+        onChangeText={(value) => setFee(formatDecimalInput(value))}
         style={{ padding: 12, backgroundColor: "#e6eef5", color: "#172b3a" }}
       />
       <View style={styles.timeframeRow}>
@@ -204,7 +228,7 @@ const TradePage = ({ crypto, onBack }) => {
                 timeframe === key && styles.activeTimeframeText,
               ]}
             >
-              {label}
+              {i18n.t(label)}
             </Text>
           </TouchableOpacity>
         ))}
@@ -221,7 +245,7 @@ const TradePage = ({ crypto, onBack }) => {
               chartType === "line" && styles.activeTimeframeText,
             ]}
           >
-            Line
+            {i18n.t("detailsScreen.line")}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -237,7 +261,7 @@ const TradePage = ({ crypto, onBack }) => {
               chartType === "candlestick" && styles.activeTimeframeText,
             ]}
           >
-            Candle
+            {i18n.t("tradePage.candle")}
           </Text>
         </TouchableOpacity>
       </View>
@@ -245,10 +269,11 @@ const TradePage = ({ crypto, onBack }) => {
       {loadingChart ? (
         <ActivityIndicator size="large" color="#3b82f6" />
       ) : !chartData ? (
-        <Text>No chart data available.</Text>
+        <Text>{i18n.t("detailsScreen.noChartDataAvailable")}</Text>
       ) : chartType === "line" ? (
         <ScrollView horizontal>
           <LineChart
+            formatYLabel={(value) => formatAmount(Number(value))}
             data={{
               labels: chartData.labels,
               datasets: [{ data: chartData.datasets[0].data }],
@@ -284,11 +309,12 @@ const TradePage = ({ crypto, onBack }) => {
       )}
 
       <Picker
+        accessibilityLabel={i18n.t("tradePage.selectPortfolio")}
         selectedValue={selectedPortfolioId}
         onValueChange={(value) => setSelectedPortfolioId(value)}
         style={styles.picker}
       >
-        <Picker.Item label="-- Select Portfolio --" value="" />
+        <Picker.Item label={i18n.t("tradePage.selectPortfolio")} value="" />
         {(user && portfolioOwner === user.id ? portfolios : []).map(
           (portfolio) => (
             <Picker.Item
@@ -306,7 +332,7 @@ const TradePage = ({ crypto, onBack }) => {
             onPress={() => setAction("buy")}
             style={[styles.actionButton, action === "buy" && styles.buyAction]}
           >
-            <Text style={styles.actionText}>Buy</Text>
+            <Text style={styles.actionText}>{i18n.t("common:action.buy")}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setAction("sell")}
@@ -315,25 +341,29 @@ const TradePage = ({ crypto, onBack }) => {
               action === "sell" && styles.sellAction,
             ]}
           >
-            <Text style={styles.actionText}>Sell</Text>
+            <Text style={styles.actionText}>
+              {i18n.t("common:action.sell")}
+            </Text>
           </TouchableOpacity>
         </View>
 
         <TextInput
           style={styles.input}
           keyboardType="numeric"
-          placeholder="Quantity"
+          placeholder={i18n.t("tradePage.quantity")}
+          accessibilityLabel={i18n.t("tradePage.quantity")}
           placeholderTextColor={isDark ? "#ccc" : "#888"}
-          value={quantity}
-          onChangeText={setQuantity}
+          value={displayDecimalInput(quantity)}
+          onChangeText={(value) => setQuantity(formatDecimalInput(value))}
         />
         <TextInput
           style={styles.input}
           keyboardType="numeric"
-          placeholder="Price"
+          placeholder={i18n.t("cryptoPricesTable.price")}
+          accessibilityLabel={i18n.t("cryptoPricesTable.price")}
           placeholderTextColor={isDark ? "#ccc" : "#888"}
-          value={String(price)}
-          onChangeText={setPrice}
+          value={displayDecimalInput(price)}
+          onChangeText={(value) => setPrice(formatDecimalInput(value))}
         />
 
         <TouchableOpacity
@@ -341,12 +371,16 @@ const TradePage = ({ crypto, onBack }) => {
           style={styles.datePickerButton}
         >
           <Text style={styles.datePickerText}>
-            {transactionDate.toDateString()}
+            {new Intl.DateTimeFormat(activeLocale(), {
+              dateStyle: "medium",
+            }).format(transactionDate)}
           </Text>
         </TouchableOpacity>
 
         {showDatePicker && (
           <DateTimePicker
+            locale={activeLocale()}
+            accessibilityLabel={i18n.t("tradePage.datePicker")}
             value={transactionDate}
             mode={Platform.OS === "ios" ? "datetime" : "date"}
             display="default"
@@ -357,7 +391,12 @@ const TradePage = ({ crypto, onBack }) => {
           />
         )}
 
-        <Text style={styles.totalText}>Gross total (USDT): {grossTotal}</Text>
+        <Text style={styles.totalText}>
+          {i18n.t("tradePage.grossTotalUsdt")}{" "}
+          {Number.isFinite(Number(grossTotal))
+            ? formatAmount(Number(grossTotal))
+            : i18n.t("marketMovers.unavailable")}
+        </Text>
 
         <TouchableOpacity
           onPress={handleTrade}
@@ -365,7 +404,9 @@ const TradePage = ({ crypto, onBack }) => {
           style={styles.tradeButton}
         >
           <Text style={styles.tradeButtonText}>
-            {saving ? "Saving..." : "Record simulated trade"}
+            {saving
+              ? i18n.t("tradePage.saving")
+              : i18n.t("tradePage.recordSimulatedTrade")}
           </Text>
         </TouchableOpacity>
       </View>

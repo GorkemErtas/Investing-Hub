@@ -1,3 +1,5 @@
+import { i18n } from "../services/i18n";
+import { useTranslation } from "react-i18next";
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -10,139 +12,142 @@ import { useTheme } from "../context/ThemeContext";
 
 const allQuestions = [
   {
-    question: "What is the native cryptocurrency of Ethereum?",
+    question: "quizSection.whatIsTheNativeCryptocurrencyOfEthereum",
     options: ["Bitcoin", "Ether", "Solana", "Cardano"],
     correct: 1,
   },
   {
-    question: "Which consensus algorithm does Bitcoin use?",
+    question: "quizSection.whichConsensusAlgorithmDoesBitcoinUse",
     options: [
-      "Proof of Stake",
-      "Proof of Work",
-      "Delegated Proof of Stake",
-      "Proof of Authority",
+      "quizSection.proofOfStake",
+      "quizSection.proofOfWork",
+      "quizSection.delegatedProofOfStake",
+      "quizSection.proofOfAuthority",
     ],
     correct: 1,
   },
   {
-    question: "Which cryptocurrency is known as 'digital gold'?",
+    question: "quizSection.whichCryptocurrencyIsKnownAsDigitalGold",
     options: ["Ethereum", "Ripple", "Bitcoin", "Litecoin"],
     correct: 2,
   },
   {
-    question: "Which blockchain platform introduced smart contracts?",
+    question: "quizSection.whichBlockchainPlatformIntroducedSmartContracts",
     options: ["Bitcoin", "Ethereum", "Polkadot", "Solana"],
     correct: 1,
   },
   {
-    question: "What does DApp stand for?",
+    question: "quizSection.whatDoesDappStandFor",
     options: [
-      "Decentralized Application",
-      "Digital Application",
-      "Data Application",
-      "Distributed Application",
+      "quizSection.decentralizedApplication",
+      "quizSection.digitalApplication",
+      "quizSection.dataApplication",
+      "quizSection.distributedApplication",
     ],
     correct: 0,
   },
   {
-    question: "Which blockchain uses the Proof of Stake algorithm?",
+    question: "quizSection.whichBlockchainUsesTheProofOfStake",
     options: ["Bitcoin", "Ethereum", "Cardano", "Polkadot"],
     correct: 2,
   },
   {
-    question: "Who is the founder of Ethereum?",
+    question: "quizSection.whoIsTheFounderOfEthereum",
     options: [
-      "Vitalik Buterin",
-      "Satoshi Nakamoto",
-      "Charles Hoskinson",
-      "Gavin Wood",
+      "quizSection.vitalikButerin",
+      "quizSection.satoshiNakamoto",
+      "quizSection.charlesHoskinson",
+      "quizSection.gavinWood",
     ],
     correct: 0,
   },
   {
-    question:
-      "Which cryptocurrency was the first to implement smart contracts?",
+    question: "quizSection.whichCryptocurrencyWasTheFirstToImplement",
     options: ["Bitcoin", "Ethereum", "Ripple", "Litecoin"],
     correct: 1,
   },
   {
-    question: "Which platform is known for decentralized finance (DeFi)?",
+    question: "quizSection.whichPlatformIsKnownForDecentralizedFinance",
     options: ["Ethereum", "Bitcoin", "Solana", "Polkadot"],
     correct: 0,
   },
   {
-    question: "Which coin uses the symbol 'BTC'?",
+    question: "quizSection.whichCoinUsesTheSymbolBtc",
     options: ["Bitcoin", "Ethereum", "Cardano", "Ripple"],
     correct: 0,
   },
   {
-    question: "What is the maximum supply of Bitcoin?",
-    options: ["21 million", "50 million", "100 million", "1 billion"],
+    question: "quizSection.whatIsTheMaximumSupplyOfBitcoin",
+    options: [
+      "quizSection.21Million",
+      "quizSection.50Million",
+      "quizSection.100Million",
+      "quizSection.1Billion",
+    ],
     correct: 0,
   },
   {
-    question: "What is the primary use of Ethereum?",
+    question: "quizSection.whatIsThePrimaryUseOfEthereum",
     options: [
-      "Digital currency",
-      "Smart contracts",
-      "Privacy transactions",
-      "Decentralized storage",
+      "quizSection.digitalCurrency",
+      "quizSection.smartContracts",
+      "quizSection.privacyTransactions",
+      "quizSection.decentralizedStorage",
     ],
     correct: 1,
   },
   {
-    question: "Which cryptocurrency is known for being highly scalable?",
+    question: "quizSection.whichCryptocurrencyIsKnownForBeingHighly",
     options: ["Bitcoin", "Polkadot", "Ripple", "Litecoin"],
     correct: 1,
   },
   {
-    question: "Which cryptocurrency platform uses the 'GAS' token?",
+    question: "quizSection.whichCryptocurrencyPlatformUsesTheGasToken",
     options: ["Ethereum", "Polkadot", "Cardano", "Solana"],
     correct: 0,
   },
   {
-    question:
-      "Which blockchain platform is known for cross-chain compatibility?",
+    question: "quizSection.whichBlockchainPlatformIsKnownForCross",
     options: ["Polkadot", "Bitcoin", "Ethereum", "Litecoin"],
     correct: 0,
   },
   {
-    question: "Which cryptocurrency is considered a stablecoin?",
+    question: "quizSection.whichCryptocurrencyIsConsideredAStablecoin",
     options: ["Bitcoin", "Ethereum", "Tether", "Cardano"],
     correct: 2,
   },
   {
-    question: "What is the largest blockchain by market capitalization?",
+    question: "quizSection.whatIsTheLargestBlockchainByMarket",
     options: ["Ethereum", "Bitcoin", "Solana", "Cardano"],
     correct: 1,
   },
   {
-    question: "Which blockchain platform has the largest DeFi ecosystem?",
+    question: "quizSection.whichBlockchainPlatformHasTheLargestDefi",
     options: ["Ethereum", "Bitcoin", "Polkadot", "Cardano"],
     correct: 0,
   },
   {
-    question: "What is the purpose of a hard fork in a blockchain?",
+    question: "quizSection.whatIsThePurposeOfAHard",
     options: [
-      "Upgrade functionality",
-      "Increase the block size",
-      "Make a new cryptocurrency",
-      "Fix security issues",
+      "quizSection.upgradeFunctionality",
+      "quizSection.increaseTheBlockSize",
+      "quizSection.makeANewCryptocurrency",
+      "quizSection.fixSecurityIssues",
     ],
     correct: 2,
   },
   {
-    question: "Which blockchain uses 'Proof of Work' as its consensus?",
+    question: "quizSection.whichBlockchainUsesProofOfWorkAs",
     options: ["Bitcoin", "Ethereum", "Polkadot", "Cardano"],
     correct: 0,
   },
   {
-    question: "Which cryptocurrency is considered the first 'altcoin'?",
-    options: ["Ethereum", "Litecoin", "Bitcoin Cash", "Ripple"],
+    question: "quizSection.whichCryptocurrencyIsConsideredTheFirstAltcoin",
+    options: ["Ethereum", "Litecoin", "quizSection.bitcoinCash", "Ripple"],
     correct: 1,
   },
   {
-    question: "Which cryptocurrency introduced the concept of 'staking'?",
+    question: "quizSection.whichCryptocurrencyIntroducedTheConceptOfStaking",
     options: ["Ethereum", "Bitcoin", "Cardano", "Polkadot"],
     correct: 2,
   },
@@ -154,6 +159,7 @@ const getRandomQuestions = () => {
 };
 
 const Quiz = () => {
+  useTranslation();
   const [questions, setQuestions] = useState(getRandomQuestions());
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
@@ -189,25 +195,28 @@ const Quiz = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.header}>Crypto Quiz</Text>
+      <Text style={styles.header}>{i18n.t("quizSection.cryptoQuiz")}</Text>
 
       <View style={styles.quizContainer}>
         {isTestFinished ? (
           <View style={styles.resultContainer}>
-            <Text style={styles.resultText}>Test Completed</Text>
+            <Text style={styles.resultText}>
+              {i18n.t("quizSection.testCompleted")}
+            </Text>
             <Text style={styles.scoreText}>
-              Your Final Score: {score} / {questions.length}
+              {i18n.t("quizSection.score", { score, total: questions.length })}
             </Text>
           </View>
         ) : (
           <>
             <Text style={styles.question}>
-              {questions[currentQuestion].question}
+              {i18n.t(questions[currentQuestion].question)}
             </Text>
 
             {questions[currentQuestion].options.map((option, index) => (
               <TouchableOpacity
                 key={index}
+                accessibilityRole="button"
                 onPress={() => handleOptionClick(index)}
                 style={[
                   styles.optionButton,
@@ -219,16 +228,35 @@ const Quiz = () => {
                 ]}
                 disabled={isAnswered}
               >
-                <Text style={styles.optionText}>{option}</Text>
+                <Text
+                  style={[
+                    styles.optionText,
+                    {
+                      color:
+                        isAnswered &&
+                        (index === questions[currentQuestion].correct ||
+                          index === selectedOption)
+                          ? "#fff"
+                          : isDarkMode
+                            ? "#f8fafc"
+                            : "#172b3a",
+                    },
+                  ]}
+                >
+                  {option.startsWith("quizSection.") ? i18n.t(option) : option}
+                </Text>
               </TouchableOpacity>
             ))}
 
             {isAnswered && (
               <TouchableOpacity
                 onPress={handleNextQuestion}
+                accessibilityRole="button"
                 style={styles.nextButton}
               >
-                <Text style={styles.nextButtonText}>Next Question</Text>
+                <Text style={styles.nextButtonText}>
+                  {i18n.t("quizSection.nextQuestion")}
+                </Text>
               </TouchableOpacity>
             )}
           </>

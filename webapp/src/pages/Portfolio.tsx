@@ -1,3 +1,5 @@
+import { i18n, userError } from '../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Download, Pencil, Plus, Trash2, Wallet, X } from 'lucide-react';
 import { assets, type Symbol } from '@investing-hub/shared/contracts';
@@ -8,8 +10,9 @@ import {
   type Transaction,
 } from '@investing-hub/shared/portfolio';
 import { useMarkets } from '../lib/api';
-import { money, utc } from '../lib/format';
+import { money, utc, number } from '../lib/format';
 import { Coin, Notice, Stat, Status } from '../components/ui';
+import { decimalInput, decimalDisplay, localeValue } from '@investing-hub/shared/localization';
 
 interface Props {
   portfolios: PortfolioData[];
@@ -28,9 +31,13 @@ function TransactionDialog({
   onSave: (t: Transaction) => void;
   onClose: () => void;
 }) {
+  useTranslation();
+  const locale = localeValue(i18n.resolvedLanguage);
   const ref = useRef<HTMLDialogElement>(null);
   const [symbol, setSymbol] = useState<Symbol>(original?.symbol ?? 'BTCUSDT');
   const [price, setPrice] = useState(original?.price ?? '');
+  const [quantity, setQuantity] = useState(original?.quantity ?? '');
+  const [fee, setFee] = useState(original?.fee ?? '0');
   const [error, setError] = useState('');
   useEffect(() => {
     const dialog = ref.current!;
@@ -41,23 +48,26 @@ function TransactionDialog({
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     try {
+      if (!event.currentTarget.checkValidity()) throw new Error('common:errors.INVALID_REQUEST');
       const date = new Date(String(data.get('date')));
       if (!Number.isFinite(date.getTime()) || date.getTime() > Date.now())
-        throw new Error('Choose a valid date in the past or present.');
+        throw new Error('portfolio.chooseAValidDateInThePast');
       onSave({
         id: original?.id ?? crypto.randomUUID(),
         symbol,
         side: data.get('side') as 'buy' | 'sell',
-        quantity: String(data.get('quantity')),
+        quantity,
         price,
-        fee: String(data.get('fee')),
+        fee,
         timestamp: date.toISOString(),
       });
     } catch (e) {
       setError(
         e instanceof Error && !('issues' in e)
-          ? e.message
-          : 'Use positive quantities and prices with at most 8 decimals, and a nonnegative fee.',
+          ? i18n.exists(e.message)
+            ? userError(e)
+            : 'portfolio.invalidHistory'
+          : 'portfolio.usePositiveQuantitiesAndPricesWithAt',
       );
     }
   }
@@ -74,18 +84,24 @@ function TransactionDialog({
     >
       <div className="dialog-heading">
         <div>
-          <div className="eyebrow">PAPER TRADING ONLY</div>
-          <h2 id="transaction-title">{original ? 'Edit' : 'Add'} transaction</h2>
+          <div className="eyebrow">{i18n.t('portfolio.paperTradingOnly')}</div>
+          <h2 id="transaction-title">
+            {i18n.t(original ? 'portfolio.editForm' : 'portfolio.addForm')}
+          </h2>
         </div>
-        <button className="icon-button" aria-label="Close transaction form" onClick={onClose}>
+        <button
+          className="icon-button"
+          aria-label={i18n.t('portfolio.closeTransactionForm')}
+          onClick={onClose}
+        >
           <X size={20} />
         </button>
       </div>
-      <p className="muted">Record a simulated trade. No order is sent to an exchange.</p>
-      <form onSubmit={submit}>
+      <p className="muted">{i18n.t('portfolio.recordASimulatedTradeNoOrderIs')}</p>
+      <form onSubmit={submit} noValidate>
         <div className="form-grid">
           <label>
-            Asset
+            {i18n.t('marketTable.asset')}
             <select
               value={symbol}
               onChange={(e) => {
@@ -101,38 +117,45 @@ function TransactionDialog({
             </select>
           </label>
           <label>
-            Side
+            {i18n.t('portfolio.side')}
             <select name="side" defaultValue={original?.side ?? 'buy'}>
-              <option value="buy">Buy</option>
-              <option value="sell">Sell</option>
+              <option value="buy">{i18n.t('common:action.buy')}</option>
+              <option value="sell">{i18n.t('common:action.sell')}</option>
             </select>
           </label>
           <label>
-            Quantity
+            {i18n.t('portfolio.quantity')}
             <input
               name="quantity"
               inputMode="decimal"
-              defaultValue={original?.quantity}
-              placeholder="0.00"
+              value={decimalDisplay(quantity, locale)}
+              onChange={(e) => setQuantity(decimalInput(e.target.value, locale))}
+              placeholder={decimalDisplay('0.00', locale)}
               required
             />
           </label>
           <label>
-            Price in USDT
+            {i18n.t('portfolio.priceInUsdt')}
             <input
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
+              value={decimalDisplay(price, locale)}
+              onChange={(e) => setPrice(decimalInput(e.target.value, locale))}
               inputMode="decimal"
-              placeholder="0.00"
+              placeholder={decimalDisplay('0.00', locale)}
               required
             />
           </label>
           <label>
-            Fee in USDT
-            <input name="fee" inputMode="decimal" defaultValue={original?.fee ?? '0'} required />
+            {i18n.t('portfolio.feeInUsdt')}
+            <input
+              name="fee"
+              inputMode="decimal"
+              value={decimalDisplay(fee, locale)}
+              onChange={(e) => setFee(decimalInput(e.target.value, locale))}
+              required
+            />
           </label>
           <label>
-            Date & time (your local time)
+            {i18n.t('portfolio.dateTimeYourLocalTime')}
             <input type="datetime-local" name="date" defaultValue={localDate} required />
           </label>
         </div>
@@ -144,20 +167,21 @@ function TransactionDialog({
               setPrice(prices[symbol]!.toFixed(8).replace(/0+$/, '').replace(/\.$/, ''))
             }
           >
-            Use displayed market quote: {money(prices[symbol])} USDT
+            {i18n.t('portfolio.useDisplayedMarketQuote')}
+            {money(prices[symbol])} USDT
           </button>
         )}
         {error && (
           <p className="form-error" role="alert">
-            {error}
+            {i18n.t(error)}
           </p>
         )}
         <div className="dialog-actions">
           <button type="button" className="button secondary" onClick={onClose}>
-            Cancel
+            {i18n.t('common:action.cancel')}
           </button>
           <button className="button primary" type="submit">
-            Save simulated transaction
+            {i18n.t('portfolio.saveSimulatedTransaction')}
           </button>
         </div>
       </form>
@@ -165,6 +189,7 @@ function TransactionDialog({
   );
 }
 export function Portfolio({ portfolios, selected, onSelect, onSave }: Props) {
+  useTranslation();
   const p = portfolios[selected] ?? portfolios[0];
   const query = useMarkets();
   const prices = Object.fromEntries((query.data?.data ?? []).map((m) => [m.symbol, m.price]));
@@ -186,14 +211,14 @@ export function Portfolio({ portfolios, selected, onSelect, onSave }: Props) {
     };
     update(next);
     setEditing(null);
-    setMessage('Simulated transaction saved.');
+    setMessage('portfolio.simulatedTransactionSaved');
   }
   function removeTransaction(id: string) {
     try {
       update({ ...p, transactions: p.transactions.filter((t) => t.id !== id) });
-      setMessage('Transaction removed.');
+      setMessage('portfolio.transactionRemoved');
     } catch {
-      setMessage('This transaction supports a later sale. Edit or remove that sale first.');
+      setMessage('portfolio.thisTransactionSupportsALaterSaleEdit');
     }
   }
   function exportData() {
@@ -211,24 +236,22 @@ export function Portfolio({ portfolios, selected, onSelect, onSave }: Props) {
     <>
       <div className="page-heading">
         <div>
-          <div className="eyebrow">PRACTICE WITH PERSPECTIVE</div>
+          <div className="eyebrow">{i18n.t('portfolio.practiceWithPerspective')}</div>
           <h1>
-            Your portfolio<span className="heading-dot">.</span>
+            {i18n.t('portfolio.yourPortfolio')}
+            <span className="heading-dot">.</span>
           </h1>
-          <p>A space to learn. Simulated trades, real accounting.</p>
+          <p>{i18n.t('portfolio.aSpaceToLearnSimulatedTradesReal')}</p>
         </div>
         <button className="button primary" onClick={() => setEditing('new')}>
           <Plus size={17} />
-          Add transaction
+          {i18n.t('portfolio.addTransaction')}
         </button>
       </div>
-      <Notice>
-        Guest demo · Example trades are fictional. Stored only in this browser. No real orders, cash
-        account, or financial advice.
-      </Notice>
+      <Notice>{i18n.t('portfolio.guestDemoExampleTradesAreFictionalStored')}</Notice>
       <div className="portfolio-toolbar">
         <label>
-          <span className="sr-only">Active portfolio</span>
+          <span className="sr-only">{i18n.t('portfolio.activePortfolio')}</span>
           <select
             value={selected}
             onChange={(e) => {
@@ -250,25 +273,29 @@ export function Portfolio({ portfolios, selected, onSelect, onSave }: Props) {
           onClick={() => {
             onSave([
               ...portfolios,
-              { version: 1, name: `Demo portfolio ${portfolios.length + 1}`, transactions: [] },
+              {
+                version: 1,
+                name: i18n.t('portfolio.newName', { count: portfolios.length + 1 }),
+                transactions: [],
+              },
             ]);
             onSelect(portfolios.length);
           }}
         >
           {' '}
           <Plus size={15} />
-          New portfolio
+          {i18n.t('portfolio.newPortfolio')}
         </button>
         <button
           className="icon-button"
-          aria-label="Rename portfolio"
+          aria-label={i18n.t('portfolio.renamePortfolio')}
           onClick={() => setRename(!rename)}
         >
           <Pencil size={16} />
         </button>
         <button
           className="icon-button"
-          aria-label="Delete portfolio"
+          aria-label={i18n.t('portfolio.deletePortfolio')}
           disabled={portfolios.length <= 1}
           onClick={() => setConfirmDelete(!confirmDelete)}
         >
@@ -276,7 +303,7 @@ export function Portfolio({ portfolios, selected, onSelect, onSave }: Props) {
         </button>
         <button className="button secondary export-button" onClick={exportData}>
           <Download size={15} />
-          Export
+          {i18n.t('portfolio.export')}
         </button>
       </div>
       {rename && (
@@ -289,20 +316,20 @@ export function Portfolio({ portfolios, selected, onSelect, onSave }: Props) {
               update({ ...p, name: String(form.get('name')) });
               setRename(false);
             } catch {
-              setMessage('Choose a portfolio name between 1 and 60 characters.');
+              setMessage('portfolio.nameValidation');
             }
           }}
         >
           <label>
-            Portfolio name{' '}
+            {i18n.t('portfolio.portfolioName')}{' '}
             <input name="name" defaultValue={p.name} maxLength={60} minLength={1} required />
           </label>
-          <button className="button primary">Save name</button>
+          <button className="button primary">{i18n.t('portfolio.saveName')}</button>
         </form>
       )}
       {confirmDelete && (
         <div className="notice">
-          Delete “{p.name}” and its simulated transactions?
+          {i18n.t('portfolio.deleteConfirmation', { name: p.name })}
           <button
             className="button danger"
             onClick={() => {
@@ -311,68 +338,67 @@ export function Portfolio({ portfolios, selected, onSelect, onSave }: Props) {
               setConfirmDelete(false);
             }}
           >
-            Delete portfolio
+            {i18n.t('portfolio.deletePortfolio')}
           </button>
           <button className="text-button" onClick={() => setConfirmDelete(false)}>
-            Cancel
+            {i18n.t('common:action.cancel')}
           </button>
         </div>
       )}
       {message && (
         <p className="feedback" role="status">
-          {message}
+          {i18n.t(message)}
         </p>
       )}
       <div className="stats-grid">
         <Stat
-          label="Market value"
+          label={i18n.t('portfolio.marketValue')}
           value={money(ledger.marketValue)}
-          note="USDT · current remaining holdings"
+          note={i18n.t('portfolio.usdtCurrentRemainingHoldings')}
           icon={<Wallet size={17} />}
         />
         <Stat
-          label="Remaining cost basis"
+          label={i18n.t('portfolio.remainingCostBasis')}
           value={money(ledger.costBasis)}
-          note="USDT · includes purchase fees"
+          note={i18n.t('portfolio.usdtIncludesPurchaseFees')}
           icon={<Wallet size={17} />}
         />
         <Stat
-          label="Unrealized profit / loss"
+          label={i18n.t('portfolio.unrealizedProfitLoss')}
           value={money(ledger.unrealized)}
-          note="USDT · open positions"
+          note={i18n.t('portfolio.usdtOpenPositions')}
           icon={<Wallet size={17} />}
         />
         <Stat
-          label="Realized profit / loss"
+          label={i18n.t('portfolio.realizedProfitLoss')}
           value={money(ledger.realized)}
-          note="USDT · net of sale fees"
+          note={i18n.t('portfolio.usdtNetOfSaleFees')}
           icon={<Wallet size={17} />}
         />
       </div>
       {query.isError || query.data?.meta.stale ? (
-        <Notice>
-          Live quotes are unavailable or stale. Missing prices stay blank; saved transaction
-          accounting still works.
-        </Notice>
+        <Notice>{i18n.t('portfolio.liveQuotesAreUnavailableOrStaleMissing')}</Notice>
       ) : null}
       <div className="portfolio-grid">
         <section className="panel">
           <div className="panel-heading">
             <div>
-              <h2>Your holdings</h2>
-              <p>Weighted average cost basis · USDT</p>
+              <h2>{i18n.t('portfolio.yourHoldings')}</h2>
+              <p>{i18n.t('portfolio.weightedAverageCostBasisUsdt')}</p>
             </div>
-            <span className="pill">{holdings.length} assets</span>
+            <span className="pill">
+              {holdings.length} {i18n.t('portfolio.assets')}
+            </span>
           </div>
           <div className="table-scroll">
             <table>
               <thead>
                 <tr>
-                  <th>Asset</th>
-                  <th>Quantity</th>
-                  <th>Avg. cost</th>
-                  <th>Market value</th>
-                  <th>Unrealized P/L</th>
+                  <th>{i18n.t('marketTable.asset')}</th>
+                  <th>{i18n.t('portfolio.quantity')}</th>
+                  <th>{i18n.t('portfolio.avgCost')}</th>
+                  <th>{i18n.t('portfolio.marketValue')}</th>
+                  <th>{i18n.t('portfolio.unrealizedPL')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -384,7 +410,7 @@ export function Portfolio({ portfolios, selected, onSelect, onSave }: Props) {
                         <strong>{h.symbol.replace('USDT', '')}</strong>
                       </span>
                     </td>
-                    <td>{h.quantity.toLocaleString('en-US', { maximumFractionDigits: 8 })}</td>
+                    <td>{number(h.quantity, { maximumFractionDigits: 8 })}</td>
                     <td>{money(h.averagePrice)}</td>
                     <td>{money(h.marketValue)}</td>
                     <td
@@ -405,8 +431,8 @@ export function Portfolio({ portfolios, selected, onSelect, onSave }: Props) {
             {!holdings.length && (
               <div className="empty-state">
                 <Wallet size={28} />
-                <strong>No open positions</strong>
-                <p>Add a simulated buy to start exploring.</p>
+                <strong>{i18n.t('portfolio.noOpenPositions')}</strong>
+                <p>{i18n.t('portfolio.addASimulatedBuyToStartExploring')}</p>
               </div>
             )}
           </div>
@@ -417,8 +443,8 @@ export function Portfolio({ portfolios, selected, onSelect, onSave }: Props) {
         <section className="panel allocation">
           <div className="panel-heading">
             <div>
-              <h2>Asset allocation</h2>
-              <p>By current market value</p>
+              <h2>{i18n.t('portfolio.assetAllocation')}</h2>
+              <p>{i18n.t('portfolio.byCurrentMarketValue')}</p>
             </div>
           </div>
           {ledger.marketValue !== null && ledger.marketValue > 0 ? (
@@ -438,13 +464,18 @@ export function Portfolio({ portfolios, selected, onSelect, onSave }: Props) {
                 <div className="allocation-row" key={h.symbol}>
                   <Coin symbol={h.symbol} small />
                   <span>{h.symbol.replace('USDT', '')}</span>
-                  <strong>{((h.marketValue! / ledger.marketValue!) * 100).toFixed(1)}%</strong>
+                  <strong>
+                    {number(h.marketValue! / ledger.marketValue!, {
+                      style: 'percent',
+                      maximumFractionDigits: 1,
+                    })}
+                  </strong>
                 </div>
               ))}
             </>
           ) : (
             <div className="empty-state">
-              <p>Allocation needs open holdings and available quotes.</p>
+              <p>{i18n.t('portfolio.allocationNeedsOpenHoldingsAndAvailableQuotes')}</p>
             </div>
           )}
         </section>
@@ -452,23 +483,25 @@ export function Portfolio({ portfolios, selected, onSelect, onSave }: Props) {
       <section className="panel">
         <div className="panel-heading">
           <div>
-            <h2>Transaction history</h2>
-            <p>Simulated transactions · chronological accounting · timestamps in UTC</p>
+            <h2>{i18n.t('portfolio.transactionHistory')}</h2>
+            <p>{i18n.t('portfolio.simulatedTransactionsChronologicalAccountingTimestampsInUtc')}</p>
           </div>
-          <span className="pill">{p.transactions.length} transactions</span>
+          <span className="pill">
+            {p.transactions.length} {i18n.t('portfolio.transactions')}
+          </span>
         </div>
         <div className="table-scroll">
           <table>
             <thead>
               <tr>
-                <th>Date (UTC)</th>
-                <th>Asset</th>
-                <th>Side</th>
-                <th>Quantity</th>
-                <th>Price (USDT)</th>
-                <th>Fee</th>
-                <th>Gross total</th>
-                <th>Actions</th>
+                <th>{i18n.t('portfolio.dateUtc')}</th>
+                <th>{i18n.t('marketTable.asset')}</th>
+                <th>{i18n.t('portfolio.side')}</th>
+                <th>{i18n.t('portfolio.quantity')}</th>
+                <th>{i18n.t('portfolio.priceUsdt')}</th>
+                <th>{i18n.t('portfolio.fee')}</th>
+                <th>{i18n.t('portfolio.grossTotal')}</th>
+                <th>{i18n.t('portfolio.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -477,7 +510,9 @@ export function Portfolio({ portfolios, selected, onSelect, onSave }: Props) {
                   <td>{utc(t.timestamp)}</td>
                   <td>{t.symbol.replace('USDT', '')}</td>
                   <td>
-                    <span className={`side-badge ${t.side}`}>{t.side}</span>
+                    <span className={`side-badge ${t.side}`}>
+                      {i18n.t('common:action.' + t.side)}
+                    </span>
                   </td>
                   <td>{t.quantity}</td>
                   <td>{money(Number(t.price))}</td>
@@ -487,14 +522,22 @@ export function Portfolio({ portfolios, selected, onSelect, onSave }: Props) {
                     <div className="row-actions">
                       <button
                         className="icon-button"
-                        aria-label={`Edit ${t.side} ${t.symbol} on ${utc(t.timestamp)}`}
+                        aria-label={i18n.t('portfolio.editTransaction', {
+                          side: i18n.t('common:action.' + t.side),
+                          symbol: t.symbol,
+                          date: utc(t.timestamp),
+                        })}
                         onClick={() => setEditing(t)}
                       >
                         <Pencil size={14} />
                       </button>
                       <button
                         className="icon-button"
-                        aria-label={`Remove ${t.side} ${t.symbol} on ${utc(t.timestamp)}`}
+                        aria-label={i18n.t('portfolio.removeTransaction', {
+                          side: i18n.t('common:action.' + t.side),
+                          symbol: t.symbol,
+                          date: utc(t.timestamp),
+                        })}
                         onClick={() => removeTransaction(t.id)}
                       >
                         <Trash2 size={14} />
@@ -507,7 +550,7 @@ export function Portfolio({ portfolios, selected, onSelect, onSave }: Props) {
           </table>
           {!p.transactions.length && (
             <div className="empty-state">
-              <p>Your simulated transaction history will appear here.</p>
+              <p>{i18n.t('portfolio.yourSimulatedTransactionHistoryWillAppearHere')}</p>
             </div>
           )}
         </div>
