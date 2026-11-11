@@ -1,0 +1,41 @@
+name: Verify pull request
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [feat/analytics-lab]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm ci --prefix mobileapp
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run build
+      - run: npm run check:mobile
+      - run: npm run test:mobile
+      - run: npm --prefix mobileapp run lint
+  python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install -r ml/requirements.txt
+      - run: python -m unittest discover -s ml -p 'test_*.py'
