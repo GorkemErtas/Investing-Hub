@@ -25,7 +25,7 @@ Run EAS commands **from mobileapp**; keep the entire monorepo in the upload cont
 
 ## Functionality and limits
 
-Markets, search/favorites, daily/weekly/monthly movers, line/candle charts, Fibonacci analysis, themes, Learning Hub and account/portfolio CRUD remain. Prices are USDT; fixed fiat conversions and synthetic exchange ranks are removed. Charts show actual OHLCV in UTC, with stale/error/empty states. Numeric predictions and generated news are explicitly unavailable. Financial accounting uses the same Decimal replay ledger as web/server; missing quotes remain unavailable. Unsupported historical portfolio symbols/precision require operator review and are never silently converted/deleted.
+Markets, search/favorites, daily/weekly/monthly movers, line/candle charts, Fibonacci analysis, themes, Learning Hub and account/portfolio CRUD remain. Prices are USDT; fixed fiat conversions and synthetic exchange ranks are removed. Charts show actual OHLCV in UTC, with stale/error/empty states. Experimental numerical forecasts are displayed when published; generated news is unavailable. Financial accounting uses the same Decimal replay ledger as web/server; missing quotes remain unavailable. Unsupported historical portfolio symbols/precision require operator review and are never silently converted/deleted.
 
 Public data is deduplicated; polling pauses on background/hidden tabs and screens ignore late responses. Eight current pairs are supported. Legacy quotes/trades for MATIC, DOT, SHIB, TRX, LTC, AVAX, UNI, ATOM, ETC, XLM, BCH, APT, APE, FIL, NEAR, QNT, AAVE, AXS, SAND, VET, EGLD and EOS are explicitly blocked outside the tested market registry; the legacy list included retired pairs and is not blindly restored. Existing records remain in Mongo and require symbol/precision review, with no automatic deletion or reassignment. New price alerts require enabled server delivery. Unsupported historical favorites remain stored, but their quotes/alerts are unavailable. Transaction edit/delete API capabilities are retained even though the original mobile UI did not expose them.
 
@@ -38,3 +38,7 @@ From mobileapp with a valid production URL: `npx expo export --platform android 
 ## Local numerical predictions
 
 The existing prediction client now accepts `experimental` numerical forecasts from `/api/predictions/:symbol`, with the model identity and target UTC timestamp. The detail view displays the unchanged USDT forecast and an experimental label; unavailable or expired forecasts never become placeholder prices. Training and inference remain offline Python operations. There is no generative-AI or research-review request. Existing authentication, settings, portfolio and notification contracts are unchanged.
+
+## Language preferences
+
+Turkish is the default, including on English devices. The language control above the screens is available to guests and while viewing Settings. English switches immediately and persists through the existing AsyncStorage adapter without changing account settings or financial values. Dictionaries are in `locales/tr.json` and `locales/en.json`; shared messages and formatting helpers live in `shared/localization.ts`. See [localization boundaries](../docs/ARCHITECTURE.md#client-localization) for external videos, FCM payloads and OS dialogs that retain their original language.

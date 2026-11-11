@@ -46,11 +46,14 @@ Features are past-only, labels are purged at boundaries, and scalers fit trainin
 - Market dashboard, public Binance quotes, real OHLCV charts and technical levels.
 - Simulated portfolios, fees, history replay and existing browser storage.
 - Learning Hub, themes and responsive navigation.
+- Turkish-first web and mobile interfaces with instant optional English and saved language preferences.
 - Existing optional mobile account, portfolio and notification services. The shared `/api/predictions/:symbol` response retains familiar numeric/timestamp fields and adds experimental availability.
 
 `/predictions` is the single web prediction page. Old `/future-analysis` bookmarks redirect there; `/research` and all review APIs are removed. Existing mobile/market/account endpoints remain supported. No deployment or scheduled task is installed automatically.
 
 ## Verification
+
+Language controls are available to guests and signed-in users. New and existing users without a saved choice start in Turkish, regardless of browser/device language. See [client localization](docs/ARCHITECTURE.md#client-localization) for dictionaries, formatting and content limitations.
 
 See [final MVP verification](docs/MVP_VERIFICATION.md) for the actual results and operational limits.
 

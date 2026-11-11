@@ -2,6 +2,28 @@
 
 Work stayed on `feat/analytics-lab`. No real scheduled task was installed, no paid service called, no deployment performed and no main-branch merge made.
 
+## UI and localization verification — 2026-11-11
+
+Web and Expo now default to Turkish without browser/OS detection; guests can switch instantly to English. The dedicated language preference preserves other saved state. Application-owned screens, lesson/quiz content, validation/errors, chart labels, dialogs and accessibility text use i18next resources. Number/date formatting is presentation-only; localized decimal entry retains canonical decimal strings and the existing financial replay. Removed decorative web sidebar content and the unused mobile news panel, reduced mobile market-row decoration, improved quiz contrast, and shortened chart ticks for narrow screens. The candlestick teaching illustration now uses translated SVG labels.
+
+| Executed check | Result |
+| --- | --- |
+| `npm test` | **98 passed**: shared 46, backend 50, web 2 |
+| `npm run typecheck` | Passed shared/backend/web |
+| `npm run lint` | Passed, no web warnings |
+| `npm run build` | Passed shared/backend/web; Vite reports a non-blocking main-chunk size warning |
+| `npm run test:browser` | **12 passed**, including Turkish defaults on an English browser, immediate switching, persistence, errors/empty states, decimal entry, portfolio replay, prediction values/UTC targets and 390px layouts |
+| `npm run check:mobile` | Passed |
+| `npm run test:mobile` | **7 passed**, including preference isolation, storage failure, fallback, localized stable error codes and UTC formatting |
+| `npm --prefix mobileapp run lint` | Passed |
+| `npm --prefix mobileapp run test:browser` | **2 passed** after a fresh fixture-only Expo web export: market/chart/account/private-portfolio/logout regression plus Turkish/English persistence, quiz progress and error switching |
+| `npm --prefix mobileapp run build` | Android Hermes bundle export passed with a non-live API URL and Firebase disabled |
+| Visual review / diff | Turkish desktop/mobile and English narrow-screen screenshots inspected; `git diff --check` passed |
+
+Dictionary tests verify matching keys and interpolation variables in both languages. Backend/ML source and API contracts were not changed; no model training, selection, forecasting or scheduler commands were executed for this UI task. During the resumed verification, the original SQLite SHA-256 remained `aa3d54c9b3f8c86e057dcd12333c95e27012d37884a442c9265770b18a40d417`. Environment files, credentials and generated exports/screenshots remain untracked.
+
+Native Gradle compilation, iOS/device behavior and live FCM delivery were not exercised. External video/audio, existing server-rendered FCM bodies/background titles and OS-owned permission/date-picker text retain their source/system language; see [localization boundaries](ARCHITECTURE.md#client-localization). No paid request, deployment or main merge was performed. The earlier sections below describe the prior ML-only MVP baseline and its separate real-data verification.
+
 ## Changes
 
 - Removed the analytical UI/page/plot/styles/hooks and `/analytics` route; the navigation now has Overview, Portfolio, Price Predictions and Learning Hub.
