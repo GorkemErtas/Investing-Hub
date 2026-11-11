@@ -5,10 +5,10 @@ import json
 import logging
 import os
 import sqlite3
-from argparse import Namespace
 from contextlib import nullcontext
 from pathlib import Path
 from common import ROOT, SYMBOLS, day, load_config, utc_ms, latest_open
+from daily import daily_status, run_daily
 from job_lock import job_lock
 from forecast import generate, reconcile
 from ingestion import import_legacy, sync
@@ -36,7 +36,7 @@ def parser():
     return result
 
 
-def inspect_status(store, symbols, config, now):
+def inspect_status(store, symbols, now):
     datasets=[]
     for symbol in symbols:
         try:
@@ -54,7 +54,7 @@ def inspect_status(store, symbols, config, now):
     return {'as_of':now,'datasets':datasets,'models':models}
 
 
-def run(args, store, config, now, provider=None):
+def run(args, store, config, now, provider=None, on_retry=None):
     symbols=[args.symbol] if args.symbol else config['symbols']
     if args.command=='backup':
         if args.output.exists() or args.output.resolve()==args.db.resolve():
@@ -65,10 +65,10 @@ def run(args, store, config, now, provider=None):
         finally: target.close()
         return {'backup':str(args.output.resolve())}
     if args.command in ('status','evaluate'):
-        return inspect_status(store,symbols,config,now)
+        return inspect_status(store,symbols,now)
     results=[]
     if args.command=='sync':
-        provider=provider or Binance()
+        provider=provider or Binance(on_retry=on_retry)
         for symbol in symbols:
             if not store.dataset(symbol): import_legacy(store,args.legacy_dir,symbol,now)
             result=sync(store,provider,symbol,day(args.start or config['start_date']),now,config['max_absolute_daily_return'])
@@ -96,32 +96,18 @@ def main(argv=None):
     store=None
     try:
         if args.command=='daily-status':
-            from daily import daily_status
             result=daily_status(args.log_directory or args.db.parent/'logs'/'daily')
+        elif args.command=='daily':
+            result=run_daily(args,run,clock=utc_ms)
         else:
-            if not args.db.exists() and args.command not in ('sync','daily'):
+            if not args.db.exists() and args.command!='sync':
                 raise ValueError('Existing database required; sync creates the initial dataset')
-            if args.command=='daily':
-                from daily import run_daily
-                args.log_directory=args.log_directory or args.db.parent/'logs'/'daily'
-                config=None
-                def operation(command, current_store, now, on_retry):
-                    nonlocal config
-                    if config is None:
-                        config=load_config(args.config)
-                        if args.symbol or len(config['symbols']) != len(SYMBOLS) or set(config['symbols']) != set(SYMBOLS):
-                            raise ValueError('Daily execution requires all eight symbols')
-                    step=Namespace(**{**vars(args),'command':command,'require_complete':True,
-                                      'start':None,'legacy_dir':ROOT/'data'})
-                    return run(step,current_store,config,now,Binance(on_retry=on_retry))
-                result=run_daily(args,operation,clock=utc_ms)
-            else:
-                config=load_config(args.config)
-                reading=args.command in ('status','evaluate','backup')
-                if args.command=='sync': args.db.parent.mkdir(parents=True,exist_ok=True)
-                with nullcontext() if reading else job_lock(args.db):
-                    store=Store.readonly(args.db) if reading else Store(args.db)
-                    result=run(args,store,config,utc_ms())
+            config=load_config(args.config)
+            reading=args.command in ('status','evaluate','backup')
+            if args.command=='sync': args.db.parent.mkdir(parents=True,exist_ok=True)
+            with nullcontext() if reading else job_lock(args.db):
+                store=Store.readonly(args.db) if reading else Store(args.db)
+                result=run(args,store,config,utc_ms())
         print(json.dumps(result,indent=2,allow_nan=False))
         return 0
     except Exception as error:

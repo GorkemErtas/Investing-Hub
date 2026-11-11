@@ -1,3 +1,6 @@
+import { formatDecimalInput, displayDecimalInput } from "../services/format";
+import { i18n, userError } from "../services/i18n";
+import { useTranslation } from "react-i18next";
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -18,6 +21,7 @@ import { useTheme } from "../context/ThemeContext";
 const availableCoins = assets.map((asset) => asset.base);
 
 const SettingsScreen = ({ onBack }: { onBack: () => void }) => {
+  useTranslation();
   const { user } = useAuth();
   const { settings, save, warning } = useSettings();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
@@ -68,10 +72,10 @@ const SettingsScreen = ({ onBack }: { onBack: () => void }) => {
       onBack();
     } catch (error) {
       Alert.alert(
-        "Could not save settings",
+        i18n.t("settingsScreen.couldNotSaveSettings"),
         error instanceof Error
-          ? error.message
-          : "Check alert ranges and retry.",
+          ? i18n.t(userError(error))
+          : i18n.t("settingsScreen.checkAlertRangesAndRetry"),
       );
     }
   };
@@ -88,20 +92,28 @@ const SettingsScreen = ({ onBack }: { onBack: () => void }) => {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
-          <Text style={styles.backButtonText}>Back</Text>
+          <Text style={styles.backButtonText}>
+            {i18n.t("common:action.back")}
+          </Text>
         </TouchableOpacity>
 
-        <Text style={styles.title}>Select Your Favorite Coins</Text>
+        <Text style={styles.title}>
+          {i18n.t("settingsScreen.selectYourFavoriteCoins")}
+        </Text>
 
         <View style={styles.actionsRow}>
           <TouchableOpacity
             onPress={handleSelectAll}
             style={styles.selectButton}
           >
-            <Text style={styles.selectButtonText}>Select All</Text>
+            <Text style={styles.selectButtonText}>
+              {i18n.t("settingsScreen.selectAll")}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={handleClearAll} style={styles.clearButton}>
-            <Text style={styles.clearButtonText}>Clear All</Text>
+            <Text style={styles.clearButtonText}>
+              {i18n.t("settingsScreen.clearAll")}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -127,11 +139,14 @@ const SettingsScreen = ({ onBack }: { onBack: () => void }) => {
           ))}
         </View>
 
-        {warning ? <Text accessibilityRole="alert">{warning}</Text> : null}
+        {warning ? (
+          <Text accessibilityRole="alert">{i18n.t(warning)}</Text>
+        ) : null}
         {!notificationsEnabled ? (
           <Text>
-            Price alert delivery is unavailable. Your favorites and theme still
-            work.
+            {i18n.t(
+              "settingsScreen.priceAlertDeliveryIsUnavailableYourFavorites",
+            )}
           </Text>
         ) : null}
         {/* Price ranges are stored only when server delivery is enabled. */}
@@ -146,7 +161,7 @@ const SettingsScreen = ({ onBack }: { onBack: () => void }) => {
                 textAlign: "center",
               }}
             >
-              {coin} Price Alerts
+              {coin} {i18n.t("settingsScreen.priceAlerts")}
             </Text>
             <View
               style={{
@@ -157,12 +172,17 @@ const SettingsScreen = ({ onBack }: { onBack: () => void }) => {
             >
               <View style={{ flex: 1, marginRight: 8 }}>
                 <TextInput
-                  placeholder="Min Price (USDT)"
+                  placeholder={i18n.t("settingsScreen.minPriceUsdt")}
+                  accessibilityLabel={i18n.t("settingsScreen.minPriceUsdt")}
                   placeholderTextColor={isDark ? "#94a3b8" : "#9ca3af"}
                   keyboardType="numeric"
-                  value={priceAlerts[coin]?.min?.toString() || ""}
+                  value={displayDecimalInput(priceAlerts[coin]?.min ?? "")}
                   onChangeText={(val) =>
-                    updatePriceAlert(coin, "min", parseFloat(val) || 0)
+                    updatePriceAlert(
+                      coin,
+                      "min",
+                      parseFloat(formatDecimalInput(val)) || 0,
+                    )
                   }
                   style={{
                     backgroundColor: isDark ? "#1e293b" : "#e5e7eb",
@@ -174,12 +194,17 @@ const SettingsScreen = ({ onBack }: { onBack: () => void }) => {
               </View>
               <View style={{ flex: 1 }}>
                 <TextInput
-                  placeholder="Max Price (USDT)"
+                  placeholder={i18n.t("settingsScreen.maxPriceUsdt")}
+                  accessibilityLabel={i18n.t("settingsScreen.maxPriceUsdt")}
                   placeholderTextColor={isDark ? "#94a3b8" : "#9ca3af"}
                   keyboardType="numeric"
-                  value={priceAlerts[coin]?.max?.toString() || ""}
+                  value={displayDecimalInput(priceAlerts[coin]?.max ?? "")}
                   onChangeText={(val) =>
-                    updatePriceAlert(coin, "max", parseFloat(val) || 0)
+                    updatePriceAlert(
+                      coin,
+                      "max",
+                      parseFloat(formatDecimalInput(val)) || 0,
+                    )
                   }
                   style={{
                     backgroundColor: isDark ? "#1e293b" : "#e5e7eb",
@@ -194,7 +219,9 @@ const SettingsScreen = ({ onBack }: { onBack: () => void }) => {
         ))}
 
         <TouchableOpacity onPress={saveSettings} style={styles.saveButton}>
-          <Text style={styles.saveButtonText}>Save</Text>
+          <Text style={styles.saveButtonText}>
+            {i18n.t("common:action.save")}
+          </Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>

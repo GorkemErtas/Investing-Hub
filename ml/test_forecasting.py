@@ -8,16 +8,16 @@ from pathlib import Path
 from unittest.mock import patch
 import numpy as np
 from artifact import predict
-from common import ROOT, SYMBOLS, DAY_MS, canonical, digest
+from common import ROOT, SYMBOLS, DAY_MS, canonical
 from features import FEATURES, prepare
 from forecast import generate
 from lstm import LSTMRegressor
 from pipeline import main
-from publication import export_predictions, prediction_result
+from publication import prediction_result
 from store import Store
 from test_lifecycle import DatabaseTests, FixtureProvider, config, seed
 from test_pipeline import candles
-from train import ALGORITHMS, evaluation_plan, sequence_data, select_best, train_models, training_slice, candidates
+from train import ALGORITHMS, evaluation_plan, sequence_data, select_best, train_models, candidates
 
 
 class ForecastWorkflowTests(DatabaseTests):
@@ -212,7 +212,8 @@ class ChronologyAndLSTMTests(unittest.TestCase):
     def test_ridge_scaler_and_sequence_endpoints_use_training_history_only(self):
         data,_=prepare(candles(700));aligned,x=sequence_data(data,14)
         np.testing.assert_allclose(x[0,-1],aligned[FEATURES].iloc[0])
-        boundary=int(aligned.source_time.iloc[400]);training=training_slice(aligned,boundary,None,'expanding',boundary,180)
+        _,indices,evaluation=evaluation_plan(aligned,config())[0]
+        training=aligned.iloc[indices];boundary=int(aligned.source_time.iloc[evaluation[0]])
         model=candidates(42)['ridge'].fit(training[FEATURES],training.target)
         np.testing.assert_allclose(model.steps[0][1].mean_,training[FEATURES].mean())
         self.assertLess(training.target_time.max(),boundary)

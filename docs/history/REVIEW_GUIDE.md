@@ -1,3 +1,5 @@
+> Archived migration/verification record. Commands and branch statements below describe an earlier release. Current setup is in [README](../../README.md), [ML operations](../../ml/README.md) and [current verification](../MVP_VERIFICATION.md).
+
 # Review and suggested commits
 
 All work remains on the originally checked-out `main` branch. No file was staged, no commit was made, and no branch/history/configuration operation was performed. Commands below are suggestions for the owner to run after review, not commands executed by the agent. Review the complete working tree first; especially check retained Firebase client config, database compatibility, mobile market coverage and the unresolved verification/security limits.

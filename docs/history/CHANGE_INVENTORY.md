@@ -1,3 +1,5 @@
+> Archived migration/verification record. Commands and branch statements below describe an earlier release. Current setup is in [README](../../README.md), [ML operations](../../ml/README.md) and [current verification](../MVP_VERIFICATION.md).
+
 # Working-tree change inventory
 
 Generated with read-only Git inspection. All entries are unstaged. `D` means an original path was removed or relocated; `A` means a new/untracked destination; `M` means a tracked file changed. Directory moves appear as removed and added paths because no staging/index operation was performed. See REVIEW_GUIDE.md for move mappings and commit groups. Dependencies, generated bundles, virtual environments, build outputs and private env files are ignored.

@@ -1,3 +1,5 @@
+import { i18n, userError } from "../services/i18n";
+import { useTranslation } from "react-i18next";
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -16,6 +18,7 @@ import { api } from "../services/api";
 import { useTheme } from "../context/ThemeContext";
 
 const PortfolioCustomization = ({ portfolio, onBack }) => {
+  useTranslation();
   const [portfolioName, setPortfolioName] = useState(portfolio?.name || "");
   const [selectedAvatar, setSelectedAvatar] = useState(
     portfolio?.avatar || "boy",
@@ -38,7 +41,7 @@ const PortfolioCustomization = ({ portfolio, onBack }) => {
 
   const savePortfolio = async () => {
     if (!portfolioName.trim()) {
-      setMessage("Portfolio name is required.");
+      setMessage("portfolioCustomization.portfolioNameIsRequired");
       return;
     }
 
@@ -50,14 +53,22 @@ const PortfolioCustomization = ({ portfolio, onBack }) => {
       else await api.createPortfolio(metadata);
 
       const successMessage = portfolio
-        ? "Portfolio updated successfully!"
-        : "Portfolio created successfully!";
+        ? "portfolioCustomization.portfolioUpdatedSuccessfully"
+        : "portfolioCustomization.portfolioCreatedSuccessfully";
 
       setMessage(successMessage);
-      Alert.alert("Success", successMessage, [{ text: "OK", onPress: onBack }]);
+      Alert.alert(i18n.t("auth.successTitle"), i18n.t(successMessage), [
+        { text: i18n.t("portfolioCustomization.ok"), onPress: onBack },
+      ]);
     } catch (error) {
-      console.error("Error saving portfolio:", error);
-      setMessage(error.message || "An error occurred. Please try again.");
+      console.error(
+        i18n.t("portfolioCustomization.errorSavingPortfolio"),
+        error,
+      );
+      setMessage(
+        userError(error) ||
+          "portfolioCustomization.anErrorOccurredPleaseTryAgain",
+      );
     } finally {
       setLoading(false);
     }
@@ -65,11 +76,15 @@ const PortfolioCustomization = ({ portfolio, onBack }) => {
 
   const confirmDelete = () => {
     Alert.alert(
-      "Delete Portfolio",
-      "Are you sure you want to delete this portfolio?",
+      i18n.t("portfolioCustomization.deletePortfolio"),
+      i18n.t("portfolioCustomization.areYouSureYouWantToDelete"),
       [
-        { text: "Cancel", style: "cancel" },
-        { text: "Delete", style: "destructive", onPress: deletePortfolio },
+        { text: i18n.t("common:action.cancel"), style: "cancel" },
+        {
+          text: i18n.t("portfolioCustomization.delete"),
+          style: "destructive",
+          onPress: deletePortfolio,
+        },
       ],
     );
   };
@@ -81,12 +96,17 @@ const PortfolioCustomization = ({ portfolio, onBack }) => {
     try {
       await api.deletePortfolio(portfolio._id);
 
-      Alert.alert("Deleted", "Portfolio has been deleted.", [
-        { text: "OK", onPress: onBack },
-      ]);
+      Alert.alert(
+        i18n.t("portfolioCustomization.deletedTitle"),
+        i18n.t("portfolioCustomization.portfolioHasBeenDeleted"),
+        [{ text: i18n.t("portfolioCustomization.ok"), onPress: onBack }],
+      );
     } catch (err) {
-      console.error("Error deleting portfolio:", err);
-      setMessage("An error occurred while deleting.");
+      console.error(
+        i18n.t("portfolioCustomization.errorDeletingPortfolio"),
+        err,
+      );
+      setMessage("portfolioCustomization.anErrorOccurredWhileDeleting");
     } finally {
       setLoading(false);
     }
@@ -95,28 +115,44 @@ const PortfolioCustomization = ({ portfolio, onBack }) => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <TouchableOpacity onPress={onBack} style={styles.backButton}>
-        <Text style={styles.backButtonText}>Back</Text>
+        <Text style={styles.backButtonText}>
+          {i18n.t("common:action.back")}
+        </Text>
       </TouchableOpacity>
 
       <View style={styles.card}>
         <Text style={styles.title}>
-          {portfolio ? "Edit Portfolio" : "Create Portfolio"}
+          {portfolio
+            ? i18n.t("portfolioCustomization.editPortfolio")
+            : i18n.t("portfolioCustomization.createPortfolio")}
         </Text>
 
-        <Text style={styles.label}>Portfolio Name</Text>
+        <Text style={styles.label}>
+          {i18n.t("portfolioCustomization.portfolioName")}
+        </Text>
         <TextInput
           value={portfolioName}
           onChangeText={setPortfolioName}
           style={styles.input}
-          placeholder="Enter portfolio name"
+          placeholder={i18n.t("portfolioCustomization.enterPortfolioName")}
+          accessibilityLabel={i18n.t(
+            "portfolioCustomization.enterPortfolioName",
+          )}
           placeholderTextColor={isDarkMode ? "#94a3b8" : "#888"}
         />
 
-        <Text style={styles.label}>Select Avatar</Text>
+        <Text style={styles.label}>
+          {i18n.t("portfolioCustomization.selectAvatar")}
+        </Text>
         <View style={styles.avatarContainer}>
           {["boy", "girl"].map((type) => (
             <TouchableOpacity
               key={type}
+              accessibilityRole="button"
+              accessibilityLabel={i18n.t("portfolioCustomization.avatar", {
+                number: type === "boy" ? 1 : 2,
+              })}
+              accessibilityState={{ selected: selectedAvatar === type }}
               onPress={() => setSelectedAvatar(type)}
             >
               <Image
@@ -139,16 +175,20 @@ const PortfolioCustomization = ({ portfolio, onBack }) => {
             <ActivityIndicator color="#fff" />
           ) : (
             <Text style={styles.saveButtonText}>
-              {portfolio ? "Save Portfolio" : "Create Portfolio"}
+              {portfolio
+                ? i18n.t("portfolioCustomization.savePortfolio")
+                : i18n.t("portfolioCustomization.createPortfolio")}
             </Text>
           )}
         </TouchableOpacity>
 
-        {!!message && <Text style={styles.message}>{message}</Text>}
+        {!!message && <Text style={styles.message}>{i18n.t(message)}</Text>}
 
         {portfolio && (
           <TouchableOpacity onPress={confirmDelete} style={styles.deleteButton}>
-            <Text style={styles.deleteButtonText}>Delete Portfolio</Text>
+            <Text style={styles.deleteButtonText}>
+              {i18n.t("portfolioCustomization.deletePortfolio")}
+            </Text>
           </TouchableOpacity>
         )}
       </View>

@@ -71,9 +71,7 @@ export async function movers(timeframe: string, descending: boolean) {
       !previous ||
       last.openTime - previous.openTime !== periods * 86400000
     )
-      throw new Error(
-        "Not enough continuous completed candles for this period.",
-      );
+      throw new Error("api.notEnoughContinuousCompletedCandlesForThis");
     data.push({ ...row, change: (last.close / previous.close - 1) * 100 });
   }
   return {

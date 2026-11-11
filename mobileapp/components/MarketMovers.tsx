@@ -1,3 +1,6 @@
+import { formatUtc, formatPrice, formatPercent } from "../services/format";
+import { i18n } from "../services/i18n";
+import { useTranslation } from "react-i18next";
 import React, { useState, useCallback } from "react";
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import { Picker } from "@react-native-picker/picker";
@@ -5,66 +8,103 @@ import { useResource } from "../services/useResource";
 import { movers } from "../services/api";
 import { useTheme } from "../context/ThemeContext";
 
-const TopGainers = () => {
+export function MarketMovers({
+  direction,
+}: {
+  direction: "gainers" | "losers";
+}) {
+  useTranslation();
+  const gainers = direction === "gainers";
   const [timeframe, setTimeframe] = useState("daily");
-  const load = useCallback(() => movers(timeframe, true), [timeframe]);
+  const load = useCallback(
+    () => movers(timeframe, gainers),
+    [timeframe, gainers],
+  );
   const resource = useResource(load);
-  const gainersData = resource.data?.data ?? [];
+  const data = resource.data?.data ?? [];
   const error = resource.error,
     initialLoading = resource.loading,
     meta = resource.data?.meta;
   const { isDarkMode: isDark } = useTheme();
-  const styles = getStyles(isDark);
+  const styles = getStyles(isDark, gainers);
 
-  const gainers = gainersData.filter((coin) => coin.change > 0);
+  const rows = data.filter((coin) =>
+    gainers ? coin.change > 0 : coin.change < 0,
+  );
 
   return (
     <View style={styles.container}>
       <Text style={styles.header}>
-        Top {timeframe.charAt(0).toUpperCase() + timeframe.slice(1)} Gainers
+        {i18n.t(
+          gainers
+            ? "marketMovers.gainersHeading"
+            : "marketMovers.losersHeading",
+          {
+            period: i18n.t(
+              timeframe === "daily"
+                ? "cryptoPricesTable.daily"
+                : "marketMovers." + timeframe.toLowerCase(),
+            ),
+          },
+        )}
       </Text>
 
       <View style={styles.pickerWrapper}>
         <Picker
+          accessibilityLabel={i18n.t("marketMovers.period")}
           selectedValue={timeframe}
           onValueChange={(itemValue) => setTimeframe(itemValue)}
           style={styles.picker}
           dropdownIconColor={isDark ? "#fff" : "#333"}
         >
-          <Picker.Item label="Daily" value="daily" />
-          <Picker.Item label="Weekly" value="weekly" />
-          <Picker.Item label="Monthly" value="monthly" />
+          <Picker.Item
+            label={i18n.t("cryptoPricesTable.daily")}
+            value="daily"
+          />
+          <Picker.Item label={i18n.t("marketMovers.weekly")} value="weekly" />
+          <Picker.Item label={i18n.t("marketMovers.monthly")} value="monthly" />
         </Picker>
       </View>
 
-      {error ? <Text accessibilityRole="alert">{error}</Text> : null}
+      {error ? <Text accessibilityRole="alert">{i18n.t(error)}</Text> : null}
       {meta && (meta.stale || error) ? (
         <Text>
-          Stale quotes | Source {meta.sourceTime} | Fetched {meta.fetchedAt}
+          {i18n.t("marketMovers.staleQuotesSource")}
+          {formatUtc(meta.sourceTime)} {i18n.t("detailsScreen.fetched")}
+          {formatUtc(meta.fetchedAt)}
         </Text>
       ) : null}
       {initialLoading ? (
-        <ActivityIndicator size="large" color="#2563EB" />
-      ) : gainers.length === 0 ? (
-        <Text style={styles.emptyText}>No data available</Text>
+        gainers ? (
+          <ActivityIndicator size="large" color="#2563EB" />
+        ) : (
+          <Text style={styles.emptyText}>{i18n.t("marketMovers.loading")}</Text>
+        )
+      ) : rows.length === 0 ? (
+        <Text style={styles.emptyText}>
+          {i18n.t("marketMovers.noDataAvailable")}
+        </Text>
       ) : (
-        gainers.map((item, index) => (
+        rows.map((item, index) => (
           <View key={index} style={styles.card}>
             <Text style={styles.cell}>{item.symbol}</Text>
             <Text style={styles.cell}>
-              {item.price ? item.price.toLocaleString() : "Unavailable"} USDT
+              {item.price
+                ? formatPrice(item.price)
+                : i18n.t("marketMovers.unavailable")}{" "}
+              USDT
             </Text>
-            <Text style={[styles.cell, styles.positiveChange]}>
-              {item.change ? item.change.toFixed(2) : 0}%
+            <Text style={[styles.cell, styles.priceChange]}>
+              {formatPercent(item.change ?? 0)}
             </Text>
           </View>
         ))
       )}
     </View>
   );
-};
+}
 
-const getStyles = (isDark) =>
+const getStyles = (isDark: boolean, gainers: boolean) =>
   StyleSheet.create({
     container: {
       padding: 16,
@@ -77,8 +117,6 @@ const getStyles = (isDark) =>
       marginBottom: 12,
       color: isDark ? "#f1f5f9" : "#111",
       textAlign: "center",
-      borderBottomWidth: 1,
-      borderBottomColor: isDark ? "#334155" : "#ccc",
       paddingBottom: 6,
     },
     pickerWrapper: {
@@ -95,17 +133,11 @@ const getStyles = (isDark) =>
       paddingHorizontal: 8,
     },
     card: {
-      backgroundColor: isDark ? "#1e293b" : "#fff",
-      borderRadius: 10,
       padding: 12,
-      marginBottom: 10,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: isDark ? "#334155" : "#dce3eb",
       flexDirection: "row",
       justifyContent: "space-between",
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.1,
-      shadowRadius: 2,
-      elevation: 2,
     },
     cell: {
       fontSize: 16,
@@ -114,8 +146,8 @@ const getStyles = (isDark) =>
       flex: 1,
       textAlign: "center",
     },
-    positiveChange: {
-      color: "#16a34a",
+    priceChange: {
+      color: gainers ? "#16a34a" : "#DC2626",
     },
     emptyText: {
       fontSize: 16,
@@ -124,5 +156,3 @@ const getStyles = (isDark) =>
       marginTop: 10,
     },
   });
-
-export default TopGainers;

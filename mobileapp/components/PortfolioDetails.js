@@ -1,3 +1,11 @@
+import {
+  formatAmount,
+  formatPercent,
+  formatDay,
+  formatChartTick,
+} from "../services/format";
+import { i18n, userError } from "../services/i18n";
+import { useTranslation } from "react-i18next";
 // ...diğer importlar...
 import React, { useState, useEffect } from "react";
 import {
@@ -6,7 +14,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
-  Image,
   FlatList,
   Dimensions,
 } from "react-native";
@@ -17,6 +24,7 @@ import { assets } from "@investing-hub/shared/contracts";
 import { useTheme } from "../context/ThemeContext";
 
 const PortfolioDetails = ({ portfolioId, onBack }) => {
+  useTranslation();
   const [portfolio, setPortfolio] = useState(null);
   const [ledger, setLedger] = useState(null);
   const [stale, setStale] = useState(false);
@@ -73,7 +81,7 @@ const PortfolioDetails = ({ portfolioId, onBack }) => {
           })),
         );
       } catch (err) {
-        setError(err.message);
+        setError(userError(err));
       } finally {
         setIsLoading(false);
       }
@@ -87,13 +95,26 @@ const PortfolioDetails = ({ portfolioId, onBack }) => {
   const totalProfitLoss = ledger?.unrealized;
   const profitPercent =
     totalProfitLoss != null && totalInvested > 0
-      ? ((totalProfitLoss / totalInvested) * 100).toFixed(2)
-      : "Unavailable";
+      ? formatPercent((totalProfitLoss / totalInvested) * 100)
+      : i18n.t("marketMovers.unavailable");
   const format = (value) =>
-    value == null ? "Unavailable" : value.toLocaleString();
+    value == null ? i18n.t("marketMovers.unavailable") : formatAmount(value);
+  const distribution = holdings.filter(
+    (h) => h.currentValue != null && h.currentValue > 0,
+  );
+  const distributionTotal = distribution.reduce(
+    (sum, h) => sum + h.currentValue,
+    0,
+  );
 
   if (isLoading) return <ActivityIndicator size="large" color="#2563eb" />;
-  if (error) return <Text style={styles.errorText}>Error: {error}</Text>;
+  if (error)
+    return (
+      <Text style={styles.errorText}>
+        {i18n.t("fibonacciGraph.error")}
+        {i18n.t(error)}
+      </Text>
+    );
 
   return (
     <FlatList
@@ -102,25 +123,37 @@ const PortfolioDetails = ({ portfolioId, onBack }) => {
       ListHeaderComponent={
         <>
           <TouchableOpacity onPress={onBack} style={styles.backButton}>
-            <Text style={styles.backButtonText}>← Back</Text>
+            <Text style={styles.backButtonText}>
+              {i18n.t("detailsScreen.back")}
+            </Text>
           </TouchableOpacity>
 
           <View style={styles.card}>
-            <Text style={styles.title}>Portfolio Overview (USDT)</Text>
+            <Text style={styles.title}>
+              {i18n.t("portfolioDetails.portfolioOverviewUsdt")}
+            </Text>
             {stale ? (
               <Text>
-                Quotes are stale or unavailable. Missing valuations remain
-                unavailable.
+                {i18n.t(
+                  "portfolioDetails.quotesAreStaleOrUnavailableMissingValuations",
+                )}
               </Text>
             ) : null}
-            <Text>Realized P/L: {format(ledger.realized)} USDT</Text>
+            <Text>
+              {i18n.t("portfolioDetails.realizedPL")} {format(ledger.realized)}{" "}
+              USDT
+            </Text>
             <View style={styles.row}>
               <View style={styles.statBox}>
-                <Text style={styles.label}>Value</Text>
+                <Text style={styles.label}>
+                  {i18n.t("portfolioDetails.value")}
+                </Text>
                 <Text style={styles.value}>{format(totalValue)} USDT</Text>
               </View>
               <View style={styles.statBox}>
-                <Text style={styles.label}>Remaining cost basis</Text>
+                <Text style={styles.label}>
+                  {i18n.t("portfolioDetails.remainingCostBasis")}
+                </Text>
                 <Text style={styles.value}>{format(totalInvested)} USDT</Text>
               </View>
               <View style={styles.statBox}>
@@ -132,7 +165,9 @@ const PortfolioDetails = ({ portfolioId, onBack }) => {
                 >
                   {format(totalProfitLoss)} USDT
                 </Text>
-                <Text style={styles.label}>Unrealized P/L</Text>
+                <Text style={styles.label}>
+                  {i18n.t("portfolioDetails.unrealizedPL")}
+                </Text>
               </View>
               <View style={styles.statBox}>
                 <Text
@@ -141,20 +176,27 @@ const PortfolioDetails = ({ portfolioId, onBack }) => {
                     { color: totalProfitLoss >= 0 ? "green" : "red" },
                   ]}
                 >
-                  {profitPercent}%
+                  {profitPercent}
                 </Text>
-                <Text style={styles.label}>P/L %</Text>
+                <Text style={styles.label}>
+                  {i18n.t("portfolioDetails.pL")}
+                </Text>
               </View>
             </View>
           </View>
 
           <View style={styles.chartCard}>
             <Text style={styles.chartTitle}>
-              Remaining Cost Basis Over Time
+              {i18n.t("portfolioDetails.remainingCostBasisOverTime")}
             </Text>
             <LineChart
+              formatYLabel={(value) => formatAmount(Number(value))}
               data={{
-                labels: totalInvestedData.map((d) => d.date),
+                labels: totalInvestedData.map((d, i, rows) =>
+                  i % Math.ceil(rows.length / 3) === 0
+                    ? formatChartTick(d.date)
+                    : "",
+                ),
                 datasets: [
                   {
                     data: totalInvestedData.length
@@ -177,8 +219,11 @@ const PortfolioDetails = ({ portfolioId, onBack }) => {
           </View>
 
           <View style={styles.chartCard}>
-            <Text style={styles.chartTitle}>Holdings Distribution</Text>
+            <Text style={styles.chartTitle}>
+              {i18n.t("portfolioDetails.holdingsDistribution")}
+            </Text>
             <PieChart
+              hasLegend={false}
               data={holdings
                 .filter((h) => h.currentValue != null && h.currentValue > 0)
                 .map((h) => ({
@@ -201,39 +246,65 @@ const PortfolioDetails = ({ portfolioId, onBack }) => {
                 color: () => "#000",
               }}
             />
+            {distribution.map((h) => (
+              <Text
+                key={h.symbol}
+                style={{ color: isDarkMode ? "#f1f5f9" : "#172b3a" }}
+              >
+                {h.symbol} ·{" "}
+                {formatPercent((h.currentValue / distributionTotal) * 100)}
+              </Text>
+            ))}
           </View>
 
           <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Transaction History</Text>
+            <Text style={styles.sectionTitle}>
+              {i18n.t("portfolioDetails.transactionHistory")}
+            </Text>
             <View style={styles.tableHeader}>
-              <Text style={styles.tableCol}>Date</Text>
-              <Text style={styles.tableCol}>Action</Text>
-              <Text style={styles.tableCol}>Symbol</Text>
-              <Text style={styles.tableCol}>Qty</Text>
-              <Text style={styles.tableCol}>Price</Text>
-              <Text style={styles.tableCol}>Total</Text>
+              <Text style={styles.tableCol}>
+                {i18n.t("portfolioDetails.date")}
+              </Text>
+              <Text style={styles.tableCol}>
+                {i18n.t("cryptoPricesTable.action")}
+              </Text>
+              <Text style={styles.tableCol}>
+                {i18n.t("cryptoPricesTable.symbol")}
+              </Text>
+              <Text style={styles.tableCol}>
+                {i18n.t("portfolioDetails.qty")}
+              </Text>
+              <Text style={styles.tableCol}>
+                {i18n.t("cryptoPricesTable.price")}
+              </Text>
+              <Text style={styles.tableCol}>
+                {i18n.t("portfolioDetails.total")}
+              </Text>
             </View>
           </View>
         </>
       }
       renderItem={({ item }) => (
         <View style={styles.transactionRow}>
-          <Text style={styles.tableCol}>
-            {new Date(item.date).toLocaleDateString()}
-          </Text>
+          <Text style={styles.tableCol}>{formatDay(item.date)}</Text>
           <Text
             style={[
               styles.tableCol,
               { color: item.action === "buy" ? "green" : "red" },
             ]}
           >
-            {item.action.toUpperCase()}
+            {i18n.t("common:action." + item.action)}
           </Text>
           <Text style={styles.tableCol}>{item.symbol}</Text>
-          <Text style={styles.tableCol}>{item.quantity}</Text>
-          <Text style={styles.tableCol}>{item.price} USDT</Text>
           <Text style={styles.tableCol}>
-            {grossNotional(item.quantity, item.price)} USDT
+            {formatAmount(Number(item.quantity))}
+          </Text>
+          <Text style={styles.tableCol}>
+            {formatAmount(Number(item.price))} USDT
+          </Text>
+          <Text style={styles.tableCol}>
+            {formatAmount(Number(grossNotional(item.quantity, item.price)))}{" "}
+            USDT
           </Text>
         </View>
       )}

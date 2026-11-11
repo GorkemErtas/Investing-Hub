@@ -1,3 +1,5 @@
+import { i18n } from "../services/i18n";
+import { useTranslation } from "react-i18next";
 import React, { useState } from "react";
 import {
   View,
@@ -16,13 +18,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import WelcomeBanner from "../components/WelcomeBanner";
-import TrendingCoins from "../components/TrendingCoins";
-import TopExchanges from "../components/TopLosers";
+import { MarketMovers } from "../components/MarketMovers";
 import CryptoPricesTable from "../components/CryptoPricesTable";
-import RightSidebar from "../components/RightSidebar";
 import SettingsScreen from "../components/SettingsScreen";
 
 export default function HomeScreen() {
+  useTranslation();
   const { logout, user } = useAuth();
   const { isDarkMode, setDarkMode } = useTheme();
   const [menuVisible, setMenuVisible] = useState(false);
@@ -47,7 +48,7 @@ export default function HomeScreen() {
       />
 
       <TouchableOpacity
-        accessibilityLabel="Open settings menu"
+        accessibilityLabel={i18n.t("home.openSettingsMenu")}
         accessibilityRole="button"
         style={dynamicStyles.settingsIcon}
         onPress={() => setMenuVisible(true)}
@@ -59,20 +60,18 @@ export default function HomeScreen() {
         />
       </TouchableOpacity>
 
-      <View style={dynamicStyles.newsButtonWrapper}>
-        <RightSidebar />
-      </View>
-
       <ScrollView contentContainerStyle={dynamicStyles.scrollContainer}>
         <WelcomeBanner />
-        <Text style={dynamicStyles.heading}>Crypto Dashboard</Text>
+        <Text style={dynamicStyles.heading}>
+          {i18n.t("home.cryptoDashboard")}
+        </Text>
         <Text style={dynamicStyles.subheading}>
-          Follow the market, trade smart, grow your portfolio.
+          {i18n.t("home.followTheMarketTradeSmartGrowYour")}
         </Text>
 
         <View style={dynamicStyles.row}>
-          <TrendingCoins />
-          <TopExchanges />
+          <MarketMovers direction="gainers" />
+          <MarketMovers direction="losers" />
         </View>
 
         <CryptoPricesTable />
@@ -91,8 +90,11 @@ export default function HomeScreen() {
         >
           <View style={dynamicStyles.menuBox}>
             <View style={dynamicStyles.themeRow}>
-              <Text style={dynamicStyles.themeText}>Dark Mode</Text>
+              <Text style={dynamicStyles.themeText}>
+                {i18n.t("home.darkMode")}
+              </Text>
               <Switch
+                accessibilityLabel={i18n.t("home.darkMode")}
                 value={isDarkMode}
                 onValueChange={setDarkMode}
                 trackColor={{ false: "#ccc", true: "#4b5563" }}
@@ -107,7 +109,9 @@ export default function HomeScreen() {
               }}
               style={{ marginTop: 16 }}
             >
-              <Text style={dynamicStyles.settingsOption}>Settings</Text>
+              <Text style={dynamicStyles.settingsOption}>
+                {i18n.t("common:nav.settings")}
+              </Text>
             </TouchableOpacity>
 
             {user && (
@@ -115,7 +119,9 @@ export default function HomeScreen() {
                 onPress={handleLogout}
                 style={{ marginTop: 10 }}
               >
-                <Text style={dynamicStyles.logout}>Logout</Text>
+                <Text style={dynamicStyles.logout}>
+                  {i18n.t("home.logout")}
+                </Text>
               </TouchableOpacity>
             )}
           </View>
@@ -211,13 +217,6 @@ const getStyles = (isDarkMode) => {
       fontSize: 16,
       fontWeight: "bold",
       color: isDarkMode ? "#f1f5f9" : "#1f2937",
-    },
-    newsButtonWrapper: {
-      position: "absolute",
-      top: (RNStatusBar.currentHeight || 36) + 54,
-      right: 20,
-      zIndex: 10,
-      transform: [{ scale: 0.9 }],
     },
   });
 };

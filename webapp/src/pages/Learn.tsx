@@ -1,3 +1,5 @@
+import { i18n } from '../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import {
   ArrowRight,
@@ -7,68 +9,65 @@ import {
   ShieldCheck,
   Wallet,
 } from 'lucide-react';
-import candleGuide from '../assets/images/candlestick-chart-definition.png';
+import { CandleDiagram } from '../components/CandleDiagram';
 import { Notice } from '../components/ui';
 
 const lessons = [
   {
-    title: 'Read the candle, understand the range',
-    category: 'MARKET FOUNDATIONS',
+    title: 'learn.readTheCandleUnderstandTheRange',
+    category: 'learn.marketFoundations',
     icon: ChartCandlestick,
-    duration: '3 min read',
-    text: 'A candlestick summarizes an interval: open, high, low and close. Its body runs from open to close; the wicks show the extremes. Volume counts the base asset traded. A forming candle can still change. Compare completed candles over consistent intervals, and remember that a pattern is an observation, not a guarantee.',
-    detail:
-      'UTC keeps daily boundaries consistent. One calendar month (1M) is different from thirty days; a one-day candle is different from a rolling 24-hour ticker.',
+    duration: 'learn.3MinRead',
+    text: 'learn.aCandlestickSummarizesAnIntervalOpenHigh',
+    detail: 'learn.utcKeepsDailyBoundariesConsistentOneCalendar',
   },
   {
-    title: 'Know what your portfolio actually earned',
-    category: 'PORTFOLIO ESSENTIALS',
+    title: 'learn.knowWhatYourPortfolioActuallyEarned',
+    category: 'learn.portfolioEssentials',
     icon: Wallet,
-    duration: '4 min read',
-    text: 'Weighted average cost divides the remaining purchase cost, including buy fees, by the remaining units. A sale removes units at that average cost. Realized profit is sale proceeds minus sell fees and the cost of units sold. Unrealized profit compares the value of open holdings with their remaining cost.',
-    detail:
-      'Example: buy 2 units at 100 and 1 at 160. Cost is 360; average is 120. Sell 1 at 150: realized profit is 30 before fees, remaining cost is 240. Sale proceeds do not reduce average purchase cost.',
+    duration: 'learn.4MinRead',
+    text: 'learn.weightedAverageCostDividesTheRemainingPurchase',
+    detail: 'learn.exampleBuy2UnitsAt100And',
   },
   {
-    title: 'Treat a backtest as a question',
-    category: 'RESEARCH & RISK',
+    title: 'learn.treatABacktestAsAQuestion',
+    category: 'learn.researchRisk',
     icon: ShieldCheck,
-    duration: '3 min read',
-    text: 'A model must be tested on data it has never seen. Splitting randomly can leak the future into the past. Fit transformations on training data only, compare against a simple baseline and report weak results as honestly as strong ones. Historical accuracy does not establish future reliability.',
-    detail:
-      'Direction and price error answer different questions. A strategy also needs spread, fees, slippage and a feasible execution time. This demo publishes no trading strategy or reliable forecasting claim.',
+    duration: 'learn.3MinRead',
+    text: 'learn.aModelMustBeTestedOnData',
+    detail: 'learn.directionAndPriceErrorAnswerDifferentQuestions',
   },
 ];
 const questions = [
   {
-    question:
-      'You buy 2 units at 100 USDT and 1 at 160 USDT. What is your average cost before fees?',
-    options: ['120 USDT', '130 USDT', '150 USDT'],
+    question: 'learn.youBuy2UnitsAt100Usdt',
+    options: ['learn.120Usdt', 'learn.130Usdt', 'learn.150Usdt'],
     answer: 0,
-    why: 'Total cost is 360 USDT divided by 3 units: 120 USDT. Weight each purchase by quantity.',
+    why: 'learn.totalCostIs360UsdtDividedBy',
   },
   {
-    question: 'Which candle can still change?',
+    question: 'learn.whichCandleCanStillChange',
     options: [
-      'A candle that closed yesterday',
-      'The current interval’s forming candle',
-      'Every completed candle',
+      'learn.aCandleThatClosedYesterday',
+      'learn.theCurrentIntervalSFormingCandle',
+      'learn.everyCompletedCandle',
     ],
     answer: 1,
-    why: 'The forming candle continues to incorporate trades until its close time. Completed candles are used by the research pipeline.',
+    why: 'learn.theFormingCandleContinuesToIncorporateTrades',
   },
   {
-    question: 'What is the safest way to evaluate a one-day forecasting model?',
+    question: 'learn.whatIsTheSafestWayToEvaluate',
     options: [
-      'Shuffle all days randomly',
-      'Select the best test score repeatedly',
-      'Keep the final chronological test set untouched',
+      'learn.shuffleAllDaysRandomly',
+      'learn.selectTheBestTestScoreRepeatedly',
+      'learn.keepTheFinalChronologicalTestSetUntouched',
     ],
     answer: 2,
-    why: 'The final test estimates performance on unseen future periods. Choosing a model by test score contaminates that estimate.',
+    why: 'learn.theFinalTestEstimatesPerformanceOnUnseen',
   },
 ];
 export function Learn() {
+  useTranslation();
   const [lesson, setLesson] = useState(0);
   const [question, setQuestion] = useState(0);
   const [choice, setChoice] = useState<number | null>(null);
@@ -80,15 +79,16 @@ export function Learn() {
     <>
       <div className="page-heading">
         <div>
-          <div className="eyebrow">INVEST IN YOUR UNDERSTANDING</div>
+          <div className="eyebrow">{i18n.t('learn.investInYourUnderstanding')}</div>
           <h1>
-            The Learning Hub<span className="heading-dot">.</span>
+            {i18n.t('learn.theLearningHub')}
+            <span className="heading-dot">.</span>
           </h1>
-          <p>Build your foundations, one clear idea at a time.</p>
+          <p>{i18n.t('learn.buildYourFoundationsOneClearIdeaAt')}</p>
         </div>
         <span className="pill">
           <BookOpen size={15} />
-          Always learning
+          {i18n.t('learn.alwaysLearning')}
         </span>
       </div>
       <div className="lesson-grid">
@@ -102,10 +102,10 @@ export function Learn() {
             <span className="lesson-icon">
               <l.icon size={24} />
             </span>
-            <span className="eyebrow">{l.category}</span>
-            <h2>{l.title}</h2>
+            <span className="eyebrow">{i18n.t(l.category)}</span>
+            <h2>{i18n.t(l.title)}</h2>
             <span className="lesson-bottom">
-              {l.duration}
+              {i18n.t(l.duration)}
               <ArrowRight size={18} />
             </span>
           </button>
@@ -113,36 +113,28 @@ export function Learn() {
       </div>
       <div className="learn-layout">
         <article className="panel lesson-content">
-          <span className="eyebrow">{current.category}</span>
-          <h2>{current.title}</h2>
-          <p>{current.text}</p>
-          <div className="lesson-callout">{current.detail}</div>
+          <span className="eyebrow">{i18n.t(current.category)}</span>
+          <h2>{i18n.t(current.title)}</h2>
+          <p>{i18n.t(current.text)}</p>
+          <div className="lesson-callout">{i18n.t(current.detail)}</div>
           {lesson === 0 && (
             <figure>
-              <img
-                src={candleGuide}
-                alt="Candlestick diagram showing a candle’s body, open, close, high, and low"
-              />
+              <CandleDiagram />
               <figcaption>
-                Historical educational illustration retained from the original university project.
+                {i18n.t('learn.historicalEducationalIllustrationRetainedFromTheOriginal')}
               </figcaption>
             </figure>
           )}
-          <Notice>
-            Educational examples are illustrative. Crypto assets can lose value; technical patterns
-            do not guarantee an outcome.
-          </Notice>
+          <Notice>{i18n.t('learn.educationalExamplesAreIllustrativeCryptoAssetsCan')}</Notice>
         </article>
         <section className="panel quiz" aria-labelledby="quiz-title">
-          <div className="eyebrow">PUT IT INTO PRACTICE</div>
-          <h2 id="quiz-title">A quick knowledge check</h2>
+          <div className="eyebrow">{i18n.t('learn.putItIntoPractice')}</div>
+          <h2 id="quiz-title">{i18n.t('learn.aQuickKnowledgeCheck')}</h2>
           {finished ? (
             <div className="quiz-finished" role="status">
               <CheckCircle2 size={36} />
-              <h3>
-                {score} of {questions.length} correct
-              </h3>
-              <p>Keep asking good questions.</p>
+              <h3>{i18n.t('learn.score', { score, total: questions.length })}</h3>
+              <p>{i18n.t('learn.keepAskingGoodQuestions')}</p>
               <button
                 className="button primary"
                 onClick={() => {
@@ -152,7 +144,7 @@ export function Learn() {
                   setFinished(false);
                 }}
               >
-                Try again
+                {i18n.t('common:action.retry')}
               </button>
             </div>
           ) : (
@@ -161,9 +153,9 @@ export function Learn() {
                 <span style={{ width: `${((question + 1) / questions.length) * 100}%` }} />
               </div>
               <p className="muted">
-                Question {question + 1} of {questions.length}
+                {i18n.t('learn.progress', { current: question + 1, total: questions.length })}
               </p>
-              <h3>{q.question}</h3>
+              <h3>{i18n.t(q.question)}</h3>
               <div className="quiz-options">
                 {q.options.map((option, i) => (
                   <button
@@ -182,14 +174,18 @@ export function Learn() {
                     }}
                   >
                     <span>{String.fromCharCode(65 + i)}</span>
-                    {option}
+                    {i18n.t(option)}
                   </button>
                 ))}
               </div>
               {choice !== null && (
                 <div className="quiz-explanation" role="status">
-                  <strong>{choice === q.answer ? 'Correct.' : 'A useful thing to revisit.'}</strong>
-                  <p>{q.why}</p>
+                  <strong>
+                    {choice === q.answer
+                      ? i18n.t('learn.correctAnswer')
+                      : i18n.t('learn.aUsefulThingToRevisit')}
+                  </strong>
+                  <p>{i18n.t(q.why)}</p>
                   <button
                     className="text-button"
                     onClick={() => {
@@ -200,7 +196,9 @@ export function Learn() {
                       }
                     }}
                   >
-                    {question === questions.length - 1 ? 'See results' : 'Next question'}
+                    {question === questions.length - 1
+                      ? i18n.t('learn.seeResults')
+                      : i18n.t('learn.nextQuestion')}
                     <ArrowRight size={15} />
                   </button>
                 </div>

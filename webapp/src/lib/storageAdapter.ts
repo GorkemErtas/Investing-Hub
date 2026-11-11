@@ -14,8 +14,7 @@ export function readStored<T>(
   } catch {
     return {
       value: initial,
-      warning:
-        'Saved browser data could not be read. Original data has been left untouched; changes will replace it.',
+      warning: 'common:storage.read',
     };
   }
 }
@@ -32,8 +31,7 @@ export function writeStored<T>(
   } catch {
     return {
       value: valid,
-      warning:
-        'Browser storage is unavailable or full. Changes are kept only until this page closes.',
+      warning: 'common:storage.write',
     };
   }
 }

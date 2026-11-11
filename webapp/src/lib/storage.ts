@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { readStored, writeStored } from './storageAdapter';
+import { useTranslation } from 'react-i18next';
 
 const browserStorage = {
   getItem: (key: string) => localStorage.getItem(key),
@@ -7,6 +8,7 @@ const browserStorage = {
 };
 
 export function useStored<T>(key: string, initial: T, validate: (value: unknown) => T) {
+  const { t } = useTranslation();
   const [loaded] = useState(() => readStored(browserStorage, key, initial, validate));
   const [value, setValue] = useState(loaded.value);
   const [warning, setWarning] = useState(loaded.warning);
@@ -15,5 +17,5 @@ export function useStored<T>(key: string, initial: T, validate: (value: unknown)
     setWarning(saved.warning);
     setValue(saved.value);
   }
-  return [value, save, warning] as const;
+  return [value, save, warning ? t(warning) : ''] as const;
 }

@@ -1,3 +1,5 @@
+import { i18n } from "../services/i18n";
+import { useTranslation } from "react-i18next";
 import React from "react";
 import {
   View,
@@ -14,53 +16,58 @@ import { useTheme } from "../context/ThemeContext";
 const videos = [
   {
     id: 1,
-    title: "What is Cryptocurrency?",
+    title: "infoSection.whatIsCryptocurrency",
     url: "https://www.youtube.com/embed/SSo_EIwHSd4",
   },
   {
     id: 2,
-    title: "How Blockchain Works",
+    title: "videoSection.howBlockchainWorks",
     url: "https://www.youtube.com/embed/3xGLc-zz9cA",
   },
   {
     id: 3,
-    title: "Understanding Smart Contracts",
+    title: "videoSection.understandingSmartContracts",
     url: "https://www.youtube.com/embed/ZE2HxTmxfrI",
   },
   {
     id: 4,
-    title:
-      "Easy Crypto Technical Analysis Tutorial for Beginners (Step-by-Step)",
+    title: "videoSection.easyCryptoTechnicalAnalysisTutorialForBeginners",
     url: "https://www.youtube.com/embed/5ZGvuNCAlYk",
   },
   {
     id: 5,
-    title: "How To Read Candlestick Charts FAST (Beginner's Guide)",
+    title: "videoSection.howToReadCandlestickChartsFastBeginner",
     url: "https://www.youtube.com/embed/AOz1YPOKvEs",
   },
 ];
 
 const VideoSection = () => {
+  useTranslation();
   const { isDarkMode: isDark } = useTheme();
   const styles = getStyles(isDark);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Educational Videos</Text>
+      <Text style={styles.header}>
+        {i18n.t("videoSection.educationalVideos")}
+      </Text>
+      <Text style={{ color: isDark ? "#cbd5e1" : "#475569", marginBottom: 16 }}>
+        {i18n.t("videoSection.external")}
+      </Text>
 
       {videos.map((item) => (
         <View key={item.id} style={styles.videoContainer}>
-          <Text style={styles.videoTitle}>{item.title}</Text>
+          <Text style={styles.videoTitle}>{i18n.t(item.title)}</Text>
           {Platform.OS === "web" ? (
             <TouchableOpacity
               accessibilityRole="link"
               onPress={() => {
                 void Linking.openURL(
                   item.url.replace("/embed/", "/watch?v="),
-                ).catch(() => Alert.alert("Could not open video"));
+                ).catch(() => Alert.alert(i18n.t("videoSection.openError")));
               }}
             >
-              <Text>Watch on YouTube</Text>
+              <Text>{i18n.t("videoSection.watchOnYoutube")}</Text>
             </TouchableOpacity>
           ) : (
             <WebView

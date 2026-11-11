@@ -1,3 +1,4 @@
+import { userError } from "./i18n";
 import { useCallback, useState } from "react";
 import { AppState } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
@@ -27,7 +28,9 @@ export function useResource<T>(load: () => Promise<T>, interval = 60000) {
         } catch (failure) {
           if (active)
             setError(
-              failure instanceof Error ? failure.message : "Data unavailable.",
+              failure instanceof Error
+                ? userError(failure)
+                : "useResource.dataUnavailable",
             );
         } finally {
           busy = false;

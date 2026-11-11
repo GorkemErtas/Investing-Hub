@@ -5,6 +5,7 @@ node_modules/
 __pycache__/
 *.pyc
 coverage/
+.idea/caches/
 test-results/
 playwright-report/
 dist-android/

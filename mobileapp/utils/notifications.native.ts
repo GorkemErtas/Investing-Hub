@@ -1,3 +1,4 @@
+import { i18n } from "../services/i18n";
 import { PermissionsAndroid, Platform } from "react-native";
 import messaging from "@react-native-firebase/messaging";
 import * as Notifications from "expo-notifications";
@@ -16,7 +17,7 @@ export function setupForegroundNotificationHandler() {
   return messaging().onMessage(async (message) => {
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: message.notification?.title ?? "Price alert",
+        title: i18n.t("notifications.priceAlert"),
         body: message.notification?.body ?? "",
         sound: "default",
       },

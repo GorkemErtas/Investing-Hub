@@ -12,7 +12,7 @@ from sklearn.model_selection import TimeSeriesSplit
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from artifact import export_model, predict as numeric_predict
-from common import DAY_MS, ROOT, canonical, digest, latest_open
+from common import ROOT, canonical, digest, latest_open
 from features import FEATURES, FEATURE_VERSION, prepare
 from lstm import LSTMRegressor
 
@@ -37,29 +37,6 @@ def candidates(seed):
                  min_samples_leaf=20, learning_rate=0.03, random_state=seed))}
 
 
-def training_slice(data, evaluation_start, days, mode, anchor, minimum):
-    # Strict target-time purging handles gaps and generalized horizon boundaries.
-    result = data.loc[data.target_time < evaluation_start]
-    if days is not None:
-        lower = (evaluation_start if mode == 'rolling' else anchor) - days * DAY_MS
-        result = result.loc[result.source_time >= lower]
-    if len(result) < minimum:
-        raise ValueError('Insufficient observations in requested training window')
-    if result.target_time.max() >= evaluation_start:
-        raise ValueError('Overlapping training targets and evaluation features')
-    return result
-
-
-def evaluation_splits(data, config):
-    """Shared chronological origin plan for regression and research classifiers."""
-    splitter = TimeSeriesSplit(n_splits=config['walk_forward_splits'], gap=1,
-                              test_size=config['fold_days'] + 1)
-    splits = list(splitter.split(data))
-    anchor = int(data.iloc[splits[0][1][0]].source_time)
-    return splits, anchor
-
-
-
 def training_code_hash():
     names = ('train.py', 'lstm.py', 'features.py', 'artifact.py', 'common.py',
              'anomaly_reviews.py', 'reviews/historical_price_movements.json')
@@ -75,9 +52,10 @@ def sequence_data(data, lookback):
 def evaluation_plan(data, config):
     holdout_start = len(data)-config['holdout_days']
     selection = data.iloc[:holdout_start-1]
-    splits, _ = evaluation_splits(selection, config)
+    splitter = TimeSeriesSplit(n_splits=config['walk_forward_splits'], gap=1,
+                              test_size=config['fold_days'] + 1)
     plan = []
-    for _, indices in splits:
+    for _, indices in splitter.split(selection):
         evaluation = indices[:-1]
         training = np.flatnonzero(data.target_time.to_numpy() < data.source_time.iloc[evaluation[0]])
         plan.append(('selection', training, evaluation))
@@ -185,9 +163,3 @@ def select_best(store, symbol, config, now):
         'tolerance': config['selection_tolerance']}, now)
     return {'symbol': symbol, 'model_id': chosen['id'], 'algorithm': chosen['metadata']['algorithm'],
             'selection': chosen['metadata']['validation_metrics'], 'final_evaluation': chosen['metadata']['final_evaluation']['metrics']}
-
-
-if __name__ == '__main__':
-    import sys
-    from pipeline import main
-    sys.exit(main(['train', *sys.argv[1:]]))

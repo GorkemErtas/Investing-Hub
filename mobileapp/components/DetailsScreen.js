@@ -1,3 +1,12 @@
+import {
+  formatAmount,
+  formatPrice,
+  formatPercent,
+  formatUtc,
+  formatChartTick,
+} from "../services/format";
+import { i18n } from "../services/i18n";
+import { useTranslation } from "react-i18next";
 import React, { useCallback, useState } from "react";
 import {
   View,
@@ -7,7 +16,6 @@ import {
   ScrollView,
   Dimensions,
   ActivityIndicator,
-  Platform,
 } from "react-native";
 import { useResource } from "../services/useResource";
 import CandlestickSection from "./Candles";
@@ -17,14 +25,15 @@ import { chartRows } from "../services/api";
 import { useTheme } from "../context/ThemeContext";
 
 const timeframes = {
-  "15m": "15 minutes",
-  "1h": "Hour",
-  "1d": "Day",
-  "1w": "Week",
-  "1M": "Month",
+  "15m": "common:chart.minutes",
+  "1h": "common:chart.hour",
+  "1d": "common:chart.day",
+  "1w": "common:chart.week",
+  "1M": "common:chart.month",
 };
 
 const DetailsScreen = ({ crypto, onBack, onTrade }) => {
+  useTranslation();
   const [chartType, setChartType] = useState("line");
   const [selectedPoint, setSelectedPoint] = useState(null);
   const [timeframe, setTimeframe] = useState("1d");
@@ -44,8 +53,11 @@ const DetailsScreen = ({ crypto, onBack, onTrade }) => {
   const chartData = resource.data
     ? {
         labels: resource.data.line.map((point, i, rows) =>
-          i % Math.ceil(rows.length / 6) === 0
-            ? new Date(point.time).toISOString().slice(0, 16).replace("T", " ")
+          i % Math.ceil(rows.length / 3) === 0
+            ? formatChartTick(
+                point.time,
+                timeframe === "15m" || timeframe === "1h",
+              )
             : "",
         ),
         datasets: [{ data: resource.data.line.map((point) => point.price) }],
@@ -57,21 +69,33 @@ const DetailsScreen = ({ crypto, onBack, onTrade }) => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <TouchableOpacity onPress={onBack} style={styles.backButton}>
-        <Text style={styles.backButtonText}>← Back</Text>
+        <Text style={styles.backButtonText}>
+          {i18n.t("detailsScreen.back")}
+        </Text>
       </TouchableOpacity>
 
-      <Text style={styles.title}>{crypto.symbol} Details (USDT)</Text>
-      {chartError ? <Text accessibilityRole="alert">{chartError}</Text> : null}
+      <Text style={styles.title}>
+        {crypto.symbol} {i18n.t("detailsScreen.detailsUsdt")}
+      </Text>
+      {chartError ? (
+        <Text accessibilityRole="alert">{i18n.t(chartError)}</Text>
+      ) : null}
       {chartMeta ? (
         <Text>
-          {chartMeta.stale || chartError ? "Stale candles" : "Public OHLCV"} |
-          Source {chartMeta.sourceTime} | Fetched {chartMeta.fetchedAt} UTC
+          {chartMeta.stale || chartError
+            ? i18n.t("detailsScreen.staleCandles")
+            : i18n.t("detailsScreen.publicOhlcv")}{" "}
+          {i18n.t("detailsScreen.source")}
+          {formatUtc(chartMeta.sourceTime)} {i18n.t("detailsScreen.fetched")}
+          {formatUtc(chartMeta.fetchedAt)}
         </Text>
       ) : null}
 
       <View style={styles.chartContainer}>
         <Text style={styles.chartLabel}>
-          Price History ({timeframes[timeframe]}) | UTC
+          {i18n.t("detailsScreen.priceHistory")}
+          {i18n.t(timeframes[timeframe])}
+          {i18n.t("detailsScreen.utc")}
         </Text>
 
         <View style={styles.timeframeRow}>
@@ -90,7 +114,7 @@ const DetailsScreen = ({ crypto, onBack, onTrade }) => {
                   timeframe === key && styles.activeTimeframeText,
                 ]}
               >
-                {label}
+                {i18n.t(label)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -110,7 +134,7 @@ const DetailsScreen = ({ crypto, onBack, onTrade }) => {
                 chartType === "line" && styles.activeTimeframeText,
               ]}
             >
-              Line
+              {i18n.t("detailsScreen.line")}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -126,7 +150,7 @@ const DetailsScreen = ({ crypto, onBack, onTrade }) => {
                 chartType === "candlestick" && styles.activeTimeframeText,
               ]}
             >
-              Candlestick
+              {i18n.t("detailsScreen.candlestick")}
             </Text>
           </TouchableOpacity>
         </View>
@@ -134,10 +158,11 @@ const DetailsScreen = ({ crypto, onBack, onTrade }) => {
         {loadingChart ? (
           <ActivityIndicator size="large" color="#3b82f6" />
         ) : !chartData ? (
-          <Text>No chart data available.</Text>
+          <Text>{i18n.t("detailsScreen.noChartDataAvailable")}</Text>
         ) : chartType === "line" ? (
           <ScrollView horizontal>
             <LineChart
+              formatYLabel={(value) => formatAmount(Number(value))}
               data={{
                 labels: chartData.labels,
                 datasets: [{ data: chartData.datasets[0].data }],
@@ -150,7 +175,7 @@ const DetailsScreen = ({ crypto, onBack, onTrade }) => {
               onDataPointClick={({ value, index }) => {
                 setSelectedPoint({
                   value,
-                  label: chartData.labels[index],
+                  timestamp: resource.data.line[index].time,
                 });
               }}
               chartConfig={{
@@ -188,7 +213,7 @@ const DetailsScreen = ({ crypto, onBack, onTrade }) => {
                     fontWeight: "bold",
                   }}
                 >
-                  {selectedPoint.label}
+                  {formatUtc(selectedPoint.timestamp)}
                 </Text>
                 <Text
                   style={{
@@ -196,7 +221,7 @@ const DetailsScreen = ({ crypto, onBack, onTrade }) => {
                     fontSize: 16,
                   }}
                 >
-                  {parseFloat(selectedPoint.value).toFixed(2)} USDT
+                  {formatPrice(parseFloat(selectedPoint.value))} USDT
                 </Text>
               </View>
             )}
@@ -213,19 +238,30 @@ const DetailsScreen = ({ crypto, onBack, onTrade }) => {
       {/* Info Box */}
       <View style={styles.detailBox}>
         {[
-          ["Current Price", `$${crypto.price?.toLocaleString()}`],
-          ["24H Change", `${crypto.dailyChange?.toFixed(2)}%`],
-          ["High (24h)", `$${crypto.highPrice?.toLocaleString()}`],
-          ["Low (24h)", `$${crypto.lowPrice?.toLocaleString()}`],
-          ["Volume", `${crypto.volume?.toLocaleString()}`],
-          ["Market Cap", `$${crypto.mktCap?.toLocaleString() || ""}`],
+          [
+            i18n.t("detailsScreen.currentPrice"),
+            `${formatPrice(crypto.price)} USDT`,
+          ],
+          [
+            i18n.t("detailsScreen.24hChange"),
+            formatPercent(crypto.dailyChange ?? 0),
+          ],
+          [
+            i18n.t("detailsScreen.high24h"),
+            `${formatPrice(crypto.highPrice)} USDT`,
+          ],
+          [
+            i18n.t("detailsScreen.low24h"),
+            `${formatPrice(crypto.lowPrice)} USDT`,
+          ],
+          [i18n.t("common:chart.volume"), `${formatAmount(crypto.volume)}`],
         ].map(([label, value], index) => (
           <View key={index} style={styles.rowItem}>
             <Text style={styles.label}>{label}:</Text>
             <Text
               style={[
                 styles.value,
-                label === "24H Change"
+                index === 1
                   ? +crypto.dailyChange > 0
                     ? styles.green
                     : styles.red
@@ -242,7 +278,9 @@ const DetailsScreen = ({ crypto, onBack, onTrade }) => {
         style={styles.tradeButton}
         onPress={() => onTrade(crypto)}
       >
-        <Text style={styles.tradeButtonText}>Trade</Text>
+        <Text style={styles.tradeButtonText}>
+          {i18n.t("detailsScreen.trade")}
+        </Text>
       </TouchableOpacity>
       <FibonacciGraph cryptoSymbol={crypto.symbol} />
     </ScrollView>

@@ -51,6 +51,6 @@ describe('guest portfolio persistence', () => {
     const value = { ...empty, transactions: [buy] };
     const saved = writeStored(storage, 'portfolio', value, validatePortfolio);
     expect(saved.value).toEqual(value);
-    expect(saved.warning).toContain('only until');
+    expect(saved.warning).toBe('common:storage.write');
   });
 });

@@ -2,7 +2,7 @@
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-from common import DAY_MS, SYMBOLS, canonical, digest, latest_open
+from common import DAY_MS, SYMBOLS, digest, latest_open
 from features import FEATURE_VERSION, FEATURES
 from train import PIPELINE_VERSION, ALGORITHMS
 from json_store import atomic_json

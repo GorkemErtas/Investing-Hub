@@ -1,8 +1,14 @@
+import { formatAmount, formatDay } from "../services/format";
+import { i18n } from "../services/i18n";
+import { useTranslation } from "react-i18next";
 import React, { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import { api, symbolFor } from "../services/api";
 export function PredictionStatus({ base }: { base: string }) {
-  const [reason, setReason] = useState("Checking publication status…");
+  useTranslation();
+  const [reason, setReason] = useState(
+    "predictionStatus.checkingPublicationStatus",
+  );
   const [forecast, setForecast] = useState<{
     price: number;
     target: string;
@@ -21,7 +27,11 @@ export function PredictionStatus({ base }: { base: string }) {
       .prediction(symbolFor(base))
       .then((value) => {
         if (active) {
-          setReason(value.reason);
+          setReason(
+            value.status === "experimental"
+              ? "common:prediction.note"
+              : "predictionStatus.expired",
+          );
           if (
             value.status === "experimental" &&
             value.predictedValue !== null &&
@@ -36,7 +46,7 @@ export function PredictionStatus({ base }: { base: string }) {
       .catch(() => {
         if (active)
           setReason(
-            "Prediction service unavailable. No forecast is published.",
+            "predictionStatus.predictionServiceUnavailableNoForecastIsPublished",
           );
       });
     return () => {
@@ -46,17 +56,17 @@ export function PredictionStatus({ base }: { base: string }) {
   return (
     <View style={{ padding: 16, backgroundColor: "#dce7ef", borderRadius: 10 }}>
       <Text style={{ fontWeight: "bold", color: "#172b3a" }}>
-        {current ? "Experimental price prediction" : "No published forecast"}
+        {current
+          ? i18n.t("predictionStatus.experimentalPricePrediction")
+          : i18n.t("predictionStatus.noPublishedForecast")}
       </Text>
       {current && (
         <Text style={{ color: "#172b3a" }}>
-          {current.price.toLocaleString(undefined, {
-            maximumFractionDigits: 8,
-          })}{" "}
-          USDT / Target UTC date {current.target.slice(0, 10)}
+          {formatAmount(current.price)} USDT /{" "}
+          {i18n.t("common:prediction.targetDate")} {formatDay(current.target)}
         </Text>
       )}
-      <Text style={{ color: "#172b3a" }}>{reason}</Text>
+      <Text style={{ color: "#172b3a" }}>{i18n.t(reason)}</Text>
     </View>
   );
 }

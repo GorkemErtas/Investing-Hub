@@ -1,3 +1,5 @@
+> Archived migration/verification record. Commands and branch statements below describe an earlier release. Current setup is in [README](../../README.md), [ML operations](../../ml/README.md) and [current verification](../MVP_VERIFICATION.md).
+
 # Consolidation audit and migration plan
 
 Audit date: 2026-11-02. Initial branch: `main`; initial `git status --short` was empty. No index or history operations are authorized. Paths below describe the initial tree; use Git's unstaged diff to inspect removed source.

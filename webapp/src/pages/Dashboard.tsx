@@ -1,3 +1,5 @@
+import { i18n } from '../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { ArrowRight, ArrowUpRight, BarChart3, Layers3, Wallet, FlaskConical } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -20,6 +22,7 @@ export function Dashboard({
   onWatch: (s: Symbol) => void;
   portfolio: Portfolio;
 }) {
+  useTranslation();
   const markets = useMarkets();
   const [symbol, setSymbol] = useState<Symbol>('BTCUSDT');
   const data = markets.data?.data ?? [];
@@ -33,47 +36,51 @@ export function Dashboard({
     <>
       <div className="page-heading">
         <div>
-          <div className="eyebrow">YOUR MARKET. A CLEARER VIEW.</div>
+          <div className="eyebrow">{i18n.t('dashboard.yourMarketAClearerView')}</div>
           <h1>
-            Market dashboard<span className="heading-dot">.</span>
+            {i18n.t('dashboard.marketDashboard')}
+            <span className="heading-dot">.</span>
           </h1>
-          <p>Stay curious. Follow the market. Build your perspective.</p>
+          <p>{i18n.t('dashboard.stayCuriousFollowTheMarketBuildYour')}</p>
         </div>
         <div className="page-heading-status">
           <Status meta={markets.data?.meta} failed={markets.isError} />
-          <span className="muted">Refreshes every 60 seconds</span>
+          <span className="muted">{i18n.t('dashboard.refreshesEvery60Seconds')}</span>
         </div>
       </div>
       {markets.data && (markets.data.meta.stale || markets.isError) && (
-        <Notice>Market provider is delayed. All valuations below use last available quotes.</Notice>
+        <Notice>{i18n.t('dashboard.marketProviderIsDelayedAllValuationsBelow')}</Notice>
       )}
       <div className="stats-grid">
         <Stat
-          label="Tracked trading volume"
+          label={i18n.t('dashboard.trackedTradingVolume')}
           value={volume === null ? '—' : `${money(volume, true)}`}
-          note="24h · USDT · tracked pairs only"
+          note={i18n.t('dashboard.24hUsdtTrackedPairsOnly')}
           icon={<BarChart3 size={17} />}
         />
         <Stat
-          label="Top 24h performer"
+          label={i18n.t('dashboard.top24hPerformer')}
           value={leaderAsset?.name ?? '—'}
-          note={leader ? <Change value={leader.change24h} /> : 'Waiting for provider'}
+          note={
+            leader ? <Change value={leader.change24h} /> : i18n.t('dashboard.waitingForProvider')
+          }
           icon={<ArrowUpRight size={18} />}
         />
         <Stat
-          label="Demo portfolio value"
+          label={i18n.t('dashboard.demoPortfolioValue')}
           value={money(ledger.marketValue)}
           note={
             <Link to="/portfolio">
-              USDT · Simulated holdings <ArrowRight size={12} />
+              {i18n.t('dashboard.usdtSimulatedHoldings')}
+              <ArrowRight size={12} />
             </Link>
           }
           icon={<Wallet size={17} />}
         />
         <Stat
-          label="Assets in focus"
+          label={i18n.t('dashboard.assetsInFocus')}
           value={String(assets.length).padStart(2, '0')}
-          note={`${watchlist.length} on your personal watchlist`}
+          note={i18n.t('dashboard.watchCount', { count: watchlist.length })}
           icon={<Layers3 size={17} />}
         />
       </div>
@@ -83,8 +90,8 @@ export function Dashboard({
           <section className="panel movers">
             <div className="panel-heading">
               <div>
-                <h2>Market movers</h2>
-                <p>Ranked by 24h change</p>
+                <h2>{i18n.t('dashboard.marketMovers')}</h2>
+                <p>{i18n.t('dashboard.rankedBy24hChange')}</p>
               </div>
               <ArrowUpRight size={19} />
             </div>
@@ -103,22 +110,25 @@ export function Dashboard({
                 </button>
               ))
             ) : (
-              <p className="muted padded">Movers appear when market data is available.</p>
+              <p className="muted padded">
+                {i18n.t('dashboard.moversAppearWhenMarketDataIsAvailable')}
+              </p>
             )}
           </section>
           <section className="prediction-teaser">
             <div className="prediction-icon">
               <FlaskConical size={22} />
             </div>
-            <span className="pill">LOCAL PRICE ESTIMATES</span>
+            <span className="pill">{i18n.t('dashboard.localPriceEstimates')}</span>
             <h2>
-              Better questions.
+              {i18n.t('dashboard.betterQuestions')}
               <br />
-              Honest forecasts.
+              {i18n.t('dashboard.honestForecasts')}
             </h2>
-            <p>See the next-day numeric forecast from the selected local model for each coin.</p>
+            <p>{i18n.t('dashboard.seeTheNextDayNumericForecastFrom')}</p>
             <Link to={`/predictions?symbol=${symbol}`}>
-              Open Price Predictions <ArrowRight size={16} />
+              {i18n.t('dashboard.openPricePredictions')}
+              <ArrowRight size={16} />
             </Link>
             <div className="teaser-grid" aria-hidden="true" />
           </section>
@@ -144,7 +154,7 @@ export function Dashboard({
       ) : (
         <section className="panel">
           <ErrorState
-            message="Public market data is unavailable. Your saved demo transactions remain accessible in Portfolio."
+            message={i18n.t('dashboard.publicMarketDataIsUnavailableYourSaved')}
             retry={() => void markets.refetch()}
           />
         </section>
@@ -152,11 +162,12 @@ export function Dashboard({
       <div className="learning-strip">
         <div className="learning-strip-icon">↗</div>
         <div>
-          <h3>A little knowledge. A better perspective.</h3>
-          <p>From reading candles to understanding cost basis, build your foundations.</p>
+          <h3>{i18n.t('dashboard.aLittleKnowledgeABetterPerspective')}</h3>
+          <p>{i18n.t('dashboard.fromReadingCandlesToUnderstandingCostBasis')}</p>
         </div>
         <Link to="/learn" className="button secondary">
-          Explore the Learning Hub <ArrowRight size={15} />
+          {i18n.t('dashboard.exploreTheLearningHub')}
+          <ArrowRight size={15} />
         </Link>
       </div>
     </>

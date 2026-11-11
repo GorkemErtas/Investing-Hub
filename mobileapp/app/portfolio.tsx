@@ -1,3 +1,5 @@
+import { i18n, userError } from "../services/i18n";
+import { useTranslation } from "react-i18next";
 import React, { useEffect, useState, useRef } from "react";
 import {
   View,
@@ -19,6 +21,7 @@ import type { SavedPortfolio } from "@investing-hub/shared/mobile";
 import { useTheme } from "../context/ThemeContext";
 
 export default function PortfolioScreen() {
+  useTranslation();
   const router = useRouter();
   const [isDetailsVisible, setDetailsVisible] = useState(false);
   const [isCustomizationVisible, setCustomizationVisible] = useState(false);
@@ -46,7 +49,9 @@ export default function PortfolioScreen() {
       setError("");
     } catch (error) {
       setError(
-        error instanceof Error ? error.message : "Could not load portfolios.",
+        error instanceof Error
+          ? userError(error)
+          : "portfolio.couldNotLoadPortfolios",
       );
     }
   };
@@ -73,16 +78,16 @@ export default function PortfolioScreen() {
       <SafeAreaView style={styles.container}>
         <Text>
           {loading
-            ? "Checking your session..."
-            : "Log in to manage your private portfolios."}
+            ? i18n.t("portfolio.checkingYourSession")
+            : i18n.t("portfolio.logInToManageYourPrivatePortfolios")}
         </Text>
         <TouchableOpacity onPress={() => router.replace("/auth")}>
-          <Text>Open account</Text>
+          <Text>{i18n.t("portfolio.openAccount")}</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
   if (loadedFor !== user.id && (isDetailsVisible || isCustomizationVisible))
-    return <Text>Loading your account...</Text>;
+    return <Text>{i18n.t("portfolio.loadingYourAccount")}</Text>;
   const visiblePortfolios = loadedFor === user.id ? portfolios : [];
   return (
     <SafeAreaView style={styles.container}>
@@ -90,36 +95,41 @@ export default function PortfolioScreen() {
         style={isDark ? "light" : "dark"}
         backgroundColor={isDark ? "#0f172a" : "#f3f4f6"}
       />
-      {error ? <Text accessibilityRole="alert">{error}</Text> : null}
+      {error ? <Text accessibilityRole="alert">{i18n.t(error)}</Text> : null}
       {!loading && !user ? (
-        <Text>
-          Log in using the Account tab to manage your private portfolios.
-        </Text>
+        <Text>{i18n.t("portfolio.logInUsingTheAccountTabTo")}</Text>
       ) : null}
       {!isCustomizationVisible && !isDetailsVisible ? (
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           <View style={styles.centeredContainer}>
-            <Text style={styles.heading}>Crypto Portfolio Tracker</Text>
+            <Text style={styles.heading}>
+              {i18n.t("portfolio.cryptoPortfolioTracker")}
+            </Text>
             <Text style={styles.subtitle}>
-              Keep track of your profits, losses, and portfolio valuation.
+              {i18n.t("portfolio.keepTrackOfYourProfitsLossesAnd")}
             </Text>
 
             <TouchableOpacity
               style={styles.createButton}
               onPress={handleCreatePortfolio}
             >
-              <Text style={styles.createButtonText}>Create New Portfolio</Text>
+              <Text style={styles.createButtonText}>
+                {i18n.t("portfolio.createNewPortfolio")}
+              </Text>
             </TouchableOpacity>
 
             {visiblePortfolios.length > 0 && (
               <View style={styles.portfolioList}>
-                <Text style={styles.sectionTitle}>Your Portfolios</Text>
+                <Text style={styles.sectionTitle}>
+                  {i18n.t("portfolio.yourPortfolios")}
+                </Text>
                 {visiblePortfolios.map((portfolio) => (
                   <View key={portfolio._id} style={styles.portfolioCard}>
                     <View>
                       <Text style={styles.portfolioName}>{portfolio.name}</Text>
                       <Text style={styles.transactionCount}>
-                        Transactions: {portfolio.transactions.length}
+                        {i18n.t("portfolio.transactions")}
+                        {portfolio.transactions.length}
                       </Text>
                     </View>
                     <View style={styles.buttonGroup}>
@@ -130,7 +140,9 @@ export default function PortfolioScreen() {
                           setCustomizationVisible(true);
                         }}
                       >
-                        <Text style={styles.buttonText}>Edit</Text>
+                        <Text style={styles.buttonText}>
+                          {i18n.t("common:action.edit")}
+                        </Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={styles.viewButton}
@@ -139,7 +151,9 @@ export default function PortfolioScreen() {
                           setDetailsVisible(true);
                         }}
                       >
-                        <Text style={styles.buttonText}>View Details</Text>
+                        <Text style={styles.buttonText}>
+                          {i18n.t("portfolio.viewDetails")}
+                        </Text>
                       </TouchableOpacity>
                     </View>
                   </View>
