@@ -6,6 +6,8 @@ Price Predictions shows a numeric next-day closing estimate and target UTC date 
 
 ## Quick start
 
+For production Docker hosting, see the [Railway deployment guide](docs/RAILWAY.md), including persistent SQLite, daily predictions and backups.
+
 Node 24/26 and Python 3.13 are supported by the verified environment.
 
 ```powershell

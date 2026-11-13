@@ -14,6 +14,9 @@ const schema = z.object({
   CORS_ORIGINS: z
     .string()
     .default("http://localhost:3000,http://127.0.0.1:3000"),
+  // Enable only with Railway's edge as the sole public ingress.
+  TRUST_RAILWAY_PROXY: z.enum(["true", "false"]).default("false"),
+  WEB_DIST_PATH: optionalText,
   MARKET_TIMEOUT_MS: z.coerce.number().int().min(100).max(10000).default(5000),
   MARKET_CACHE_SECONDS: z.coerce.number().int().min(15).max(300).default(30),
   MARKET_STALE_SECONDS: z.coerce.number().int().min(60).max(3600).default(900),

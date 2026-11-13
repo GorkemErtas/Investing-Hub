@@ -1,0 +1,11 @@
+{
+  "name": "investing-hub-railway-config",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit --module nodenext --moduleResolution nodenext --target es2022 --skipLibCheck railway.ts"
+  },
+  "devDependencies": {
+    "railway": "3.17.0"
+  }
+}
