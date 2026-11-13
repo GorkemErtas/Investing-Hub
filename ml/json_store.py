@@ -18,5 +18,12 @@ def atomic_json(path, content):
             stream.flush()
             os.fsync(stream.fileno())
         os.replace(temporary, path)
+        # Persist the rename as well as the file contents across a host restart.
+        if os.name != 'nt':
+            directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+            try:
+                os.fsync(directory)
+            finally:
+                os.close(directory)
     finally:
         temporary.unlink(missing_ok=True)

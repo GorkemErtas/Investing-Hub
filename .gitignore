@@ -13,6 +13,7 @@ dist-web/
 dist-web-test/
 ml/data/
 ml/artifacts/
+.railway/config-plan*.json
 backend/.news-data/
 backend/.future-data/
 **/build/
