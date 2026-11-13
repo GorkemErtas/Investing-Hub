@@ -1,0 +1,34 @@
+# Use with: docker compose -f docker-compose.yml -f docker-compose.production.yml up -d --build
+# The base stack remains bound to loopback for local inspection.
+services:
+  backend:
+    environment:
+      PREDICTIONS_EXPORT_PATH: /app/ml/data/predictions.json
+      ML_DATABASE_PATH: /app/ml/data/lifecycle.sqlite3
+      CORS_ORIGINS: https://${DOMAIN:?Set DOMAIN in your shell or .env}
+    volumes:
+      - type: bind
+        source: ./ml/data
+        target: /app/ml/data
+        read_only: true
+  caddy:
+    image: caddy:2-alpine
+    depends_on:
+      web:
+        condition: service_healthy
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN in your shell or .env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+volumes:
+  caddy_data:
+  caddy_config:
