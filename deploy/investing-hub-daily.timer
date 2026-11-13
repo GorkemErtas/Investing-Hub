@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Investing Hub prediction publication after UTC daily close
+
+[Timer]
+OnCalendar=*-*-* 00:20:00 UTC
+Persistent=true
+RandomizedDelaySec=2min
+Unit=investing-hub-daily.service
+
+[Install]
+WantedBy=timers.target
