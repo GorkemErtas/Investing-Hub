@@ -4,11 +4,15 @@ import { createMarketService } from "./market/service.js";
 import { createAuthService } from "./mobile/auth.js";
 import { createMongoRepository } from "./mobile/mongo.js";
 import { createAlertWorker, type PushSender } from "./mobile/notifications.js";
+import { access } from "node:fs/promises";
+import { join } from "node:path";
 import type { MobileModule } from "./mobile/routes.js";
 
 try {
   // Intentionally no dotenv: old tracked credential files are never read.
   const config = parseConfig(process.env);
+  if (config.WEB_DIST_PATH)
+    await access(join(config.WEB_DIST_PATH, "index.html"));
   const market = createMarketService(config);
   let mobile: MobileModule | undefined;
   let alerts: ReturnType<typeof setInterval> | undefined;
@@ -76,12 +80,18 @@ try {
       alerts.unref();
     }
   }
-  const server = createApp(config, market, mobile).listen(config.PORT, () =>
-    console.info(`Investing Hub API listening on port ${config.PORT}`),
+  const server = createApp(config, market, mobile).listen(
+    config.PORT,
+    "0.0.0.0",
+    () => console.info(`Investing Hub API listening on port ${config.PORT}`),
   );
   server.requestTimeout = 15000;
   server.headersTimeout = 10000;
+  let stopping = false;
   const shutdown = () => {
+    if (stopping) return;
+    stopping = true;
+    console.info(JSON.stringify({ event: "shutdown_started" }));
     if (alerts) clearInterval(alerts);
     server.close(() => {
       void (mobile?.repo.close() ?? Promise.resolve()).finally(() =>

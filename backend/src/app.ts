@@ -1,7 +1,9 @@
 import express, { type ErrorRequestHandler } from "express";
 import cors from "cors";
 import helmet from "helmet";
-import { rateLimit } from "express-rate-limit";
+import { ipKeyGenerator, rateLimit } from "express-rate-limit";
+import { isIP } from "node:net";
+import { extname, join, resolve } from "node:path";
 import { z, ZodError } from "zod";
 import { intervalSchema, symbolSchema } from "@investing-hub/shared/contracts";
 import type { Config } from "./config.js";
@@ -21,8 +23,31 @@ export function createApp(
 ) {
   const app = express();
   app.disable("x-powered-by");
-  // No trust-proxy: client-supplied forwarding headers cannot evade limits.
-  app.use(helmet());
+  // Keep Express trust-proxy disabled. Railway overwrites X-Real-IP at its edge;
+  // arbitrary client X-Forwarded-For chains must never select the limiter key.
+  app.use(
+    helmet({
+      frameguard: { action: "deny" },
+      contentSecurityPolicy: {
+        directives: {
+          "default-src": ["'self'"],
+          "script-src": ["'self'"],
+          "script-src-attr": ["'none'"],
+          "style-src": [
+            "'self'",
+            "'unsafe-inline'",
+            "https://fonts.googleapis.com",
+          ],
+          "font-src": ["'self'", "https://fonts.gstatic.com"],
+          "img-src": ["'self'", "data:"],
+          "connect-src": ["'self'"],
+          "frame-ancestors": ["'none'"],
+          "base-uri": ["'self'"],
+          "form-action": ["'self'"],
+        },
+      },
+    }),
+  );
   app.use(
     cors({
       origin(origin, done) {
@@ -37,11 +62,25 @@ export function createApp(
     res.json({ status: "ok", mode: "guest-demo" }),
   );
   app.use(
+    "/api",
     rateLimit({
       windowMs: 60000,
       limit: 120,
       standardHeaders: "draft-8",
       legacyHeaders: false,
+      ...(config.TRUST_RAILWAY_PROXY === "true"
+        ? {
+            keyGenerator(req) {
+              const edgeIP = req.get("X-Real-IP");
+              return ipKeyGenerator(
+                edgeIP && isIP(edgeIP)
+                  ? edgeIP
+                  : req.socket.remoteAddress || "unknown",
+              );
+            },
+            validate: { xForwardedForHeader: false },
+          }
+        : {}),
       message: {
         error: {
           code: "RATE_LIMITED",
@@ -98,6 +137,34 @@ export function createApp(
         ),
       ),
     );
+  if (config.WEB_DIST_PATH) {
+    const directory = resolve(config.WEB_DIST_PATH);
+    app.use(
+      express.static(directory, {
+        index: false,
+        dotfiles: "ignore",
+        setHeaders(res, path) {
+          res.setHeader(
+            "Cache-Control",
+            path.startsWith(join(directory, "assets") + "/") ||
+              path.startsWith(join(directory, "assets") + "\\")
+              ? "public, max-age=31536000, immutable"
+              : "no-cache",
+          );
+        },
+      }),
+    );
+    app.get(/.*/, (req, res, next) => {
+      if (
+        /^\/(api|assets)(\/|$)/.test(req.path) ||
+        /\/\./.test(req.path) ||
+        extname(req.path)
+      )
+        return next();
+      res.setHeader("Cache-Control", "no-cache");
+      res.sendFile(join(directory, "index.html"));
+    });
+  }
   app.use((_req, _res, next) =>
     next(new AppError(404, "NOT_FOUND", "Endpoint not found.")),
   );
@@ -147,6 +214,13 @@ export function createApp(
       return;
     }
     // Do not serialize provider responses, request data or exception strings.
+    console.error(
+      JSON.stringify({
+        event: "request_failed",
+        method: _req.method,
+        code: "INTERNAL_ERROR",
+      }),
+    );
     res.status(500).json({
       error: {
         code: "INTERNAL_ERROR",
