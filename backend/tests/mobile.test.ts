@@ -90,6 +90,41 @@ const buy = {
   timestamp: "2024-01-01T00:00:00.000Z",
 };
 describe("optional authenticated mobile API", () => {
+  it("keeps auth limits per client behind Railway and ignores spoofed forwarding chains", async () => {
+    const { repo, auth } = fixture();
+    const app = createApp(
+      parseConfig({ NODE_ENV: "test", TRUST_RAILWAY_PROXY: "true" }),
+      market,
+      { repo, auth, notifications: false },
+    );
+    for (let index = 0; index < 15; index++) {
+      expect(
+        (
+          await request(app)
+            .post("/api/auth/login")
+            .set("X-Real-IP", "192.0.2.1")
+            .set("X-Forwarded-For", `198.51.100.${index}`)
+            .send({})
+        ).status,
+      ).toBe(400);
+    }
+    expect(
+      (
+        await request(app)
+          .post("/api/auth/login")
+          .set("X-Real-IP", "192.0.2.1")
+          .send({})
+      ).status,
+    ).toBe(429);
+    expect(
+      (
+        await request(app)
+          .post("/api/auth/login")
+          .set("X-Real-IP", "192.0.2.2")
+          .send({})
+      ).status,
+    ).toBe(400);
+  });
   it("rejects one of two concurrent sales against the same ledger revision", async () => {
     const { repo } = fixture();
     const service = createPortfolioService(repo);

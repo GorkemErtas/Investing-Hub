@@ -1,8 +1,7 @@
 import express, { type ErrorRequestHandler } from "express";
 import cors from "cors";
 import helmet from "helmet";
-import { ipKeyGenerator, rateLimit } from "express-rate-limit";
-import { isIP } from "node:net";
+import { rateLimit } from "express-rate-limit";
 import { extname, join, resolve } from "node:path";
 import { z, ZodError } from "zod";
 import { intervalSchema, symbolSchema } from "@investing-hub/shared/contracts";
@@ -14,6 +13,7 @@ import {
   type PredictionReader,
 } from "./predictions/service.js";
 import { createMobileRouter, type MobileModule } from "./mobile/routes.js";
+import { limiterIdentity } from "./limiterIdentity.js";
 
 export function createApp(
   config: Config,
@@ -68,19 +68,7 @@ export function createApp(
       limit: 120,
       standardHeaders: "draft-8",
       legacyHeaders: false,
-      ...(config.TRUST_RAILWAY_PROXY === "true"
-        ? {
-            keyGenerator(req) {
-              const edgeIP = req.get("X-Real-IP");
-              return ipKeyGenerator(
-                edgeIP && isIP(edgeIP)
-                  ? edgeIP
-                  : req.socket.remoteAddress || "unknown",
-              );
-            },
-            validate: { xForwardedForHeader: false },
-          }
-        : {}),
+      ...limiterIdentity(config.TRUST_RAILWAY_PROXY === "true"),
       message: {
         error: {
           code: "RATE_LIMITED",
@@ -121,7 +109,10 @@ export function createApp(
   // Optional private services do not intercept public market/prediction endpoints.
   const privatePaths = ["/api/auth", "/api/me", "/api/portfolios"];
   if (mobile) {
-    const router = createMobileRouter(mobile);
+    const router = createMobileRouter(
+      mobile,
+      config.TRUST_RAILWAY_PROXY === "true",
+    );
     app.use("/api", (req, res, next) => {
       if (/^\/(auth|me|portfolios)(\/|$)/.test(req.path))
         router(req, res, next);
