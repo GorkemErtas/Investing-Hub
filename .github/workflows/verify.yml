@@ -26,6 +26,8 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
       - run: npm ci --prefix .railway --ignore-scripts
       - run: npm --prefix .railway run typecheck
       - run: npm run check:mobile

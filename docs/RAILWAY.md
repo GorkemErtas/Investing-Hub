@@ -51,6 +51,8 @@ Run `npm ci --prefix .railway --ignore-scripts` and `npm --prefix .railway run t
 
 ## Environment and HTTPS
 
+For optional web accounts, SMTP variables, session behavior and live acceptance checks are in [Web accounts](WEB_ACCOUNTS.md). Guest Demo requires none of those private services.
+
 Set variables in Railway using [the secret-free example](../deploy/railway/.env.example). `.env` files are neither loaded automatically nor copied into the image.
 
 - `PORT`: defaults to 8080 in Docker; a Railway override is supported. Match the domain target port.
