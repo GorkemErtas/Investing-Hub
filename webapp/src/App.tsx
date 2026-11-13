@@ -1,6 +1,7 @@
 import { i18n } from './lib/i18n';
 import { useTranslation } from 'react-i18next';
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import {
   BookOpen,
@@ -15,15 +16,18 @@ import {
   X,
 } from 'lucide-react';
 import { z } from 'zod';
-import { symbolSchema, type Symbol } from '@investing-hub/shared/contracts';
+import { assets, symbolSchema, type Symbol } from '@investing-hub/shared/contracts';
 import {
   examplePortfolio,
   validatePortfolio,
   type Portfolio as PortfolioData,
+  type Transaction,
 } from '@investing-hub/shared/portfolio';
 import { useStored } from './lib/storage';
 import { Notice, Skeleton } from './components/ui';
 import { LanguageSelector } from './components/LanguageSelector';
+import { AuthDialog } from './components/AuthDialog';
+import { createAccountStore, portfolioView } from './lib/accounts';
 
 const Dashboard = lazy(() => import('./pages/Dashboard').then((m) => ({ default: m.Dashboard })));
 const Portfolio = lazy(() => import('./pages/Portfolio').then((m) => ({ default: m.Portfolio })));
@@ -43,20 +47,52 @@ function validatePortfolios(value: unknown) {
 }
 export default function App() {
   const { i18n: language } = useTranslation();
-  const [theme, saveTheme, themeWarning] = useStored('ih:theme:v1', 'dark', (value) =>
+  const [guestTheme, saveGuestTheme, themeWarning] = useStored('ih:theme:v1', 'dark', (value) =>
     z.enum(['dark', 'light']).parse(value),
   );
-  const [watchlist, saveWatchlist, watchWarning] = useStored<Symbol[]>(
+  const [guestWatchlist, saveWatchlist, watchWarning] = useStored<Symbol[]>(
     'ih:watchlist:v1',
     ['BTCUSDT', 'ETHUSDT'],
     (value) => [...new Set(z.array(symbolSchema).max(8).parse(value))],
   );
-  const [portfolios, savePortfolios, portfolioWarning] = useStored<PortfolioData[]>(
+  const [guestPortfolios, savePortfolios, portfolioWarning] = useStored<PortfolioData[]>(
     'ih:portfolios:v1',
     [{ ...examplePortfolio, name: i18n.t('portfolio.exampleName') }],
     validatePortfolios,
   );
-  const [selected, setSelected] = useState(0);
+  const [guestSelected, setGuestSelected] = useState(0);
+  const [accounts] = useState(() => createAccountStore({ baseUrl: window.location.origin }));
+  const accountState = useSyncExternalStore(accounts.subscribe, accounts.getSnapshot);
+  const session = accountState.session;
+  const [authOpen, setAuthOpen] = useState(false);
+  const capabilities = useQuery({
+    queryKey: ['capabilities'],
+    queryFn: accounts.capabilities,
+    retry: false,
+    staleTime: 30000,
+  });
+  const theme = session ? (accountState.settings?.theme ?? 'dark') : guestTheme;
+  const watchlist = session
+    ? assets
+        .filter((asset) => accountState.settings?.selectedCoins.includes(asset.base))
+        .map((asset) => asset.symbol)
+    : guestWatchlist;
+  const portfolios = session ? accountState.portfolios.map(portfolioView) : guestPortfolios;
+  const selected = session
+    ? Math.max(
+        0,
+        accountState.portfolios.findIndex((p) => p._id === accountState.selected),
+      )
+    : guestSelected;
+  const privateBusy = accountState.busy || accountState.loading || !accountState.settings;
+  function setSelected(index: number) {
+    if (session) accounts.select(index);
+    else setGuestSelected(index);
+  }
+  function saveTheme(next: 'dark' | 'light') {
+    if (session) void accounts.theme(next).catch(() => {});
+    else saveGuestTheme(next);
+  }
   const [menu, setMenu] = useState(false);
   const sidebar = useRef<HTMLElement>(null);
   const location = useLocation();
@@ -67,6 +103,15 @@ export default function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
+  useEffect(() => {
+    const check = () => accounts.checkExpiry();
+    document.addEventListener('visibilitychange', check);
+    window.addEventListener('pageshow', check);
+    return () => {
+      document.removeEventListener('visibilitychange', check);
+      window.removeEventListener('pageshow', check);
+    };
+  }, [accounts]);
   useEffect(() => {
     document.title = `${i18n.t(active?.label ?? 'app.pageNotFound')} · Investing Hub`;
     document
@@ -112,6 +157,10 @@ export default function App() {
     };
   }, [menu]);
   function watch(symbol: Symbol) {
+    if (session) {
+      void accounts.watch(symbol).catch(() => {});
+      return;
+    }
     saveWatchlist(
       watchlist.includes(symbol) ? watchlist.filter((s) => s !== symbol) : [...watchlist, symbol],
     );
@@ -159,16 +208,21 @@ export default function App() {
             <button
               aria-label={i18n.t(theme === 'dark' ? 'app.switchLight' : 'app.switchDark')}
               onClick={() => saveTheme(theme === 'dark' ? 'light' : 'dark')}
+              disabled={Boolean(session && privateBusy)}
             >
               {theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
               {theme === 'dark' ? i18n.t('app.dark') : i18n.t('app.light')}
             </button>
           </div>
           <div className="guest-profile">
-            <span className="guest-avatar">{i18n.t('app.g')}</span>
+            <span className="guest-avatar">
+              {session ? session.user.firstName.slice(0, 1) : i18n.t('app.g')}
+            </span>
             <div>
-              <strong>{i18n.t('app.guestExplorer')}</strong>
-              <small>{i18n.t('app.localDemoWorkspace')}</small>
+              <strong>{session ? session.user.firstName : i18n.t('app.guestExplorer')}</strong>
+              <small>
+                {i18n.t(session ? 'accounts.accountWorkspace' : 'app.localDemoWorkspace')}
+              </small>
             </div>
             <span className="status-dot" />
           </div>
@@ -199,38 +253,109 @@ export default function App() {
           </div>
           <div className="topbar-right">
             <span className="demo-dot" />
-            {i18n.t('app.guestDemo')}
+            {i18n.t(session ? 'accounts.accountWorkspace' : 'app.guestDemo')}
             <span className="topbar-divider" />
             <span className="topbar-note">{i18n.t('app.exploreLearnSimulate')}</span>
-            <span className="avatar-small">{i18n.t('app.g')}</span>
+            {session ? (
+              <button className="button secondary account-button" onClick={() => accounts.logout()}>
+                {i18n.t('common:action.logOut')}
+              </button>
+            ) : (
+              <button className="button secondary account-button" onClick={() => setAuthOpen(true)}>
+                {i18n.t('common:action.signIn')}
+              </button>
+            )}
           </div>
         </header>
         <main id="main-content" tabIndex={-1}>
           {[themeWarning, watchWarning, portfolioWarning].filter(Boolean).map((text, i) => (
             <Notice key={i}>{text}</Notice>
           ))}
+          {accountState.notice && <Notice>{i18n.t(accountState.notice)}</Notice>}
+          {session && accountState.error && (
+            <Notice>
+              <span role="alert">{i18n.t(accountState.error)}</span>{' '}
+              <button
+                className="text-button"
+                disabled={accountState.loading || accountState.busy}
+                onClick={() => void accounts.reload()}
+              >
+                {i18n.t('common:action.retry')}
+              </button>
+            </Notice>
+          )}
+          {session && accountState.loading && <p role="status">{i18n.t('accounts.loading')}</p>}
           <Suspense fallback={<Skeleton rows={6} />}>
             <Routes>
               <Route
                 path="/"
                 element={
                   <Dashboard
+                    accountMode={Boolean(session)}
+                    watchDisabled={Boolean(session && privateBusy)}
                     theme={theme}
                     watchlist={watchlist}
                     onWatch={watch}
-                    portfolio={portfolios[selected] ?? portfolios[0]}
+                    portfolio={
+                      portfolios[selected] ??
+                      portfolios[0] ??
+                      (session && !accountState.settings
+                        ? null
+                        : { version: 1, name: '', transactions: [] })
+                    }
                   />
                 }
               />
               <Route
                 path="/portfolio"
                 element={
-                  <Portfolio
-                    portfolios={portfolios}
-                    selected={selected}
-                    onSelect={setSelected}
-                    onSave={savePortfolios}
-                  />
+                  session && !accountState.settings ? (
+                    accountState.loading ? (
+                      <Skeleton rows={3} />
+                    ) : (
+                      <div className="empty-state">
+                        <h1>{i18n.t('portfolio.yourPortfolio')}</h1>
+                        <p>{i18n.t('accounts.unavailable')}</p>
+                      </div>
+                    )
+                  ) : (
+                    <Portfolio
+                      key={session?.scope ?? 'guest'}
+                      portfolios={portfolios}
+                      selected={selected}
+                      onSelect={setSelected}
+                      {...(session
+                        ? {
+                            busy: privateBusy,
+                            actions: {
+                              create: async (name: string) => {
+                                await accounts.create(name);
+                              },
+                              rename: async (index: number, name: string) => {
+                                await accounts.rename(accountState.portfolios[index]._id, name);
+                              },
+                              remove: async (index: number) => {
+                                await accounts.remove(accountState.portfolios[index]._id);
+                              },
+                              saveTrade: async (
+                                index: number,
+                                trade: Transaction,
+                                editing: boolean,
+                              ) => {
+                                await accounts.saveTrade(
+                                  accountState.portfolios[index]._id,
+                                  trade,
+                                  editing,
+                                );
+                              },
+                              removeTrade: async (index: number, id: string) => {
+                                await accounts.removeTrade(accountState.portfolios[index]._id, id);
+                              },
+                            },
+                          }
+                        : { onSave: savePortfolios })}
+                    />
+                  )
                 }
               />
               <Route path="/predictions" element={<PricePredictions />} />
@@ -263,6 +388,19 @@ export default function App() {
           </span>
         </footer>
       </div>
+      {authOpen && (
+        <AuthDialog
+          store={accounts}
+          capabilities={capabilities.data}
+          retry={() => {
+            void capabilities.refetch();
+          }}
+          onClose={() => {
+            accounts.cancelLogin();
+            setAuthOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -13,12 +13,21 @@ import { useMarkets } from '../lib/api';
 import { money, utc, number } from '../lib/format';
 import { Coin, Notice, Stat, Status } from '../components/ui';
 import { decimalInput, decimalDisplay, localeValue } from '@investing-hub/shared/localization';
+import { ApiError } from '@investing-hub/shared/client';
 
 interface Props {
   portfolios: PortfolioData[];
   selected: number;
   onSelect: (index: number) => void;
-  onSave: (portfolios: PortfolioData[]) => void;
+  onSave?: (portfolios: PortfolioData[]) => void;
+  actions?: {
+    create: (name: string) => Promise<void>;
+    rename: (index: number, name: string) => Promise<void>;
+    remove: (index: number) => Promise<void>;
+    saveTrade: (index: number, trade: Transaction, editing: boolean) => Promise<void>;
+    removeTrade: (index: number, id: string) => Promise<void>;
+  };
+  busy?: boolean;
 }
 function TransactionDialog({
   original,
@@ -28,7 +37,7 @@ function TransactionDialog({
 }: {
   original?: Transaction;
   prices: Partial<Record<Symbol, number>>;
-  onSave: (t: Transaction) => void;
+  onSave: (t: Transaction) => Promise<void>;
   onClose: () => void;
 }) {
   useTranslation();
@@ -39,20 +48,23 @@ function TransactionDialog({
   const [quantity, setQuantity] = useState(original?.quantity ?? '');
   const [fee, setFee] = useState(original?.fee ?? '0');
   const [error, setError] = useState('');
+  const [pending, setPending] = useState(false);
   useEffect(() => {
     const dialog = ref.current!;
     dialog.showModal();
     return () => dialog.close();
   }, []);
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (pending) return;
     const data = new FormData(event.currentTarget);
     try {
       if (!event.currentTarget.checkValidity()) throw new Error('common:errors.INVALID_REQUEST');
       const date = new Date(String(data.get('date')));
       if (!Number.isFinite(date.getTime()) || date.getTime() > Date.now())
         throw new Error('portfolio.chooseAValidDateInThePast');
-      onSave({
+      setPending(true);
+      await onSave({
         id: original?.id ?? crypto.randomUUID(),
         symbol,
         side: data.get('side') as 'buy' | 'sell',
@@ -66,9 +78,13 @@ function TransactionDialog({
         e instanceof Error && !('issues' in e)
           ? i18n.exists(e.message)
             ? userError(e)
-            : 'portfolio.invalidHistory'
+            : e instanceof ApiError
+              ? userError(e)
+              : 'portfolio.invalidHistory'
           : 'portfolio.usePositiveQuantitiesAndPricesWithAt',
       );
+    } finally {
+      setPending(false);
     }
   }
   const defaultDate = original ? new Date(original.timestamp) : new Date();
@@ -180,7 +196,7 @@ function TransactionDialog({
           <button type="button" className="button secondary" onClick={onClose}>
             {i18n.t('common:action.cancel')}
           </button>
-          <button className="button primary" type="submit">
+          <button className="button primary" type="submit" disabled={pending}>
             {i18n.t('portfolio.saveSimulatedTransaction')}
           </button>
         </div>
@@ -188,9 +204,17 @@ function TransactionDialog({
     </dialog>
   );
 }
-export function Portfolio({ portfolios, selected, onSelect, onSave }: Props) {
+export function Portfolio({
+  portfolios,
+  selected,
+  onSelect,
+  onSave,
+  actions,
+  busy = false,
+}: Props) {
   useTranslation();
-  const p = portfolios[selected] ?? portfolios[0];
+  const p = portfolios[selected] ??
+    portfolios[0] ?? { version: 1 as const, name: '', transactions: [] };
   const query = useMarkets();
   const prices = Object.fromEntries((query.data?.data ?? []).map((m) => [m.symbol, m.price]));
   const ledger = account(p.transactions, prices);
@@ -199,9 +223,9 @@ export function Portfolio({ portfolios, selected, onSelect, onSave }: Props) {
   const [rename, setRename] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   function update(next: PortfolioData) {
-    onSave(portfolios.map((item, i) => (i === selected ? validatePortfolio(next) : item)));
+    onSave?.(portfolios.map((item, i) => (i === selected ? validatePortfolio(next) : item)));
   }
-  function saveTransaction(t: Transaction) {
+  async function saveTransaction(t: Transaction) {
     const next = {
       ...p,
       transactions:
@@ -209,16 +233,18 @@ export function Portfolio({ portfolios, selected, onSelect, onSave }: Props) {
           ? p.transactions.map((old) => (old.id === t.id ? t : old))
           : [...p.transactions, t],
     };
-    update(next);
+    if (actions) await actions.saveTrade(selected, t, editing !== 'new');
+    else update(next);
     setEditing(null);
     setMessage('portfolio.simulatedTransactionSaved');
   }
-  function removeTransaction(id: string) {
+  async function removeTransaction(id: string) {
     try {
-      update({ ...p, transactions: p.transactions.filter((t) => t.id !== id) });
+      if (actions) await actions.removeTrade(selected, id);
+      else update({ ...p, transactions: p.transactions.filter((t) => t.id !== id) });
       setMessage('portfolio.transactionRemoved');
-    } catch {
-      setMessage('portfolio.thisTransactionSupportsALaterSaleEdit');
+    } catch (error) {
+      setMessage(actions ? userError(error) : 'portfolio.thisTransactionSupportsALaterSaleEdit');
     }
   }
   function exportData() {
@@ -227,13 +253,37 @@ export function Portfolio({ portfolios, selected, onSelect, onSave }: Props) {
     );
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'investing-hub-demo-portfolio.json';
+    a.download = actions ? 'investing-hub-portfolio.json' : 'investing-hub-demo-portfolio.json';
     a.click();
     URL.revokeObjectURL(url);
   }
   const holdings = ledger.holdings.filter((h) => h.quantity > 0);
+  async function create() {
+    setMessage('');
+    try {
+      const name = i18n.t('portfolio.newName', { count: portfolios.length + 1 });
+      if (actions) await actions.create(name);
+      else {
+        onSave?.([...portfolios, { version: 1, name, transactions: [] }]);
+        onSelect(portfolios.length);
+      }
+    } catch (error) {
+      setMessage(userError(error));
+    }
+  }
+  if (!portfolios.length)
+    return (
+      <div className="empty-state">
+        <h1>{i18n.t('portfolio.yourPortfolio')}</h1>
+        <p>{i18n.t('accounts.emptyPortfolios')}</p>
+        {message && <p role="alert">{i18n.t(message)}</p>}
+        <button className="button primary" disabled={busy} onClick={() => void create()}>
+          {i18n.t('portfolio.newPortfolio')}
+        </button>
+      </div>
+    );
   return (
-    <>
+    <fieldset className="portfolio-workspace" disabled={busy} aria-busy={busy}>
       <div className="page-heading">
         <div>
           <div className="eyebrow">{i18n.t('portfolio.practiceWithPerspective')}</div>
@@ -248,7 +298,13 @@ export function Portfolio({ portfolios, selected, onSelect, onSave }: Props) {
           {i18n.t('portfolio.addTransaction')}
         </button>
       </div>
-      <Notice>{i18n.t('portfolio.guestDemoExampleTradesAreFictionalStored')}</Notice>
+      <Notice>
+        {i18n.t(
+          actions
+            ? 'accounts.savedPortfolios'
+            : 'portfolio.guestDemoExampleTradesAreFictionalStored',
+        )}
+      </Notice>
       <div className="portfolio-toolbar">
         <label>
           <span className="sr-only">{i18n.t('portfolio.activePortfolio')}</span>
@@ -270,17 +326,7 @@ export function Portfolio({ portfolios, selected, onSelect, onSave }: Props) {
         <button
           className="text-button"
           disabled={portfolios.length >= 20}
-          onClick={() => {
-            onSave([
-              ...portfolios,
-              {
-                version: 1,
-                name: i18n.t('portfolio.newName', { count: portfolios.length + 1 }),
-                transactions: [],
-              },
-            ]);
-            onSelect(portfolios.length);
-          }}
+          onClick={() => void create()}
         >
           {' '}
           <Plus size={15} />
@@ -296,7 +342,7 @@ export function Portfolio({ portfolios, selected, onSelect, onSave }: Props) {
         <button
           className="icon-button"
           aria-label={i18n.t('portfolio.deletePortfolio')}
-          disabled={portfolios.length <= 1}
+          disabled={!actions && portfolios.length <= 1}
           onClick={() => setConfirmDelete(!confirmDelete)}
         >
           <Trash2 size={16} />
@@ -309,14 +355,17 @@ export function Portfolio({ portfolios, selected, onSelect, onSave }: Props) {
       {rename && (
         <form
           className="inline-form"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
+            setMessage('');
             const form = new FormData(e.currentTarget);
             try {
-              update({ ...p, name: String(form.get('name')) });
+              const name = String(form.get('name'));
+              if (actions) await actions.rename(selected, name);
+              else update({ ...p, name });
               setRename(false);
-            } catch {
-              setMessage('portfolio.nameValidation');
+            } catch (error) {
+              setMessage(actions ? userError(error) : 'portfolio.nameValidation');
             }
           }}
         >
@@ -332,10 +381,18 @@ export function Portfolio({ portfolios, selected, onSelect, onSave }: Props) {
           {i18n.t('portfolio.deleteConfirmation', { name: p.name })}
           <button
             className="button danger"
-            onClick={() => {
-              onSave(portfolios.filter((_, i) => i !== selected));
-              onSelect(0);
-              setConfirmDelete(false);
+            onClick={async () => {
+              setMessage('');
+              try {
+                if (actions) await actions.remove(selected);
+                else {
+                  onSave?.(portfolios.filter((_, i) => i !== selected));
+                  onSelect(0);
+                }
+                setConfirmDelete(false);
+              } catch (error) {
+                setMessage(userError(error));
+              }
             }}
           >
             {i18n.t('portfolio.deletePortfolio')}
@@ -563,6 +620,6 @@ export function Portfolio({ portfolios, selected, onSelect, onSave }: Props) {
           onClose={() => setEditing(null)}
         />
       )}
-    </>
+    </fieldset>
   );
 }

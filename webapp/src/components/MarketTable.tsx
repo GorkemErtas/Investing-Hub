@@ -13,12 +13,14 @@ export function MarketTable({
   onWatch,
   selected,
   onSelect,
+  watchDisabled = false,
 }: {
   data: Market[];
   watchlist: Symbol[];
   onWatch: (s: Symbol) => void;
   selected: Symbol;
   onSelect: (s: Symbol) => void;
+  watchDisabled?: boolean;
 }) {
   useTranslation();
   const [search, setSearch] = useState('');
@@ -114,6 +116,7 @@ export function MarketTable({
                     <button
                       className={`icon-button star ${watchlist.includes(m.symbol) ? 'starred' : ''}`}
                       onClick={() => onWatch(m.symbol)}
+                      disabled={watchDisabled}
                       aria-label={i18n.t(
                         watchlist.includes(m.symbol)
                           ? 'marketTable.watchRemove'

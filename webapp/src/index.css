@@ -2053,3 +2053,66 @@ dd {
   flex-wrap: wrap;
   row-gap: 8px;
 }
+
+.portfolio-workspace,
+.auth-fields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-inline-size: 0;
+}
+.auth-dialog {
+  max-height: 90dvh;
+  overflow-y: auto;
+}
+.auth-dialog p {
+  line-height: 1.6;
+}
+.auth-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 20px 0;
+}
+.auth-tabs [aria-pressed='true'] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.auth-fields {
+  display: grid;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+.auth-fields .form-grid {
+  margin-top: 0;
+}
+.auth-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.auth-fields input {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  font: inherit;
+  background: var(--bg);
+}
+.account-button {
+  min-height: 36px;
+  white-space: nowrap;
+  padding: 8px 10px;
+}
+.guest-profile strong {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 450px) {
+  .breadcrumb > span:first-of-type {
+    display: none;
+  }
+  .account-button {
+    font-size: 10px;
+  }
+}

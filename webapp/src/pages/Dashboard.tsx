@@ -16,18 +16,22 @@ export function Dashboard({
   watchlist,
   onWatch,
   portfolio,
+  accountMode = false,
+  watchDisabled = false,
 }: {
   theme: string;
   watchlist: Symbol[];
   onWatch: (s: Symbol) => void;
-  portfolio: Portfolio;
+  portfolio: Portfolio | null;
+  accountMode?: boolean;
+  watchDisabled?: boolean;
 }) {
   useTranslation();
   const markets = useMarkets();
   const [symbol, setSymbol] = useState<Symbol>('BTCUSDT');
   const data = markets.data?.data ?? [];
   const prices = Object.fromEntries(data.map((m) => [m.symbol, m.price]));
-  const ledger = account(portfolio.transactions, prices);
+  const ledger = account(portfolio?.transactions ?? [], prices);
   const volume = data.length ? data.reduce((n, m) => n + m.quoteVolume, 0) : null;
   const leader = [...data].sort((a, b) => b.change24h - a.change24h)[0];
   const leaderAsset = assets.find((a) => a.symbol === leader?.symbol);
@@ -67,8 +71,8 @@ export function Dashboard({
           icon={<ArrowUpRight size={18} />}
         />
         <Stat
-          label={i18n.t('dashboard.demoPortfolioValue')}
-          value={money(ledger.marketValue)}
+          label={i18n.t(accountMode ? 'accounts.portfolioValue' : 'dashboard.demoPortfolioValue')}
+          value={portfolio ? money(ledger.marketValue) : '—'}
           note={
             <Link to="/portfolio">
               {i18n.t('dashboard.usdtSimulatedHoldings')}
@@ -150,6 +154,7 @@ export function Dashboard({
           }}
           watchlist={watchlist}
           onWatch={onWatch}
+          watchDisabled={watchDisabled}
         />
       ) : (
         <section className="panel">
