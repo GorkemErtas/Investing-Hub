@@ -1,0 +1,13 @@
+[Unit]
+Description=Investing Hub daily verified market-data and prediction publication
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=investinghub
+Group=investinghub
+WorkingDirectory=/opt/investing-hub
+ExecStart=/bin/sh /opt/investing-hub/deploy/run-daily.sh
+TimeoutStartSec=45min
+NoNewPrivileges=true
