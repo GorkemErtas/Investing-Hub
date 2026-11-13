@@ -16,17 +16,17 @@ import { type AuthService, publicUser } from "./auth.js";
 import { createPortfolioService } from "./portfolios.js";
 import { AppError } from "../errors.js";
 import { assets } from "@investing-hub/shared/contracts";
+import { limiterIdentity } from "../limiterIdentity.js";
 
 export interface MobileModule {
   repo: MobileRepository;
   auth: AuthService;
   notifications: boolean;
 }
-export function createMobileRouter({
-  repo,
-  auth,
-  notifications,
-}: MobileModule) {
+export function createMobileRouter(
+  { repo, auth, notifications }: MobileModule,
+  trustRailwayProxy = false,
+) {
   const router = Router();
   const portfolios = createPortfolioService(repo);
   const empty = (value: unknown) => z.strictObject({}).parse(value);
@@ -41,6 +41,7 @@ export function createMobileRouter({
     next();
   });
   const authLimit = rateLimit({
+    ...limiterIdentity(trustRailwayProxy),
     windowMs: 15 * 60000,
     limit: 15,
     standardHeaders: "draft-8",
@@ -54,12 +55,10 @@ export function createMobileRouter({
   });
   router.post("/auth/register", authLimit, async (req, res) => {
     await auth.register(registerSchema.parse(req.body));
-    res
-      .status(202)
-      .json({
-        message:
-          "If registration is available for this email, a verification code has been sent.",
-      });
+    res.status(202).json({
+      message:
+        "If registration is available for this email, a verification code has been sent.",
+    });
   });
   router.post("/auth/verify", authLimit, async (req, res) => {
     const body = verifySchema.parse(req.body);
