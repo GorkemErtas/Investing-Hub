@@ -23,6 +23,13 @@ const schema = z.object({
   MONGO_URI: optionalText,
   JWT_SECRET: optionalText,
   SMTP_URL: optionalText,
+  BREVO_API_KEY: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z
+      .string()
+      .regex(/^\S+$/, "BREVO_API_KEY must not contain whitespace.")
+      .optional(),
+  ),
   EMAIL_FROM: z.preprocess(
     (value) => (value === "" ? undefined : value),
     z.string().email().optional(),
@@ -58,10 +65,22 @@ export function parseConfig(env: NodeJS.ProcessEnv) {
     throw new Error(
       "Mobile accounts require a Mongo URI and a strong JWT_SECRET of at least 32 bytes.",
     );
-  if ((c.SMTP_URL && !c.EMAIL_FROM) || (!c.SMTP_URL && c.EMAIL_FROM))
-    throw new Error("SMTP_URL and EMAIL_FROM must be configured together.");
-  if (c.SMTP_URL && !/^smtps?:\/\//.test(c.SMTP_URL))
-    throw new Error("SMTP_URL must use smtp or smtps.");
+  if (Boolean(c.BREVO_API_KEY || c.SMTP_URL) !== Boolean(c.EMAIL_FROM))
+    throw new Error(
+      "Email requires EMAIL_FROM and a provider: BREVO_API_KEY or SMTP_URL.",
+    );
+  // Brevo takes precedence, but every supplied provider must be valid.
+  if (c.SMTP_URL) {
+    try {
+      const smtp = new URL(c.SMTP_URL);
+      if (!["smtp:", "smtps:"].includes(smtp.protocol) || !smtp.hostname)
+        throw new Error();
+      decodeURIComponent(smtp.username);
+      decodeURIComponent(smtp.password);
+    } catch {
+      throw new Error("SMTP_URL must be a valid smtp or smtps URL.");
+    }
+  }
   if (
     c.PRICE_ALERTS_ENABLED === "true" &&
     (!c.MONGO_URI || c.FIREBASE_ENABLED !== "true")

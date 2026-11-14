@@ -2,6 +2,7 @@ import { createApp } from "./app.js";
 import { parseConfig } from "./config.js";
 import { createMarketService } from "./market/service.js";
 import { createAuthService } from "./mobile/auth.js";
+import { createVerificationMailer } from "./mobile/email.js";
 import { createMongoRepository } from "./mobile/mongo.js";
 import { createAlertWorker, type PushSender } from "./mobile/notifications.js";
 import { access } from "node:fs/promises";
@@ -18,36 +19,7 @@ try {
   let alerts: ReturnType<typeof setInterval> | undefined;
   if (config.MONGO_URI) {
     const repo = createMongoRepository(config.MONGO_URI);
-    let mailer;
-    if (config.SMTP_URL) {
-      const { default: nodemailer } = await import("nodemailer");
-      const smtp = new URL(config.SMTP_URL);
-      const transport = nodemailer.createTransport({
-        host: smtp.hostname,
-        port: Number(smtp.port || (smtp.protocol === "smtps:" ? 465 : 587)),
-        secure: smtp.protocol === "smtps:",
-        requireTLS: true,
-        ...(smtp.username
-          ? {
-              auth: {
-                user: decodeURIComponent(smtp.username),
-                pass: decodeURIComponent(smtp.password),
-              },
-            }
-          : {}),
-        connectionTimeout: 5000,
-        greetingTimeout: 5000,
-        socketTimeout: 10000,
-      });
-      mailer = async (email: string, code: string) => {
-        await transport.sendMail({
-          from: config.EMAIL_FROM,
-          to: email,
-          subject: "Investing Hub email verification",
-          text: `Your verification code is ${code}. It expires in 10 minutes.`,
-        });
-      };
-    }
+    const mailer = await createVerificationMailer(config);
     let sender: PushSender | undefined;
     if (config.FIREBASE_ENABLED === "true") {
       try {
