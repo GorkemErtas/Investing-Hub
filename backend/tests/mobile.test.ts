@@ -176,6 +176,12 @@ describe("optional authenticated mobile API", () => {
   it("rejects expired, wrong audience, wrong algorithm and fallback-secret tokens", async () => {
     const { app } = fixture();
     for (const token of [
+      "malformed.jwt",
+      jwt.sign({}, secret, {
+        subject: owner,
+        audience: "investing-hub-mobile",
+        issuer: "investing-hub",
+      }),
       jwt.sign({ sub: owner }, "secretkey"),
       jwt.sign({}, secret, {
         subject: owner,
@@ -472,6 +478,25 @@ describe("registration email delivery", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+  });
+
+  it("sends one code for simultaneous registrations of the same email", async () => {
+    const { auth, repo, mailer } = fixture();
+    const results = await Promise.allSettled([
+      auth.register(input),
+      auth.register(input),
+    ]);
+    expect(mailer).toHaveBeenCalledTimes(1);
+    expect(
+      results.filter((result) => result.status === "fulfilled"),
+    ).toHaveLength(1);
+    expect(
+      results.filter((result) => result.status === "rejected"),
+    ).toMatchObject([
+      { reason: { status: 429, code: "VERIFICATION_COOLDOWN" } },
+    ]);
+    await auth.verify(input.email, mailer.mock.calls[0][1]);
+    expect(repo.createUser).toHaveBeenCalledTimes(1);
   });
 
   it("keeps registration disabled and existing-user login available without a mailer", async () => {
