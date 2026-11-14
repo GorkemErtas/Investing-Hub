@@ -124,6 +124,22 @@ describe("cache resilience", () => {
   });
 });
 describe("provider request budget", () => {
+  it.each([400, 403, 418, 429, 500, 503])(
+    "releases HTTP %i bodies and preserves the retry budget",
+    async (status) => {
+      const responses: Response[] = [];
+      const request = vi.fn<typeof fetch>(async () => {
+        const response = new Response("provider-error", { status });
+        responses.push(response);
+        return response;
+      });
+      await expect(
+        new BinanceProvider(100, request, async () => {}).markets(),
+      ).rejects.toThrow();
+      expect(request).toHaveBeenCalledTimes(status >= 500 ? 2 : 1);
+      expect(responses.every((response) => response.bodyUsed)).toBe(true);
+    },
+  );
   it("stops immediately on 429 and honors a global cooldown", async () => {
     const request = vi
       .fn<typeof fetch>()

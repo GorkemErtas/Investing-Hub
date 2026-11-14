@@ -117,6 +117,8 @@ export class BinanceProvider {
             signal: AbortSignal.timeout(this.timeout),
             redirect: "error",
           });
+          // Release error response streams before backoff/retry; never log their bodies.
+          if (!response.ok) await response.body?.cancel().catch(() => {});
           if (response.status === 429 || response.status === 418) {
             const retry = response.headers.get("retry-after");
             const seconds =
