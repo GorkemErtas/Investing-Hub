@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createHash, randomUUID } from "node:crypto";
-import { mkdir, readFile, writeFile, stat, rm } from "node:fs/promises";
+import { mkdir, readFile, writeFile, stat, rm, rename } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import request from "supertest";
 import { assets } from "@investing-hub/shared/contracts";
@@ -11,8 +11,14 @@ import {
 import { createApp } from "../src/app";
 import { parseConfig } from "../src/config";
 import { createPredictionReader } from "../src/predictions/service";
+vi.mock("node:fs/promises", async (original) => {
+  const fs = await original<typeof import("node:fs/promises")>();
+  // Count real file reads; preserve actual disk I/O and metadata for these tests.
+  return { ...fs, readFile: vi.fn(fs.readFile) };
+});
 const directories: string[] = [];
 afterEach(async () => {
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
   for (const dir of directories.splice(0)) {
     if (!dir.startsWith(resolve(".predictions-test-")))
@@ -66,6 +72,56 @@ async function fixture() {
   };
 }
 describe("read-only local numeric predictions", () => {
+  it("coalesces all eight symbols and reuses one validated publication", async () => {
+    const f = await fixture();
+    const reads = vi.mocked(readFile).mockClear();
+    const results = await Promise.all(
+      assets.map(({ symbol }) => f.reader.read(symbol)),
+    );
+    expect(results.every((result) => result.status === "experimental")).toBe(
+      true,
+    );
+    expect(reads).toHaveBeenCalledTimes(1);
+    // Returned records must not allow one caller to corrupt the shared publication.
+    results[0].predictedValue = 999;
+    expect(await f.reader.read("BTCUSDT")).toEqual(predictionFixture());
+    expect(reads).toHaveBeenCalledTimes(1);
+  });
+
+  it("invalidates cached publications on replacement, corruption and disappearance", async () => {
+    const f = await fixture();
+    expect((await f.reader.read("BTCUSDT")).status).toBe("experimental");
+    f.report.forecasts[0].reason = "Updated publication";
+    await f.save();
+    expect((await f.reader.read("BTCUSDT")).reason).toBe("Updated publication");
+    const replacement = join(f.dir, "replacement.json");
+    await writeFile(replacement, await readFile(f.output));
+    await rename(replacement, f.output);
+    expect((await f.reader.read("BTCUSDT")).reason).toBe("Updated publication");
+    await writeFile(f.output, "corrupt");
+    expect((await f.reader.read("BTCUSDT")).reason).toBe(
+      "invalid_prediction_publication",
+    );
+    await f.save();
+    expect((await f.reader.read("BTCUSDT")).status).toBe("experimental");
+    await rm(f.output);
+    expect((await f.reader.read("BTCUSDT")).reason).toBe(
+      "no_prediction_publication",
+    );
+  });
+
+  it("rechecks registry stamps and UTC expiry on warm cache hits", async () => {
+    const f = await fixture();
+    expect((await f.reader.read("BTCUSDT")).status).toBe("experimental");
+    f.advance(12 * 60 * 60000);
+    expect((await f.reader.read("BTCUSDT")).reason).toBe("prediction_expired");
+    f.advance(-12 * 60 * 60000);
+    await writeFile(f.database, "CHANGED REGISTRY");
+    expect((await f.reader.read("BTCUSDT")).reason).toBe(
+      "registry_changed_regenerate_predictions",
+    );
+  });
+
   it("has no generative AI dependency or environment settings", async () => {
     const pkg = JSON.parse(
       await readFile(new URL("../package.json", import.meta.url), "utf8"),

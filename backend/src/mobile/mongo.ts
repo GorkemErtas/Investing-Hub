@@ -180,6 +180,8 @@ export function createMongoRepository(uri: string): MobileRepository {
         serverSelectionTimeoutMS: 3000,
         connectTimeoutMS: 3000,
         maxPoolSize: 5,
+        waitQueueTimeoutMS: 3000,
+        socketTimeoutMS: 5000,
       });
       // Non-destructive: preserve existing indexes/data; create the legacy unique
       // email index on fresh databases too. Fail private readiness on an index conflict.

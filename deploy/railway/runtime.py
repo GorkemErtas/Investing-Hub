@@ -1,12 +1,13 @@
 """Supervise HTTP and finite daily ML jobs on one persistent Railway volume."""
 import json
+import math
 import os
 import signal
 import subprocess
 import sys
 import threading
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from uuid import uuid4
 
@@ -43,12 +44,19 @@ def load_state(path):
         if path.stat().st_size > 4096:
             raise ValueError('oversized_state')
         state = json.loads(path.read_text(encoding='utf-8'))
-        if not isinstance(state, dict) or not isinstance(state.get('nextAttempt', 0), (int, float)):
+        if not isinstance(state, dict):
             raise ValueError('invalid_state')
+        retry = state.get('nextAttempt', 0)
+        if type(retry) not in (int, float) or not math.isfinite(retry) or retry < 0:
+            raise ValueError('invalid_retry')
+        if 'lastSuccess' in state:
+            success = state['lastSuccess']
+            if not isinstance(success, str) or date.fromisoformat(success).isoformat() != success:
+                raise ValueError('invalid_success_date')
         return state
     except FileNotFoundError:
         return {}
-    except (ValueError, TypeError):
+    except (ValueError, TypeError, OverflowError):
         log('scheduler_state_invalid')
         return {}
 

@@ -38,6 +38,12 @@ export function createAuthService(
       attempts: number;
     }
   >();
+  const registering = new Set<string>();
+  const registrationSize = () => {
+    let size = pending.size;
+    for (const email of registering) if (!pending.has(email)) size++;
+    return size;
+  };
   // Fixed cost even for unknown accounts, reducing account-enumeration timing differences.
   const dummy = bcrypt.hash("unused-comparison-password", 12);
   return {
@@ -57,7 +63,7 @@ export function createAuthService(
         );
       for (const [key, entry] of pending)
         if (entry.expires <= now()) pending.delete(key);
-      if (pending.size >= 1000)
+      if (registrationSize() >= 1000)
         throw new AppError(
           503,
           "REGISTRATION_BUSY",
@@ -65,33 +71,48 @@ export function createAuthService(
         );
       if (await repo.findUser(input.email)) return;
       const previous = pending.get(input.email);
-      if (previous && previous.expires - now() > 9 * 60000)
+      if (
+        registering.has(input.email) ||
+        (previous && previous.expires - now() > 9 * 60000)
+      )
         throw new AppError(
           429,
           "VERIFICATION_COOLDOWN",
           "Please wait a minute before requesting another code.",
         );
-      const code = String(randomInt(100000, 1000000));
-      const user = {
-        ...input,
-        password: await bcrypt.hash(input.password, 12),
-        isVerified: true,
-      };
-      pending.set(input.email, {
-        user,
-        code: digest(code),
-        expires: now() + 10 * 60000,
-        attempts: 0,
-      });
-      try {
-        await mailer(input.email, code);
-      } catch {
-        pending.delete(input.email);
+      // Recheck after the database await, then reserve before expensive hashing.
+      if (registrationSize() >= 1000)
         throw new AppError(
           503,
-          "EMAIL_UNAVAILABLE",
-          "Could not send verification email. Please retry later.",
+          "REGISTRATION_BUSY",
+          "Registration is busy. Please retry later.",
         );
+      registering.add(input.email);
+      try {
+        const code = String(randomInt(100000, 1000000));
+        const user = {
+          ...input,
+          password: await bcrypt.hash(input.password, 12),
+          isVerified: true,
+        };
+        pending.set(input.email, {
+          user,
+          code: digest(code),
+          expires: now() + 10 * 60000,
+          attempts: 0,
+        });
+        try {
+          await mailer(input.email, code);
+        } catch {
+          pending.delete(input.email);
+          throw new AppError(
+            503,
+            "EMAIL_UNAVAILABLE",
+            "Could not send verification email. Please retry later.",
+          );
+        }
+      } finally {
+        registering.delete(input.email);
       }
     },
     async verify(email: string, code: string) {

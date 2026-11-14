@@ -29,17 +29,17 @@ Start with one CPU, approximately 1 GiB RAM and a 1 GiB volume, then measure the
 3. Attach a volume named `investing-hub-data` at **`/data`**, in the service's region. The example IaC uses `europe-west4`; check Binance availability and terms in the chosen region. The image refuses an ephemeral `/data` directory. Volumes are mounted only at runtime, not during builds or pre-deploy commands. [Volume setup](https://docs.railway.com/volumes).
 4. Configure these settings:
 
-| Setting | Value |
-| --- | --- |
-| Builder / Dockerfile | Docker / root `Dockerfile` |
-| Replicas / regions | exactly one replica in one region |
-| Healthcheck | `/api/health`, timeout 120 seconds |
-| Restart | On Failure, maximum 10 retries |
-| Deployment draining / shutdown grace | 20 seconds |
-| Serverless / App Sleeping | disabled |
-| Railway cron schedule | unset |
-| Volume mount | `/data` |
-| Start / pre-deploy command override | empty |
+| Setting                              | Value                              |
+| ------------------------------------ | ---------------------------------- |
+| Builder / Dockerfile                 | Docker / root `Dockerfile`         |
+| Replicas / regions                   | exactly one replica in one region  |
+| Healthcheck                          | `/api/health`, timeout 120 seconds |
+| Restart                              | On Failure, maximum 10 retries     |
+| Deployment draining / shutdown grace | 20 seconds                         |
+| Serverless / App Sleeping            | disabled                           |
+| Railway cron schedule                | unset                              |
+| Volume mount                         | `/data`                            |
+| Start / pre-deploy command override  | empty                              |
 
 The Docker healthcheck also calls `/api/health` on the runtime port. Health deliberately remains successful without predictions/accounts, preserving guest/demo mode. Monitor prediction freshness separately. Railway's healthcheck gates deployment and does not continuously probe live services. Child process crashes make the supervisor exit nonzero for the restart policy. [Healthcheck behavior](https://docs.railway.com/deployments/healthchecks).
 
@@ -51,7 +51,27 @@ Run `npm ci --prefix .railway --ignore-scripts` and `npm --prefix .railway run t
 
 ## Environment and HTTPS
 
-For optional web accounts, SMTP variables, session behavior and live acceptance checks are in [Web accounts](WEB_ACCOUNTS.md). Guest Demo requires none of those private services.
+For optional web accounts, Brevo HTTPS/SMTP variables, session behavior and live acceptance checks are in [Web accounts](WEB_ACCOUNTS.md). Guest Demo requires none of those private services.
+
+The [production audit](PRODUCTION_AUDIT.md) records hardening evidence and remaining
+work. `/api/health` is process liveness; use `/api/capabilities` for account readiness
+and all eight prediction responses for publication/source-day freshness. A configured
+email provider is not proof of delivery. Do not fail Guest Demo health simply because
+Mongo, email or predictions are unavailable.
+
+After an approved release, inspect existing `daily_finished`, `backup_finished`,
+`backup_failed` and `scheduler_state_invalid` events alongside `daily-status`.
+Invalid scheduler state now recovers to catch-up rather than accepting a nonfinite
+retry timestamp. Valid daily success/retry records retain the existing schedule.
+Prediction reads cache one validated publication; file/registry changes and UTC
+expiry still invalidate availability on subsequent requests. No extra cache service
+or production setting is required.
+
+Mongo still uses at most five application pool connections. Pool waits are bounded
+to three seconds and inactive sockets to five seconds, in addition to existing
+selection/query limits. These do not guarantee an end-to-end deadline or prove a
+timed-out write did not complete: reload authoritative account data before retrying.
+Retain the current single replica, volume, secrets and model registry.
 
 Set variables in Railway using [the secret-free example](../deploy/railway/.env.example). `.env` files are neither loaded automatically nor copied into the image.
 
@@ -84,6 +104,7 @@ Preserve the original local database. Export a consistent SQLite backup into a *
    ```
 
    Substitute the actual local backup path; do not pass `--overwrite`. [Volume CLI commands](https://docs.railway.com/cli/volume).
+
 3. Use `railway ssh --service investing-hub` to inspect the staging file with a read-only SQLite connection. Confirm `PRAGMA integrity_check` is `ok`, `PRAGMA user_version` is 1 and all eight symbols have an active model. Compare its SHA-256 with the local backup before installation. Model artifacts/checksums are subsequently inspected by `pipeline.py status` and daily verification.
 4. **First import only:** confirm `/ml/lifecycle.sqlite3` does not exist, then rename the staging file. Existing data requires the restore procedure below.
 
