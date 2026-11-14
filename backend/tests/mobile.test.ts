@@ -1,10 +1,11 @@
 import request from "supertest";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { createApp } from "../src/app";
 import { parseConfig } from "../src/config";
-import { createAuthService } from "../src/mobile/auth";
+import { createAuthService, type VerificationMailer } from "../src/mobile/auth";
+import { createVerificationMailer } from "../src/mobile/email";
 import type { Account, MobileRepository } from "../src/mobile/repository";
 import type { MarketService } from "../src/market/service";
 import { AppError } from "../src/errors";
@@ -33,7 +34,7 @@ const user: Account = {
   password: await bcrypt.hash("long-test-password", 4),
   isVerified: true,
 };
-function fixture() {
+function fixture(providerMailer?: VerificationMailer) {
   let portfolio: SavedPortfolio = {
     _id: id,
     name: "Private",
@@ -72,7 +73,9 @@ function fixture() {
     restoreAlert: vi.fn(async () => {}),
     close: vi.fn(async () => {}),
   };
-  const mailer = vi.fn(async (_email: string, _code: string) => {});
+  const mailer = vi.fn(
+    providerMailer ?? (async (_email: string, _code: string) => {}),
+  );
   const auth = createAuthService(repo, secret, mailer);
   return {
     repo,
@@ -443,5 +446,200 @@ describe("optional authenticated mobile API", () => {
       .set("Authorization", bearer());
     expect(result.status).toBe(500);
     expect(JSON.stringify(result.body)).not.toContain("sensitive");
+  });
+});
+
+describe("registration email delivery", () => {
+  const input = {
+    firstName: "New",
+    lastName: "User",
+    email: "new@example.com",
+    password: "long-new-password",
+  };
+  const emailConfig = parseConfig({
+    BREVO_API_KEY: "test-only-brevo-key",
+    EMAIL_FROM: "accounts@example.com",
+  });
+  const fetchMock = vi.fn<typeof fetch>();
+  let logs: ReturnType<typeof vi.spyOn>[];
+  beforeEach(() => {
+    fetchMock.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
+    logs = (["log", "info", "warn", "error", "debug"] as const).map((method) =>
+      vi.spyOn(console, method).mockImplementation(() => {}),
+    );
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it("keeps registration disabled and existing-user login available without a mailer", async () => {
+    const { repo } = fixture();
+    const auth = createAuthService(
+      repo,
+      secret,
+      await createVerificationMailer(config),
+    );
+    const app = createApp(config, market, { repo, auth, notifications: false });
+    expect((await request(app).get("/api/capabilities")).body).toMatchObject({
+      accounts: true,
+      registration: false,
+    });
+    const registration = await request(app)
+      .post("/api/auth/register")
+      .send(input);
+    expect(registration.status).toBe(503);
+    expect(registration.body.error.code).toBe("REGISTRATION_DISABLED");
+    expect(
+      (
+        await request(app).post("/api/auth/login").send({
+          email: user.email,
+          password: "long-test-password",
+        })
+      ).status,
+    ).toBe(200);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("preserves verification, cooldown, non-enumeration and explicit login", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 201 }));
+    const { app, repo, mailer } = fixture(
+      await createVerificationMailer(emailConfig),
+    );
+    expect(
+      (await request(app).get("/api/capabilities")).body.registration,
+    ).toBe(true);
+    const registered = await request(app)
+      .post("/api/auth/register")
+      .send(input);
+    expect(registered.status).toBe(202);
+    expect(registered.body).toEqual({
+      message:
+        "If registration is available for this email, a verification code has been sent.",
+    });
+    expect(repo.createUser).not.toHaveBeenCalled();
+    const code = mailer.mock.calls[0][1];
+    expect(code).toMatch(/^\d{6}$/);
+    expect(
+      JSON.parse(fetchMock.mock.calls[0][1]!.body as string).textContent,
+    ).toBe(`Your verification code is ${code}. It expires in 10 minutes.`);
+    expect(
+      (await request(app).post("/api/auth/register").send(input)).body.error
+        .code,
+    ).toBe("VERIFICATION_COOLDOWN");
+    const existing = await request(app)
+      .post("/api/auth/register")
+      .send({ ...input, email: user.email });
+    expect(existing.status).toBe(202);
+    expect(existing.body).toEqual(registered.body);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const verified = await request(app).post("/api/auth/verify").send({
+      email: input.email,
+      verificationCode: code,
+    });
+    expect(verified.status).toBe(201);
+    expect(verified.body).not.toHaveProperty("token");
+    expect(repo.createUser).toHaveBeenCalledTimes(1);
+    const created = vi.mocked(repo.createUser).mock.calls[0][0];
+    expect(created.isVerified).toBe(true);
+    expect(await bcrypt.compare(input.password, created.password)).toBe(true);
+    vi.mocked(repo.findUser).mockResolvedValue({ ...created, id: owner });
+    const login = await request(app)
+      .post("/api/auth/login")
+      .send({ email: input.email, password: input.password });
+    expect(login.status).toBe(200);
+    expect(login.body.token).toEqual(expect.any(String));
+    expect(logs.every((log) => log.mock.calls.length === 0)).toBe(true);
+  });
+
+  it.each([400, 401, 429, 500, 503])(
+    "returns EMAIL_UNAVAILABLE on Brevo HTTP %i and clears the failed code",
+    async (status) => {
+      fetchMock.mockResolvedValue(
+        new Response("test-only-brevo-key sensitive-provider-payload", {
+          status,
+        }),
+      );
+      const { app, repo, mailer } = fixture(
+        await createVerificationMailer(emailConfig),
+      );
+      const result = await request(app).post("/api/auth/register").send(input);
+      expect(result.status).toBe(503);
+      expect(result.body).toEqual({
+        error: {
+          code: "EMAIL_UNAVAILABLE",
+          message: "Could not send verification email. Please retry later.",
+        },
+      });
+      expect(repo.createUser).not.toHaveBeenCalled();
+      const rejectedCode = await request(app).post("/api/auth/verify").send({
+        email: input.email,
+        verificationCode: mailer.mock.calls[0][1],
+      });
+      expect(rejectedCode.status).toBe(400);
+      expect(rejectedCode.body.error.code).toBe("INVALID_VERIFICATION");
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      fetchMock.mockResolvedValue(new Response(null, { status: 201 }));
+      expect(
+        (await request(app).post("/api/auth/register").send(input)).status,
+      ).toBe(202);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(logs.every((log) => log.mock.calls.length === 0)).toBe(true);
+    },
+  );
+
+  it.each(["timeout", "network"])(
+    "returns EMAIL_UNAVAILABLE on a Brevo %s error",
+    async (failure) => {
+      if (failure === "timeout") {
+        const realTimeout = AbortSignal.timeout.bind(AbortSignal);
+        vi.spyOn(AbortSignal, "timeout").mockImplementation(() =>
+          realTimeout(10),
+        );
+        fetchMock.mockImplementation(
+          (_url, options) =>
+            new Promise((_resolve, reject) => {
+              const signal = options!.signal!;
+              signal.addEventListener("abort", () => reject(signal.reason), {
+                once: true,
+              });
+            }),
+        );
+      } else {
+        fetchMock.mockRejectedValue(
+          new Error("test-only-brevo-key sensitive-network-error"),
+        );
+      }
+      const { app, repo, mailer } = fixture(
+        await createVerificationMailer(emailConfig),
+      );
+      const result = await request(app).post("/api/auth/register").send(input);
+      expect(result.status).toBe(503);
+      expect(result.body.error.code).toBe("EMAIL_UNAVAILABLE");
+      expect(result.text).not.toContain("test-only-brevo-key");
+      expect(result.text).not.toContain(mailer.mock.calls[0][1]);
+      expect(repo.createUser).not.toHaveBeenCalled();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(logs.every((log) => log.mock.calls.length === 0)).toBe(true);
+    },
+  );
+
+  it("retains EMAIL_UNAVAILABLE for SMTP errors without exposing credentials or codes", async () => {
+    const { app, repo } = fixture(async (_email, code) => {
+      throw new Error(
+        `smtp://private-user:private-pass@smtp.example.com ${code}`,
+      );
+    });
+    const result = await request(app).post("/api/auth/register").send(input);
+    expect(result.status).toBe(503);
+    expect(result.body).toEqual({
+      error: {
+        code: "EMAIL_UNAVAILABLE",
+        message: "Could not send verification email. Please retry later.",
+      },
+    });
+    expect(repo.createUser).not.toHaveBeenCalled();
+    expect(logs.every((log) => log.mock.calls.length === 0)).toBe(true);
   });
 });
