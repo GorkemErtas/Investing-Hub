@@ -56,6 +56,22 @@ class RailwayRuntimeTests(unittest.TestCase):
             path.write_text('[]')
             self.assertEqual(runtime.load_state(path), {})
 
+    def test_invalid_retry_state_cannot_silently_disable_the_daily_job(self):
+        now = datetime(2026, 11, 14, 1, tzinfo=timezone.utc)
+        with temporary_directory() as temporary:
+            path = temporary/'scheduler.json'
+            for value in ('NaN', 'Infinity', '-Infinity', 'true', '-1', '"later"', str(10**1000)):
+                with self.subTest(value=value), patch('runtime.log') as log:
+                    path.write_text('{"nextAttempt":'+value+'}')
+                    state = runtime.load_state(path)
+                    self.assertEqual(state, {})
+                    self.assertTrue(runtime.should_run(state, now))
+                    log.assert_called_once_with('scheduler_state_invalid')
+            for value in ('not-a-date', '2026-02-30', '2026-1-1'):
+                with self.subTest(value=value), patch('runtime.log'):
+                    path.write_text('{"lastSuccess":"'+value+'","nextAttempt":0}')
+                    self.assertEqual(runtime.load_state(path), {})
+
     def test_backup_preserves_source_stamp_models_and_history_and_limits_retention(self):
         with temporary_directory() as temporary:
             database = Path(temporary)/'source.sqlite3'
