@@ -1,12 +1,13 @@
-import express, { type ErrorRequestHandler } from "express";
+import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
-import { extname, join, resolve } from "node:path";
-import { z, ZodError } from "zod";
+import { z } from "zod";
 import { intervalSchema, symbolSchema } from "@investing-hub/shared/contracts";
 import type { Config } from "./config.js";
 import { AppError } from "./errors.js";
+import { errorHandler } from "./errorHandler.js";
+import { mountWebApp } from "./web.js";
 import { createMarketService, type MarketService } from "./market/service.js";
 import {
   createPredictionReader,
@@ -128,97 +129,10 @@ export function createApp(
         ),
       ),
     );
-  if (config.WEB_DIST_PATH) {
-    const directory = resolve(config.WEB_DIST_PATH);
-    app.use(
-      express.static(directory, {
-        index: false,
-        dotfiles: "ignore",
-        setHeaders(res, path) {
-          res.setHeader(
-            "Cache-Control",
-            path.startsWith(join(directory, "assets") + "/") ||
-              path.startsWith(join(directory, "assets") + "\\")
-              ? "public, max-age=31536000, immutable"
-              : "no-cache",
-          );
-        },
-      }),
-    );
-    app.get(/.*/, (req, res, next) => {
-      if (
-        /^\/(api|assets)(\/|$)/.test(req.path) ||
-        /\/\./.test(req.path) ||
-        extname(req.path)
-      )
-        return next();
-      res.setHeader("Cache-Control", "no-cache");
-      res.sendFile(join(directory, "index.html"));
-    });
-  }
+  if (config.WEB_DIST_PATH) mountWebApp(app, config.WEB_DIST_PATH);
   app.use((_req, _res, next) =>
     next(new AppError(404, "NOT_FOUND", "Endpoint not found.")),
   );
-  const errors: ErrorRequestHandler = (err, _req, res, _next) => {
-    if (err instanceof ZodError) {
-      res.status(400).json({
-        error: {
-          code: "INVALID_REQUEST",
-          message:
-            "Invalid request fields, symbol, interval or query parameters.",
-        },
-      });
-      return;
-    }
-    if (err instanceof AppError) {
-      res
-        .status(err.status)
-        .json({ error: { code: err.code, message: err.message } });
-      return;
-    }
-    if (
-      err &&
-      typeof err === "object" &&
-      "type" in err &&
-      ["entity.parse.failed", "entity.too.large"].includes(String(err.type))
-    ) {
-      res.status(err.type === "entity.too.large" ? 413 : 400).json({
-        error: {
-          code: "INVALID_BODY",
-          message: "JSON body is invalid or too large.",
-        },
-      });
-      return;
-    }
-    if (
-      err &&
-      typeof err === "object" &&
-      "name" in err &&
-      /^(Mongo|Mongoose)/.test(String(err.name))
-    ) {
-      res.status(503).json({
-        error: {
-          code: "ACCOUNTS_UNAVAILABLE",
-          message: "Account storage is unavailable. Please retry later.",
-        },
-      });
-      return;
-    }
-    // Do not serialize provider responses, request data or exception strings.
-    console.error(
-      JSON.stringify({
-        event: "request_failed",
-        method: _req.method,
-        code: "INTERNAL_ERROR",
-      }),
-    );
-    res.status(500).json({
-      error: {
-        code: "INTERNAL_ERROR",
-        message: "An unexpected error occurred.",
-      },
-    });
-  };
-  app.use(errors);
+  app.use(errorHandler);
   return app;
 }

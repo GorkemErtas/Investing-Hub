@@ -29,14 +29,25 @@ flowchart LR
 - `shared` depends only on Zod and Decimal. No DOM, React, AsyncStorage, filesystem or Express objects. Its pure ledger replays chronological transactions, capitalizes buy fees, deducts sell fees, preserves closed-position realized profit and refuses oversells/duplicate IDs. String inputs preserve eight-decimal precision; display conversion occurs after Decimal aggregation. Unknown valuations remain null.
 - `backend/src/market` is the retained modern provider/cache/service implementation. The provider hostname is fixed, symbols/intervals allowlisted, candle UTC boundaries validated, and publication/fetch times distinguished. Cache TTL, stale limit, request deduplication, cold-failure backoff, provider concurrency/rate cooldown and request budgets bound costs.
 - `backend/src/mobile` contains authenticated account, owned portfolio, settings, Mongo and notification services. Repository injection makes HTTP/service authorization and failure behavior testable without Mongo. Queries carry both owner and resource ID. Full-history validation and Mongo version predicates protect trade updates. Public routes do not read Mongo or send mail/push.
-- `backend/src/app.ts` owns HTTP policy, validation and sanitized errors. `server.ts` owns environment composition and lifecycle. No active `server.js`, nested backend, ONNX runtime or public force-refresh endpoint remains.
+- `backend/src/app.ts` composes HTTP policy and routes. `web.ts` owns static-file caching and SPA fallback; `errorHandler.ts` owns sanitized HTTP errors. Their middleware order is unchanged. `server.ts` owns environment composition and lifecycle. No active `server.js`, nested backend, ONNX runtime or public force-refresh endpoint remains.
 - `backend/src/predictions` reads the single checksum/schema/registry-stamped numerical publication. It does not load models, invoke Python or contact a generative AI service. Missing/expired/corrupt forecasts are explicitly unavailable.
 - `webapp/src/pages/PricePredictions.tsx` displays all eight numerical next-day USDT forecasts, target UTC dates and experimental labels. It has no research report, narrative, source iframe, consent or paid action.
 - `webapp` retains browser-only guest transactions and the existing storage keys. It consumes shared accounting/contracts without requiring mobile account infrastructure.
+- `webapp/src/components/TransactionDialog.tsx` owns the trade form, local-time conversion and localized decimal inputs. The portfolio page owns guest/account operations and ledger presentation; both modes use the same dialog callbacks.
 - `mobileapp` owns native navigation, platform APIs and secure-token/preferences adapters. Its typed client validates contracts, scopes private data to the session and pauses polling in the background. Existing market, portfolio and authentication contracts remain compatible; the prediction contract supports numeric experimental values and explicit unavailability.
 - `ml` owns completed UTC datasets, shared past-only features, comparable chronological training/evaluation, deterministic per-coin selection and the existing immutable forecast ledger. Ridge/Random Forest/Gradient Boosting and a CPU PyTorch LSTM are real candidates. `predict` publishes one numerical snapshot. No performance approval gates or duplicate publication paths exist. Historical artifacts/records are preserved; see [methodology](../ml/README.md).
 
 `ml/daily.py` orchestrates the existing CLI operations under the same database file lock as manual writes. Generic checksum-protected atomic JSON lives in `ml/json_store.py`. The optional PowerShell scheduler contains no models or duplicate inference path; it invokes the repository virtualenv using absolute paths. Internal evaluation stays in SQLite and the `evaluate` CLI. [Daily operations](DAILY_UPDATES.md) documents UTC scheduling, bounded execution/logging and recovery.
+
+`ml/selection.py` owns the current pipeline identity, candidate order and selection
+of frozen evaluations. `train.py`/`lstm.py` fit models only through explicit
+training; the CLI imports `train.py` only for that command. `artifact.py` and
+`lstm_inference.py` consume the same bounded numeric formats. Non-LSTM predictions
+and inspection do not load Torch or sklearn. Existing LSTM inference still uses
+CPU Torch for numerical compatibility; `evaluation.py` loads sklearn metrics only
+when fitting or scoring realized outcomes. Requirements and the Railway image
+retain those supported capabilities. See the [cleanup audit](CODEBASE_CLEANUP.md)
+for deletion evidence, verification and future pipeline boundaries.
 
 ## Package/build strategy
 

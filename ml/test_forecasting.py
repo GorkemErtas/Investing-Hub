@@ -2,6 +2,8 @@
 import io
 import json
 import shutil
+import subprocess
+import sys
 import unittest
 import uuid
 from pathlib import Path
@@ -17,7 +19,8 @@ from publication import prediction_result
 from store import Store
 from test_lifecycle import DatabaseTests, FixtureProvider, config, seed
 from test_pipeline import candles
-from train import ALGORITHMS, evaluation_plan, sequence_data, select_best, train_models, candidates
+from selection import ALGORITHMS, select_best
+from train import evaluation_plan, sequence_data, train_models, candidates
 
 
 class ForecastWorkflowTests(DatabaseTests):
@@ -123,6 +126,64 @@ class ForecastWorkflowTests(DatabaseTests):
         cfg.write_text(canonical({**self.cfg,'start_date':'2020-01-01'}),encoding='utf-8')
         return ['daily','--db',str(self.path),'--config',str(cfg),'--output',str(Path(self.tmp.name)/'predictions.json')]
 
+    def test_existing_ridge_forecasts_and_cli_commands_do_not_import_fitting_libraries(self):
+        # Use real, already-fitted synthetic artifacts from the common fixture.
+        self.store.db.execute("UPDATE models SET status='archived'")
+        for symbol in SYMBOLS:
+            model = next(self.store.model(row[0]) for row in self.store.db.execute(
+                'SELECT id FROM models WHERE symbol=?', (symbol,))
+                if self.store.model(row[0])['metadata']['algorithm'] == 'ridge')
+            self.store.db.execute("UPDATE models SET status='active' WHERE id=?", (model['id'],))
+        cfg = Path(self.tmp.name)/'runtime-config.json'
+        cfg.write_text(canonical(self.cfg), encoding='utf-8')
+        output = Path(self.tmp.name)/'runtime-predictions.json'
+        script = '''
+import importlib.abc, sys
+class NoFitting(importlib.abc.MetaPathFinder):
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname.split('.')[0] in {'train', 'lstm', 'sklearn', 'torch'}:
+            raise AssertionError('Unexpected fitting import: '+fullname)
+sys.meta_path.insert(0, NoFitting())
+from pipeline import main
+from unittest.mock import patch
+database, config, output, now = sys.argv[1:]
+with patch('pipeline.utc_ms', return_value=int(now)):
+    for command in ('status', 'evaluate', 'reconcile', 'predict', 'select'):
+        args = [command, '--db', database, '--config', config]
+        if command == 'predict': args += ['--output', output]
+        assert main(args) == 0, command
+'''
+        result = subprocess.run([sys.executable, '-c', script, str(self.path), str(cfg),
+                                 str(output), str(self.now+1)], cwd=ROOT,
+                                capture_output=True, text=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        report = json.loads(json.loads(output.read_text(encoding='utf-8'))['payload'])
+        self.assertEqual(len(report['forecasts']), len(SYMBOLS))
+        self.assertTrue(all(row['status'] == 'experimental' for row in report['forecasts']))
+
+    def test_existing_lstm_weights_predict_without_importing_fitting_or_sklearn(self):
+        artifact = next(json.loads(self.store.model(row[0])['artifact'])
+                        for row in self.store.db.execute("SELECT id FROM models WHERE symbol='BTCUSDT'")
+                        if self.store.model(row[0])['metadata']['algorithm'] == 'lstm')
+        x = np.linspace(-.01, .01, 2*artifact['lookback']*len(FEATURES)).reshape(
+            2, artifact['lookback'], len(FEATURES))
+        script = '''
+import importlib.abc, json, sys
+class NoFitting(importlib.abc.MetaPathFinder):
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname.split('.')[0] in {'train', 'lstm', 'sklearn'}:
+            raise AssertionError('Unexpected fitting import: '+fullname)
+sys.meta_path.insert(0, NoFitting())
+from artifact import predict
+payload = json.load(sys.stdin)
+print(json.dumps(predict(payload['artifact'], payload['x']).tolist()))
+'''
+        result = subprocess.run([sys.executable, '-c', script], cwd=ROOT,
+                                input=canonical({'artifact': artifact, 'x': x.tolist()}),
+                                capture_output=True, text=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        np.testing.assert_allclose(json.loads(result.stdout), predict(artifact, x), atol=1e-12, rtol=0)
+
     def test_daily_real_command_order_new_day_reconciliation_idempotence_and_model_preservation(self):
         import pipeline
         from daily import daily_status
@@ -141,7 +202,7 @@ class ForecastWorkflowTests(DatabaseTests):
         def observed(args,*values,**kwargs):
             commands.append(args.command)
             return original(args,*values,**kwargs)
-        with patch('pipeline.utc_ms',return_value=now),patch('pipeline.Binance',return_value=provider),patch('pipeline.run',side_effect=observed),patch('sys.stdout',new_callable=io.StringIO),patch('pipeline.train_models',side_effect=AssertionError('No daily training')),patch('pipeline.select_best',side_effect=AssertionError('No daily selection')):
+        with patch('pipeline.utc_ms',return_value=now),patch('pipeline.Binance',return_value=provider),patch('pipeline.run',side_effect=observed),patch('sys.stdout',new_callable=io.StringIO),patch('train.train_models',side_effect=AssertionError('No daily training')),patch('pipeline.select_best',side_effect=AssertionError('No daily selection')):
             self.assertEqual(main(self.daily_arguments()),0)
             fetched=len(provider.calls)
             self.assertEqual(main(self.daily_arguments()),0)

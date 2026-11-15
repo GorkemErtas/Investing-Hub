@@ -1,6 +1,6 @@
 # Offline daily forecasting experiment
 
-Historical report preserved from the earlier static experiment. These observations have been inspected and are development evidence; they are not an untouched test for subsequent tuning. The dynamic lifecycle uses prospective prediction tracking and separate review gates; see [current methodology](../README.md).
+Historical report preserved from the earlier static experiment. These observations have been inspected and are development evidence; they are not an untouched test for subsequent tuning. Selection gates described below belong to that historical experiment. The current lifecycle uses selection RMSE with a simplicity tolerance and no approval gates; see [current methodology](../README.md).
 
 Binance Vision historical data; noncommercial research. Derived results licensed CC BY-NC-SA 4.0.
 

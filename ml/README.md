@@ -4,6 +4,30 @@ One offline Python pipeline reuses the existing verified Binance daily OHLCV SQL
 
 All supported commands run through `ml/pipeline.py` (or `ml/run.ps1` on Windows); training and forecasting modules contain the implementation. Stored model metadata retains the training-source hash from its original fit. Source cleanup does not change those historical records or require retraining; a future explicit fit records the updated source hash.
 
+## Module responsibilities
+
+- `provider.py` / `ingestion.py` acquire and verify completed source candles;
+  `store.py` retains the existing SQLite schema and immutable records.
+- `features.py` defines the current daily feature contract for both fitting and
+  inference. `train.py` / `lstm.py` own chronological fitting and train-only scaling.
+- `selection.py` selects from frozen comparable evaluations and defines the current
+  pipeline version/candidate order without importing training libraries.
+- `artifact.py` / `lstm_inference.py` validate and run bounded numeric artifacts.
+  LSTM keeps its existing CPU Torch implementation; it does not import sklearn or
+  fitting. Non-LSTM generation does not load Torch or sklearn.
+- `evaluation.py` preserves the same sklearn scoring formulas, imported when
+  training or reconciling actual outcomes needs metrics.
+- `forecast.py` generates/reconciles immutable predictions; `publication.py`
+  validates and publishes the single HTTP-facing snapshot; `daily.py` coordinates
+  daily operations. `pipeline.py` imports fitting only for the explicit `train`
+  command. No training runs at import time, during inspection, or in HTTP.
+
+All extracted fitting, selection, metric and inference source files contribute to
+future training fingerprints. Existing artifact identities and recorded hashes
+remain readable without migration. The full requirements remain installed for
+the supported CLI and existing LSTM/scoring behavior; this cleanup does not claim
+a smaller container or a Torch-free LSTM runtime.
+
 ## Commands and execution order
 
 ```powershell

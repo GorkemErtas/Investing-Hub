@@ -15,7 +15,7 @@ from ingestion import import_legacy, sync
 from provider import Binance
 from publication import export_predictions
 from store import Store
-from train import train_models, select_best, PIPELINE_VERSION
+from selection import select_best, PIPELINE_VERSION
 
 
 def parser():
@@ -55,6 +55,9 @@ def inspect_status(store, symbols, now):
 
 
 def run(args, store, config, now, provider=None, on_retry=None):
+    if args.command == 'train':
+        from train import train_models
+
     symbols=[args.symbol] if args.symbol else config['symbols']
     if args.command=='backup':
         if args.output.exists() or args.output.resolve()==args.db.resolve():

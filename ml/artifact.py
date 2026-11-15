@@ -85,7 +85,7 @@ def predict(artifact: dict | str, x) -> np.ndarray:
     if artifact['format'] == 'numeric-lstm-v1':
         if artifact['algorithm'] != 'lstm':
             raise ValueError('Invalid LSTM algorithm')
-        from lstm import predict_artifact
+        from lstm_inference import predict_artifact
         return predict_artifact(artifact, x)
     x = np.asarray(x, dtype=float)
     if x.ndim != 2 or x.shape[1] != len(FEATURES) or not np.isfinite(x).all():

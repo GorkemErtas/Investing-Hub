@@ -1,3 +1,7 @@
+> Historical experiment record. Approval and prospective review rules below
+> describe the 2026-11-06 implementation. Current selection and operations are
+> documented in [the ML guide](../README.md).
+
 # Daily lifecycle run: 2026-11-06
 
 Binance Vision data; noncommercial research. Derived research results: CC BY-NC-SA 4.0 and [Vision Dataset Terms](https://github.com/binance/binance-public-data/blob/master/TERMS_AND_CONDITIONS.md).
