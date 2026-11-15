@@ -10,6 +10,8 @@ For production Docker hosting, see the [Railway deployment guide](docs/RAILWAY.m
 
 The [production engineering audit](docs/PRODUCTION_AUDIT.md) records verified
 hardening changes, benchmark results, isolated test procedures and remaining risks.
+The [codebase cleanup report](docs/CODEBASE_CLEANUP.md) records the repository
+inventory, safe removal evidence, module extractions and before/after validation.
 
 Node 24/26 and Python 3.13 are supported by the verified environment.
 
