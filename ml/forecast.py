@@ -5,7 +5,8 @@ import numpy as np
 from artifact import predict
 from common import DAY_MS, canonical, digest, latest_open
 from features import FEATURES, FEATURE_VERSION, feature_frame
-from train import PIPELINE_VERSION, metrics
+from selection import PIPELINE_VERSION
+from evaluation import metrics
 
 
 def generate(store, symbol, config, now):

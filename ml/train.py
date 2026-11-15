@@ -7,7 +7,6 @@ import sklearn
 import torch
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 from sklearn.linear_model import Ridge
-from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -15,18 +14,8 @@ from artifact import export_model, predict as numeric_predict
 from common import ROOT, canonical, digest, latest_open
 from features import FEATURES, FEATURE_VERSION, prepare
 from lstm import LSTMRegressor
-
-PIPELINE_VERSION = 'price-predictions-v1'
-ALGORITHMS = ('ridge', 'gradient_boosting', 'random_forest', 'lstm')
-
-def metrics(target, predicted, close):
-    target, predicted, close = (np.asarray(v, dtype=float) for v in (target, predicted, close))
-    return {'return_mae': float(mean_absolute_error(target, predicted)),
-            'return_rmse': float(np.sqrt(mean_squared_error(target, predicted))),
-            'price_mae_usdt': float(mean_absolute_error(close * (1 + target), close * (1 + predicted))),
-            'price_rmse_usdt': float(np.sqrt(mean_squared_error(close * (1 + target), close * (1 + predicted)))),
-            'directional_accuracy': float(np.mean(np.sign(target) == np.sign(predicted))),
-            'samples': len(target)}
+from evaluation import metrics
+from selection import PIPELINE_VERSION, ALGORITHMS
 
 
 def candidates(seed):
@@ -38,7 +27,8 @@ def candidates(seed):
 
 
 def training_code_hash():
-    names = ('train.py', 'lstm.py', 'features.py', 'artifact.py', 'common.py',
+    names = ('train.py', 'lstm.py', 'lstm_inference.py', 'selection.py', 'evaluation.py',
+             'features.py', 'artifact.py', 'common.py',
              'anomaly_reviews.py', 'reviews/historical_price_movements.json')
     return digest(b''.join((ROOT/name).read_bytes() for name in names))
 
@@ -139,27 +129,3 @@ def train_models(store, symbol, config, now):
         store.event('trained', {'model_id': model_id, 'comparison_id': comparison_id}, now)
         output.append({'model_id': model_id, 'result': 'trained', 'selection': selection_score, 'final_evaluation': final['metrics']})
     return output
-
-
-def select_best(store, symbol, config, now):
-    dataset = store.dataset(symbol)
-    models = [store.model(row[0]) for row in store.db.execute('SELECT id FROM models WHERE symbol=?', (symbol,)).fetchall()]
-    models = [m for m in models if m['metadata'].get('pipeline_version') == PIPELINE_VERSION and
-              m['metadata']['dataset_fingerprint'] == (dataset or {}).get('fingerprint') and m['metadata']['config'] == config]
-    if not models:
-        raise ValueError('Train current candidates before model selection')
-    # Never mix versions, data, environments or evaluation windows.
-    newest = max(models, key=lambda m: (m['metadata']['trained_at'], m['metadata']['comparison_id']))['metadata']['comparison_id']
-    models = [m for m in models if m['metadata']['comparison_id'] == newest]
-    if set(m['metadata']['algorithm'] for m in models) != set(ALGORITHMS):
-        raise ValueError('Incomplete comparable candidate set')
-    error = min(m['metadata']['validation_metrics']['price_rmse_usdt'] for m in models)
-    equivalent = [m for m in models if m['metadata']['validation_metrics']['price_rmse_usdt'] <= error*(1+config['selection_tolerance'])]
-    chosen = min(equivalent, key=lambda m: (ALGORITHMS.index(m['metadata']['algorithm']), m['id']))
-    store.db.execute("UPDATE models SET status='archived' WHERE symbol=? AND status='active' AND id<>?", (symbol, chosen['id']))
-    store.db.execute("UPDATE models SET status='active' WHERE id=?", (chosen['id'],))
-    store.event('model_selected', {'symbol': symbol, 'model_id': chosen['id'],
-        'rule': 'selection_price_rmse_with_relative_tolerance_then_simplicity_then_id',
-        'tolerance': config['selection_tolerance']}, now)
-    return {'symbol': symbol, 'model_id': chosen['id'], 'algorithm': chosen['metadata']['algorithm'],
-            'selection': chosen['metadata']['validation_metrics'], 'final_evaluation': chosen['metadata']['final_evaluation']['metrics']}

@@ -13,7 +13,8 @@ from features import validate_candles, prepare
 from forecast import generate
 from ingestion import sync, import_legacy
 from store import fingerprint
-from train import train_models, select_best
+from train import train_models
+from selection import select_best
 from test_lifecycle import DatabaseTests, config
 from test_pipeline import candles
 
