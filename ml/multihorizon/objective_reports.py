@@ -144,7 +144,8 @@ def export_objective_report(study, output, *, explain=False):
                     failed.append({'symbol': symbol, 'horizon': horizon, 'trial': trial['id'], 'status': row['status'], 'reason': row.get('error')})
             selected = {name: research_candidate(records, name) for name in ('direction', 'volatility')}
             explanation = None
-            if explain and header and spent+pilot_seconds+explanations < protocol['resourceBudget']['maxWallSeconds']:
+            remaining = protocol['resourceBudget']['maxWallSeconds']-spent-pilot_seconds-explanations
+            if explain and header and remaining >= 15:
                 try:
                     with threadpool_limits(limits=1):
                         explanation = explain_pair(study, symbol, horizon, protocol,
@@ -154,6 +155,9 @@ def export_objective_report(study, output, *, explain=False):
                     explanation = {'failed': f'{type(error).__name__}: {error}'}
             elif (directory/'explanation.json').exists():
                 explanation = json.loads((directory/'explanation.json').read_text(encoding='utf-8'))
+                explanations += explanation['seconds']
+            elif header:
+                explanation = {'unexecuted': 'explanation_resource_budget'}
             compact, shared_windows = [], {}
             for row in records:
                 reduced = {k: v for k, v in row.items() if k not in ('code', 'protocolFingerprint', 'dailyLossImprovement', 'folds')}
@@ -196,6 +200,10 @@ def export_objective_report(study, output, *, explain=False):
         'incompleteOrFailed': failed, 'measuredStudySeconds': spent, 'explanationSeconds': explanations,
         'engineeringPilot': {'execution': pilot, 'trials': pilot_trials, 'seconds': pilot_seconds,
             'note': 'same fixed model configurations; first pair hit 180s before baseline-calculation caching; preserved separately and excluded from model ranking'},
+        'resourceAccounting': {'registeredExperimentSeconds': protocol['resourceBudget']['maxWallSeconds'],
+            'measuredFitPilotAndExplanationSeconds': spent+pilot_seconds+explanations,
+            'reportBatchOverrunSeconds': max(0., spent+pilot_seconds+explanations-protocol['resourceBudget']['maxWallSeconds']),
+            'note': 'original optional explanation guard checked between model batches; a 15-second admission margin now prevents starting another batch near the cap; no additional model fitting was performed'},
         'productionAcceptedObjectives': 0, 'futureConfirmationStatus': 'not_observed'}
     # Keep individual pair evidence reviewable; the index fingerprints every file.
     index = {k: v for k, v in evidence.items() if k != 'pairs'}
@@ -257,6 +265,7 @@ def export_objective_report(study, output, *, explain=False):
         'The old inspected holdout is development history. 2026-12-01 through 2027-02-28 UTC is reserved and not yet observed.',
         'GARCH is research-only until its ongoing variance state has a validated bounded recovery path.',
         'Numeric latency excludes feature/provider cost. RSS includes Python/library/data memory. No Railway sizing claim is inferred.',
+        'Optional explanations may be partial at the combined resource cap; exact measured overrun/accounting is recorded in evidence.json.',
         'Failed and unexecuted configurations remain explicit in JSON. No raw CSV/Parquet/model weights are committed.']
     output.mkdir(parents=True, exist_ok=True)
     (output/'RESULTS.md').write_text('\n'.join(lines)+'\n', encoding='utf-8')

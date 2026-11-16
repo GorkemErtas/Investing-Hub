@@ -1,0 +1,3 @@
+# Optional standalone research figures; not a production dependency.
+-r requirements-objectives.txt
+matplotlib==3.11.2

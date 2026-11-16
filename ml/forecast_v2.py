@@ -45,6 +45,7 @@ def main(argv=None):
     objectives_report.add_argument('--study', type=Path, default=Path('ml/artifacts/objectives-study-2026-11-16'))
     objectives_report.add_argument('--output', type=Path, default=Path('ml/reports/objectives-phase2'))
     objectives_report.add_argument('--explain', action='store_true')
+    objectives_report.add_argument('--plots', action='store_true')
     objectives_catalog = commands.add_parser('objective-catalog')
     objectives_catalog.add_argument('--study', type=Path, default=Path('ml/artifacts/objectives-study-2026-11-16'))
     objectives_catalog.add_argument('--output', type=Path, default=Path('ml/artifacts/objective-registry/registry.json'))
@@ -52,6 +53,14 @@ def main(argv=None):
     if args.command == 'objective-report':
         from multihorizon.objective_reports import export_objective_report
         result = export_objective_report(args.study, args.output, explain=args.explain)
+        if args.plots:
+            from multihorizon.objective_plots import plot_reliability
+            plots = plot_reliability(args.output)
+            with (args.output/'RESULTS.md').open('a', encoding='utf-8') as document:
+                document.write('\n## Development reliability figures\n\n')
+                for name in plots['figures']:
+                    document.write(f'- [{name}]({name})\n')
+            print(json.dumps(plots))
         print(json.dumps({'configurations': result['plannedConfigurations'], 'incomplete': len(result['incompleteOrFailed']),
                           'productionAccepted': result['productionAcceptedObjectives']}))
         return 0
