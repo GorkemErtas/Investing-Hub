@@ -8,6 +8,13 @@ See [local operations](../docs/LOCAL_WINDOWS.md), [Türkçe ML summary](../docs/
 and [local selection metrics](reports/local-selection.json). The daily system below
 remains supported independently; Railway is legacy reference only.
 
+Volatility now ranks development **MAE first, QLIKE second**. The preserved
+[QLIKE-first manifest](reports/local-selection-v1.json), current manifest and
+[24-pair comparison](reports/selection-quality/COMPARISON.md) distinguish experimental
+availability from baseline outperformance and independent validation. The
+[stability review](reports/selection-quality/STABILITY.md) reports folds, regimes,
+event tails and calibration limitations without imposing new activation gates.
+
 Minute multi-horizon v2 now lives in `multihorizon/` with the separate
 `forecast_v2.py` command surface. See [operations and reproduction](../docs/FORECAST_OPERATIONS.md),
 [validation fingerprints](reports/historical-v2-validation.json) and

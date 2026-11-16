@@ -41,7 +41,7 @@ Bu bulgular [ayrıntılı araştırmada](OBJECTIVE_FINDINGS.md) aynen korunur.
 
 **Yeni yerel kullanım politikası**, mevcut ve bütünlüğü doğrulanmış modelleri
 geliştirme performansına göre sıralar: yön için kalibre log loss → Brier,
-oynaklık için QLIKE → MAE, fiyat için getiri RMSE. 12 ondalığa yuvarlanan ölçütler
+oynaklık için **MAE → QLIKE**, fiyat için getiri RMSE. 12 ondalığa yuvarlanan ölçütler
 eşitse sabit sadelik sırası (doğrusal/HAR, RF, histogram GB, LightGBM, XGBoost,
 LSTM), sonra aday kimliği kullanılır. Özellik çıkarma deneylerindeki eğitilmiş
 modeller de adaydır. Son holdout sonuçları **seçim için kullanılmaz**.
@@ -52,7 +52,7 @@ yapmaz. 24 yön, 24 oynaklık ve 24 fiyat artefaktı kullanılabilir durumdadır
 Eksik/bozuk bir ağırlık atlanır; başka geçerli eğitilmiş aday yoksa sayı gösterilmez.
 
 Aşağıdaki tablo mevcut yerel seçimleri özetler. Yön sütunu kalibre log loss'u;
-oynaklık sütunu MAE'yi ve QLIKE seçimine rağmen MAE bakımından baz modele göre
+oynaklık sütunu MAE'yi ve MAE bakımından baz modele göre
 değişimi gösterir. **Negatif iyileşme, baz modelden kötü sonuçtur.** Fiyat oranı
 geliştirme RMSE / değişim-yok baz RMSE'dir; 1'in üstü daha kötüdür. Aday kimlikleri,
 QLIKE, ECE, MCC, kapsama, artefakt hash'leri ve tam ölçüler
@@ -60,39 +60,59 @@ QLIKE, ECE, MCC, kapsama, artefakt hash'leri ve tam ölçüler
 
 | Coin / ufuk | Yön adayı · log loss | Oynaklık adayı · MAE · baz iyileşmesi | Fiyat modeli · RMSE/baz |
 |---|---|---|---|
-| BTC / 1m | lightgbm_regularized · 1.0404 | rich-rv-volatility · 0.000417 · -49.75% | xgboost · 1.00067 |
+| BTC / 1m | lightgbm_regularized · 1.0404 | har_regularized · 0.000340 · -21.98% | xgboost · 1.00067 |
 | BTC / 15m | ablate-activity · 1.0663 | lightgbm_rv · 0.000566 · +4.00% | xgboost · 1.00072 |
 | BTC / 1h | logistic_36k · 1.0655 | lightgbm_rv · 0.000982 · +9.94% | ridge · 1.00113 |
-| ETH / 1m | lightgbm_regularized · 1.0588 | lightgbm_rv · 0.000370 · -1.49% | random_forest · 1.00081 |
-| ETH / 15m | ablate-multiscale · 1.0536 | rich-rv-multiscale · 0.000797 · +3.29% | xgboost · 1.00019 |
+| ETH / 1m | lightgbm_regularized · 1.0588 | xgboost_rv · 0.000370 · -1.35% | random_forest · 1.00081 |
+| ETH / 15m | ablate-multiscale · 1.0536 | lightgbm_rv · 0.000777 · +5.72% | xgboost · 1.00019 |
 | ETH / 1h | ablate-multiscale · 1.0482 | lightgbm_rv · 0.001358 · +11.60% | lstm · 1.00156 |
-| SOL / 1m | ablate-multiscale · 1.0774 | rich-rv-volatility · 0.000590 · -37.52% | lightgbm · 0.99870 |
-| SOL / 15m | ablate-cross_asset · 1.0645 | rich-rv-structure · 0.000831 · +0.33% | lightgbm · 1.00111 |
-| SOL / 1h | forest · 1.0664 | rich-rv-activity · 0.001414 · +9.32% | hist_gradient_boosting · 1.00131 |
-| BNB / 1m | ablate-cross_asset · 1.0667 | xgboost_rv · 0.000278 · -2.74% | ridge · 0.99871 |
-| BNB / 15m | ablate-multiscale · 1.0714 | rich-rv-all · 0.000511 · +3.83% | xgboost · 0.99938 |
+| SOL / 1m | ablate-multiscale · 1.0774 | har · 0.000462 · -7.77% | lightgbm · 0.99870 |
+| SOL / 15m | ablate-cross_asset · 1.0645 | xgboost_rv · 0.000814 · +2.41% | lightgbm · 1.00111 |
+| SOL / 1h | forest · 1.0664 | lightgbm_rv · 0.001368 · +12.29% | hist_gradient_boosting · 1.00131 |
+| BNB / 1m | ablate-cross_asset · 1.0667 | har · 0.000277 · -2.46% | ridge · 0.99871 |
+| BNB / 15m | ablate-multiscale · 1.0714 | lightgbm_rv · 0.000506 · +4.76% | xgboost · 0.99938 |
 | BNB / 1h | ablate-structure · 1.0716 | lightgbm_rv · 0.000863 · +9.25% | random_forest · 0.99956 |
 | XRP / 1m | ablate-structure · 1.0693 | xgboost_rv · 0.000427 · -3.67% | xgboost · 1.00099 |
-| XRP / 15m | ablate-multiscale · 1.0680 | rich-rv-structure · 0.000944 · -20.72% | lstm · 1.00141 |
-| XRP / 1h | xgboost · 1.0711 | rich-rv-trend · 0.001365 · +7.46% | lstm · 1.00353 |
-| ADA / 1m | ablate-activity · 1.0853 | lightgbm_rv · 0.000837 · -31.89% | lightgbm · 0.99818 |
-| ADA / 15m | logistic_36k · 1.0642 | rich-rv-cross_asset · 0.001017 · +5.64% | xgboost · 1.00069 |
-| ADA / 1h | ablate-clock · 1.0663 | rich-rv-activity · 0.001686 · +9.62% | ridge · 1.00224 |
-| DOGE / 1m | ablate-multiscale · 1.0784 | har · 0.000436 · -2.52% | ridge · 0.99604 |
-| DOGE / 15m | ablate-multiscale · 1.0667 | rich-rv-multiscale · 0.000812 · +2.34% | lightgbm · 1.00225 |
-| DOGE / 1h | ablate-multiscale · 1.0686 | rich-rv-all · 0.001451 · +9.33% | lightgbm · 1.00152 |
+| XRP / 15m | ablate-multiscale · 1.0680 | xgboost_rv · 0.000757 · +3.16% | lstm · 1.00141 |
+| XRP / 1h | xgboost · 1.0711 | lightgbm_rv · 0.001332 · +9.70% | lstm · 1.00353 |
+| ADA / 1m | ablate-activity · 1.0853 | xgboost_rv · 0.000831 · -30.90% | lightgbm · 0.99818 |
+| ADA / 15m | logistic_36k · 1.0642 | xgboost_rv · 0.000976 · +9.49% | xgboost · 1.00069 |
+| ADA / 1h | ablate-clock · 1.0663 | lightgbm_rv · 0.001578 · +15.42% | ridge · 1.00224 |
+| DOGE / 1m | ablate-multiscale · 1.0784 | lightgbm_rv · 0.000415 · +2.46% | ridge · 0.99604 |
+| DOGE / 15m | ablate-multiscale · 1.0667 | rich-rv-trend · 0.000810 · +2.60% | lightgbm · 1.00225 |
+| DOGE / 1h | ablate-multiscale · 1.0686 | rich-rv-structure · 0.001446 · +9.67% | lightgbm · 1.00152 |
 | LINK / 1m | ablate-structure · 1.0788 | har_regularized · 0.000541 · -19.63% | lightgbm · 1.00424 |
-| LINK / 15m | ablate-structure · 1.0758 | rich-rv-multiscale · 0.000832 · +6.87% | hist_gradient_boosting · 1.00090 |
-| LINK / 1h | xgboost · 1.0784 | xgboost_rv · 0.001495 · +7.40% | lstm · 1.00348 |
+| LINK / 15m | ablate-structure · 1.0758 | rich-rv-structure · 0.000829 · +7.15% | hist_gradient_boosting · 1.00090 |
+| LINK / 1h | xgboost · 1.0784 | rich-rv-trend · 0.001429 · +11.47% | lstm · 1.00348 |
 
 ## Sınırlar ve çalıştırma
+
+MAE-first değişikliği, gösterilen oynaklığın mutlak hatasını seçim önceliğiyle
+uyumlu kılar; QLIKE kareli getirinin öngörülen varyansa oranını içeren ayrı bir
+tanı ölçütüdür. Mevcut ağırlıklarla **18/24** oynaklık modeli değişti. Geliştirme
+MAE'sindeki göreli düşüş çiftler arasında ortalama **%3,88**, medyan **%0,86**;
+aynı 18 çiftte QLIKE kötüleşti. Asıl, kalibrasyonla seçilmiş baz modele karşı
+MAE üstünlüğü **15/24 → 17/24** oldu. Bazın eski seçim ölçütü QLIKE idi; diğer
+tüm bazlar da raporda verilir. Bunlar yeni/veri dışı doğrulama değildir.
+[24 çiftin önce/sonra tablosu](../ml/reports/selection-quality/COMPARISON.md)
+ve [kat, rejim, uç olay ve kalibrasyon analizi](../ml/reports/selection-quality/STABILITY.md)
+tam sayıları içerir. QLIKE-first manifesti ayrı ve değişmeden saklanır.
+
+Oynaklık adaylarının 15'i üç katta da bazdan iyi olsa da son kattaki düşük
+oynaklık rejiminde yalnızca 7/24'ü kazanır. SOL/15m, BNB/15m ve DOGE/15m için en
+büyük gerçekleşen oynaklığa sahip %1 gözlem çıkarılınca ortalama son-kat üstünlüğü
+tersine döner. Bir dakikada sekiz aralık da çok geniştir; makul kapsama tek başına
+yararlı kesinlik anlamına gelmez. ETH/15m ve ETH/1h kapsaması yaklaşık %82,1 ve
+%80,8 ile %90 hedefinin altındadır. Bunlar gösterimi engelleyen yeni eşikler değildir.
+Canlı aralık artık kendi son-kat kalibrasyonuna ait ölçülen kapsamayı gösterir;
+üç katın ortalama kapsamı ayrı geçmiş tanısıdır.
 
 Dakikalık hareketlerin %96,2–98,94'ü varsayılan 24bp gidiş-dönüş maliyetinin
 içindedir. Yön kazanımları küçüktür; eski iki uygun ETH adayı sabit %60 karar
 kuralında hiç işlem açmadı. Kâr kanıtı yoktur. Oynaklık daha kalıcıdır; bir dakikada
-sekiz coin'in seçilen oynaklık modeli de MAE bakımından bazından kötüdür. QLIKE ve
-MAE farklı hedefleri ödüllendirir; QLIKE ile seçilen model en düşük MAE modeli
-olmayabilir. Sıfır getiriler nedeniyle bazı kalibrasyon aralıkları çok geniş ve
+sekiz coin'in yedisinde seçilen oynaklık modeli MAE bakımından bazından kötüdür.
+QLIKE ve MAE farklı hataları ödüllendirir; birinde iyileşme diğerini garanti etmez.
+Sıfır getiriler nedeniyle bazı kalibrasyon aralıkları çok geniş ve
 pratikte az bilgilendiricidir. Aralıkların hedefi %90 olsa da gerçekleşen kapsama
 farklıdır; bu aralıklar fiyat bandı değildir.
 

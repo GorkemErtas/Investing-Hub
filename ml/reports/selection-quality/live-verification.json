@@ -1,0 +1,135 @@
+{
+  "direction": {
+    "algorithm": "logistic",
+    "calibrated": true,
+    "direction": "neutral",
+    "evaluation": {
+      "balancedAccuracy": 0.3554072009475462,
+      "baselinePrimaryLoss": 1.0754914198725054,
+      "baselineRelativeImprovement": 0.008503906746279655,
+      "brier": 0.6438152405006619,
+      "calibrationError": 0.01869814302513744,
+      "candidate": "neutral-ablate-activity",
+      "confirmationEnd": null,
+      "developmentEligible": false,
+      "evaluationEnd": "2026-09-01T23:45:59.999Z",
+      "evaluationSamples": 8061,
+      "evaluationStart": "2026-06-10T00:00:59.999Z",
+      "futureConfirmed": false,
+      "intervalCoverage": null,
+      "mcc": 0.06364434410993558,
+      "period": "development",
+      "primaryLoss": 1.0663455411314857,
+      "selectionMetric": "logLoss"
+    },
+    "generatedAt": "2026-11-16T16:58:49.958Z",
+    "modelVersion": "BTCUSDT-15m-neutral-ablate-activity-f26f5c5fefe3",
+    "probabilities": {
+      "down": 0.3087700385917818,
+      "neutral": 0.4868890378981781,
+      "up": 0.20434092351004018
+    },
+    "reason": "local_experimental_development_selection",
+    "status": "experimental"
+  },
+  "exactUiValuesMatchedApi": true,
+  "fakeClockUsed": false,
+  "nativePublicationVerification": {
+    "changedVolatilityCandidatesInferred": 18,
+    "objectiveModelsMatchedRegistry": 48,
+    "priceModelsInferred": 24,
+    "workerPublicationGeneratedAt": "2026-11-16T17:01:22.355Z"
+  },
+  "offlineExpiredNumbersRemoved": true,
+  "otherCoins": [
+    {
+      "direction": "experimental",
+      "symbol": "BTCUSDT",
+      "volatility": "experimental"
+    },
+    {
+      "direction": "experimental",
+      "symbol": "ETHUSDT",
+      "volatility": "experimental"
+    },
+    {
+      "direction": "experimental",
+      "symbol": "SOLUSDT",
+      "volatility": "experimental"
+    },
+    {
+      "direction": "experimental",
+      "symbol": "BNBUSDT",
+      "volatility": "experimental"
+    },
+    {
+      "direction": "experimental",
+      "symbol": "XRPUSDT",
+      "volatility": "experimental"
+    },
+    {
+      "direction": "experimental",
+      "symbol": "ADAUSDT",
+      "volatility": "experimental"
+    },
+    {
+      "direction": "experimental",
+      "symbol": "DOGEUSDT",
+      "volatility": "experimental"
+    },
+    {
+      "direction": "experimental",
+      "symbol": "LINKUSDT",
+      "volatility": "experimental"
+    }
+  ],
+  "price": {
+    "model": "BTCUSDT-15m-xgboost-66f2d4e1b52a6b2f",
+    "predictedPrice": 64858.595002764014,
+    "sourceCandleTime": "2026-11-16T16:57:59.999Z"
+  },
+  "reconnectedNumbersRecovered": true,
+  "requestInterceptionUsed": false,
+  "sourceCandleTime": "2026-11-16T16:57:59.999Z",
+  "syntheticDataUsed": false,
+  "targetTime": "2026-11-16T17:12:59.999Z",
+  "verifiedAt": "2026-11-16T16:59:31.652Z",
+  "version": "local-real-ui-verification-v1",
+  "volatility": {
+    "algorithm": "lightgbm",
+    "evaluation": {
+      "baselinePrimaryLoss": 0.0005900442897411119,
+      "baselineQlike": -11.78307731397114,
+      "baselineRelativeImprovement": 0.03999208110599417,
+      "calibrationError": null,
+      "candidate": "lightgbm_rv",
+      "confirmationEnd": null,
+      "developmentEligible": false,
+      "evaluationEnd": "2026-09-01T23:45:59.999Z",
+      "evaluationSamples": 8061,
+      "evaluationStart": "2026-06-10T00:00:59.999Z",
+      "futureConfirmed": false,
+      "intervalCoverage": 0.8553529338791713,
+      "meanIntervalWidth": 0.0026440967378939485,
+      "period": "development",
+      "primaryLoss": 0.0005664471906496566,
+      "qlike": -11.861766131103103,
+      "rmse": 0.0008568745887088947,
+      "selectionMetric": "mae"
+    },
+    "expectedVolatility": 0.003071580102857215,
+    "generatedAt": "2026-11-16T16:58:49.959Z",
+    "interval": {
+      "lower": 0.0014406696815552986,
+      "measuredCoverage": 0.8541123930033495,
+      "method": "past_split_conformal",
+      "nominalCoverage": 0.9,
+      "upper": 0.006548750200314007
+    },
+    "modelVersion": "BTCUSDT-15m-lightgbm_rv-df0394f479d7",
+    "reason": "local_experimental_development_selection",
+    "riskCategory": "high",
+    "status": "experimental",
+    "units": "horizon_log_return_std"
+  }
+}

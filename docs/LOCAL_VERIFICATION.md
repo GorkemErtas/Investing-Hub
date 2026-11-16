@@ -1,5 +1,9 @@
 # Local-first finalization verification
 
+Historical verification of the QLIKE-first local policy. The current MAE-first
+comparison and additional checks are in [selection quality](SELECTION_QUALITY.md);
+dated measurements below remain unchanged.
+
 Verified on Windows with Node 26.13.0 / Python 3.13.14. These checks introduce no
 new fitting or hyperparameter experiments. Existing trained artifacts are selected
 by the documented development-only rule; previous research evidence is unchanged.

@@ -1,0 +1,2048 @@
+{
+  "objectives": [
+    {
+      "artifactSha256": "0a8b63befe118ca20162ad7683de2e18b269ba844977c8ff6fefdaae0d2fae62",
+      "evaluation": {
+        "balancedAccuracy": 0.35152574265401065,
+        "baselineRelativeImprovement": 0.0243604092597437,
+        "brier": 0.6254366123084719,
+        "calibrationError": 0.031335960256966416,
+        "candidate": "neutral-lightgbm_regularized",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": null,
+        "mcc": 0.06169324133197285,
+        "period": "development",
+        "primaryLoss": 1.0403688401201652
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1m",
+      "model": "BTCUSDT-1m-neutral-lightgbm_regularized-0a8b63befe11",
+      "objective": "direction",
+      "status": "experimental",
+      "symbol": "BTCUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "b2fdcfb605fcaa93497d2691dc81a1c1a827552820e577fc500b6379ac88c98c",
+      "evaluation": {
+        "baselineRelativeImprovement": -0.49754171487550947,
+        "calibrationError": null,
+        "candidate": "rich-rv-volatility",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": 0.8898809523809523,
+        "period": "development",
+        "primaryLoss": 0.0004171176970008565,
+        "qlike": -14.221336439950337
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1m",
+      "intervalCalibration": {
+        "measuredCoverage": 0.8898809523809523,
+        "radius": 6.717422941321015,
+        "samples": 2520
+      },
+      "model": "BTCUSDT-1m-rich-rv-volatility-b2fdcfb605fc",
+      "objective": "volatility",
+      "riskThresholds": [
+        0.00013019960900473749,
+        0.0003688605600332196
+      ],
+      "status": "experimental",
+      "symbol": "BTCUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "f26f5c5fefe3f330c597d35a5f00053d1aeee4e4d33d9c4c4c834b94207be415",
+      "evaluation": {
+        "balancedAccuracy": 0.3554072009475462,
+        "baselineRelativeImprovement": 0.008503906746279877,
+        "brier": 0.6438152405006619,
+        "calibrationError": 0.01869814302513744,
+        "candidate": "neutral-ablate-activity",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": null,
+        "mcc": 0.06364434410993558,
+        "period": "development",
+        "primaryLoss": 1.0663455411314857
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "15m",
+      "model": "BTCUSDT-15m-neutral-ablate-activity-f26f5c5fefe3",
+      "objective": "direction",
+      "status": "experimental",
+      "symbol": "BTCUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "df0394f479d774fe9af54eda6e552b5003f03151eb4023e24cf5d4c58b611784",
+      "evaluation": {
+        "baselineRelativeImprovement": 0.03999208110599417,
+        "calibrationError": null,
+        "candidate": "lightgbm_rv",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": 0.8553529338791713,
+        "period": "development",
+        "primaryLoss": 0.0005664471906496566,
+        "qlike": -11.861766131103103
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "15m",
+      "intervalCalibration": {
+        "measuredCoverage": 0.8553529338791713,
+        "radius": 0.7570803730128359,
+        "samples": 1343
+      },
+      "model": "BTCUSDT-15m-lightgbm_rv-df0394f479d7",
+      "objective": "volatility",
+      "riskThresholds": [
+        0.001147800879076851,
+        0.0018968925522152213
+      ],
+      "status": "experimental",
+      "symbol": "BTCUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "87f5c711c2da4791aa21780713223a4a01aeeabe4b42f9b34f326332348d1548",
+      "evaluation": {
+        "balancedAccuracy": 0.33886823615908407,
+        "baselineRelativeImprovement": 0.008114126472398842,
+        "brier": 0.6435120377912111,
+        "calibrationError": 0.02059719648453167,
+        "candidate": "neutral-logistic_36k",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": null,
+        "mcc": 0.023262643872390486,
+        "period": "development",
+        "primaryLoss": 1.0655026585176601
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1h",
+      "model": "BTCUSDT-1h-neutral-logistic_36k-87f5c711c2da",
+      "objective": "direction",
+      "status": "experimental",
+      "symbol": "BTCUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "1db9d22f186f608b320acb5ef247b7c7f94507723c3b8717a692f593cbfe3b29",
+      "evaluation": {
+        "baselineRelativeImprovement": 0.09935930799086012,
+        "calibrationError": null,
+        "candidate": "lightgbm_rv",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": 0.8430203676105316,
+        "period": "development",
+        "primaryLoss": 0.0009823264714816848,
+        "qlike": -10.40874765079127
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1h",
+      "intervalCalibration": {
+        "measuredCoverage": 0.8430203676105316,
+        "radius": 0.6078128343963378,
+        "samples": 335
+      },
+      "model": "BTCUSDT-1h-lightgbm_rv-1db9d22f186f",
+      "objective": "volatility",
+      "riskThresholds": [
+        0.0025494909358246367,
+        0.003985186018901983
+      ],
+      "status": "experimental",
+      "symbol": "BTCUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "evaluation": null,
+      "excludedInvalidArtifacts": [],
+      "horizon": "1M",
+      "model": null,
+      "objective": "direction",
+      "status": "unavailable",
+      "symbol": "BTCUSDT"
+    },
+    {
+      "evaluation": null,
+      "excludedInvalidArtifacts": [],
+      "horizon": "1M",
+      "model": null,
+      "objective": "volatility",
+      "status": "unavailable",
+      "symbol": "BTCUSDT"
+    },
+    {
+      "artifactSha256": "dfb1df084a391d94b9b9960c004a687009faaedc353f0ea4d960daf7f56de305",
+      "evaluation": {
+        "balancedAccuracy": 0.3525272807301622,
+        "baselineRelativeImprovement": 0.016847365600606956,
+        "brier": 0.6385483331689195,
+        "calibrationError": 0.024440964156407143,
+        "candidate": "neutral-lightgbm_regularized",
+        "confirmationEnd": null,
+        "developmentEligible": true,
+        "futureConfirmed": false,
+        "intervalCoverage": null,
+        "mcc": 0.06148370930799298,
+        "period": "development",
+        "primaryLoss": 1.0588173006832358
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1m",
+      "model": "ETHUSDT-1m-neutral-lightgbm_regularized-dfb1df084a39",
+      "objective": "direction",
+      "status": "experimental",
+      "symbol": "ETHUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "45f34e3462de777936dabfd4f08ea787fd9a26d9034810b0e483f576f38c0012",
+      "evaluation": {
+        "baselineRelativeImprovement": -0.014887278993416464,
+        "calibrationError": null,
+        "candidate": "lightgbm_rv",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": 0.8989335317460317,
+        "period": "development",
+        "primaryLoss": 0.00037035239560984025,
+        "qlike": -13.767989433071907
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1m",
+      "intervalCalibration": {
+        "measuredCoverage": 0.8989335317460317,
+        "radius": 2.5817690824657547,
+        "samples": 2520
+      },
+      "model": "ETHUSDT-1m-lightgbm_rv-45f34e3462de",
+      "objective": "volatility",
+      "riskThresholds": [
+        0.00017359525879085959,
+        0.0004661828386487699
+      ],
+      "status": "experimental",
+      "symbol": "ETHUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "c209479e1c9e457dc9b6b0f61f024496a031456a889c1c76df8467b38a70d66e",
+      "evaluation": {
+        "balancedAccuracy": 0.3558333803512809,
+        "baselineRelativeImprovement": 0.012374716988088674,
+        "brier": 0.6348280449282544,
+        "calibrationError": 0.019522620864072568,
+        "candidate": "neutral-ablate-multiscale",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": null,
+        "mcc": 0.06553584535035303,
+        "period": "development",
+        "primaryLoss": 1.0536463204682116
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "15m",
+      "model": "ETHUSDT-15m-neutral-ablate-multiscale-c209479e1c9e",
+      "objective": "direction",
+      "status": "experimental",
+      "symbol": "ETHUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "5ee145c77b599160edfe0936fc9abc1416dd51dc1be25d747ff9b2227092e166",
+      "evaluation": {
+        "baselineRelativeImprovement": 0.032915086649018876,
+        "calibrationError": null,
+        "candidate": "rich-rv-multiscale",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": 0.8744572633668279,
+        "period": "development",
+        "primaryLoss": 0.0007968464767938776,
+        "qlike": -11.253752219529224
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "15m",
+      "intervalCalibration": {
+        "measuredCoverage": 0.8744572633668279,
+        "radius": 0.6714970615069138,
+        "samples": 1343
+      },
+      "model": "ETHUSDT-15m-rich-rv-multiscale-5ee145c77b59",
+      "objective": "volatility",
+      "riskThresholds": [
+        0.0014731047329045815,
+        0.0023925223311425507
+      ],
+      "status": "experimental",
+      "symbol": "ETHUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "862880c6848d10855b675d677b4f67e4570ae81de84ea5e00de344fc10a184ec",
+      "evaluation": {
+        "balancedAccuracy": 0.35441189856226457,
+        "baselineRelativeImprovement": 0.013004677384938379,
+        "brier": 0.6306024058419873,
+        "calibrationError": 0.035220003172129546,
+        "candidate": "neutral-ablate-multiscale",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": null,
+        "mcc": 0.06240809354752116,
+        "period": "development",
+        "primaryLoss": 1.0482266711324841
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1h",
+      "model": "ETHUSDT-1h-neutral-ablate-multiscale-862880c6848d",
+      "objective": "direction",
+      "status": "experimental",
+      "symbol": "ETHUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "9dc11c0da78b42f77d128ecc0feae8ebadcd9e05f254de2b3cd1a28404c7d6b1",
+      "evaluation": {
+        "baselineRelativeImprovement": 0.11602565928221387,
+        "calibrationError": null,
+        "candidate": "lightgbm_rv",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": 0.8688524590163934,
+        "period": "development",
+        "primaryLoss": 0.0013581107530708206,
+        "qlike": -9.793871278902422
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1h",
+      "intervalCalibration": {
+        "measuredCoverage": 0.8688524590163934,
+        "radius": 0.5488845288434563,
+        "samples": 335
+      },
+      "model": "ETHUSDT-1h-lightgbm_rv-9dc11c0da78b",
+      "objective": "volatility",
+      "riskThresholds": [
+        0.0032712471937109203,
+        0.005089990074722533
+      ],
+      "status": "experimental",
+      "symbol": "ETHUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "evaluation": null,
+      "excludedInvalidArtifacts": [],
+      "horizon": "1M",
+      "model": null,
+      "objective": "direction",
+      "status": "unavailable",
+      "symbol": "ETHUSDT"
+    },
+    {
+      "evaluation": null,
+      "excludedInvalidArtifacts": [],
+      "horizon": "1M",
+      "model": null,
+      "objective": "volatility",
+      "status": "unavailable",
+      "symbol": "ETHUSDT"
+    },
+    {
+      "artifactSha256": "974805e6d409364a21e7e8288fd0b01e4bb49783d1de01d64215cd9f7aa5ecee",
+      "evaluation": {
+        "balancedAccuracy": 0.34738434174923594,
+        "baselineRelativeImprovement": 0.007441920361926924,
+        "brier": 0.6515638813260709,
+        "calibrationError": 0.016909496327785885,
+        "candidate": "neutral-ablate-multiscale",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": null,
+        "mcc": 0.04410492021126603,
+        "period": "development",
+        "primaryLoss": 1.077382905038786
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1m",
+      "model": "SOLUSDT-1m-neutral-ablate-multiscale-974805e6d409",
+      "objective": "direction",
+      "status": "experimental",
+      "symbol": "SOLUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "5d3fdbdc6e7b80ec65f9f1adf75d51ac23a83ad3886c83e88e49f54ef3c99cbd",
+      "evaluation": {
+        "baselineRelativeImprovement": -0.37521813351114885,
+        "calibrationError": null,
+        "candidate": "rich-rv-volatility",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": 0.8949652777777778,
+        "period": "development",
+        "primaryLoss": 0.0005900243495259307,
+        "qlike": -13.450839003961793
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1m",
+      "intervalCalibration": {
+        "measuredCoverage": 0.8949652777777778,
+        "radius": 10.421762210627172,
+        "samples": 2520
+      },
+      "model": "SOLUSDT-1m-rich-rv-volatility-5d3fdbdc6e7b",
+      "objective": "volatility",
+      "riskThresholds": [
+        0.0002346316294197237,
+        0.0005797604080366093
+      ],
+      "status": "experimental",
+      "symbol": "SOLUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "fc0960010ad4deb5a3e948e67f5bc1da0c350e3b3c0fc17deb7ec20b03578d83",
+      "evaluation": {
+        "balancedAccuracy": 0.3511002931325844,
+        "baselineRelativeImprovement": 0.007056976949814886,
+        "brier": 0.6423600698211482,
+        "calibrationError": 0.02485238501875585,
+        "candidate": "neutral-ablate-cross_asset",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": null,
+        "mcc": 0.05834720094101729,
+        "period": "development",
+        "primaryLoss": 1.0644586639522127
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "15m",
+      "model": "SOLUSDT-15m-neutral-ablate-cross_asset-fc0960010ad4",
+      "objective": "direction",
+      "status": "experimental",
+      "symbol": "SOLUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "9b524dd3cf4d19301e16b9de170c413b676a7d641fa6eb088b58487a0a8d3a08",
+      "evaluation": {
+        "baselineRelativeImprovement": 0.0033306032802287167,
+        "calibrationError": null,
+        "candidate": "rich-rv-structure",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": 0.8833891576727453,
+        "period": "development",
+        "primaryLoss": 0.0008311914468082837,
+        "qlike": -10.945141239610678
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "15m",
+      "intervalCalibration": {
+        "measuredCoverage": 0.8833891576727453,
+        "radius": 0.5817881809873944,
+        "samples": 1343
+      },
+      "model": "SOLUSDT-15m-rich-rv-structure-9b524dd3cf4d",
+      "objective": "volatility",
+      "riskThresholds": [
+        0.0018321578905037112,
+        0.002882081755505335
+      ],
+      "status": "experimental",
+      "symbol": "SOLUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "3d465634b22166c744b5a63bb2377523e5c5258d15f57e603c88b85324bf71af",
+      "evaluation": {
+        "balancedAccuracy": 0.34065536403858837,
+        "baselineRelativeImprovement": 0.006305869749153592,
+        "brier": 0.6442689901061679,
+        "calibrationError": 0.0326723317713312,
+        "candidate": "neutral-forest",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": null,
+        "mcc": 0.035467943601533554,
+        "period": "development",
+        "primaryLoss": 1.0664276647915647
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1h",
+      "model": "SOLUSDT-1h-neutral-forest-3d465634b221",
+      "objective": "direction",
+      "status": "experimental",
+      "symbol": "SOLUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "cbdaf1a61672c8c8edd2c71a771fcac9aa0f190859f7d92cbae5adb913ac80f6",
+      "evaluation": {
+        "baselineRelativeImprovement": 0.09317645955752629,
+        "calibrationError": null,
+        "candidate": "rich-rv-activity",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": 0.8917039244908097,
+        "period": "development",
+        "primaryLoss": 0.0014139227757983739,
+        "qlike": -9.501403779972941
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1h",
+      "intervalCalibration": {
+        "measuredCoverage": 0.8917039244908097,
+        "radius": 0.47309178957097675,
+        "samples": 335
+      },
+      "model": "SOLUSDT-1h-rich-rv-activity-cbdaf1a61672",
+      "objective": "volatility",
+      "riskThresholds": [
+        0.004024719429895873,
+        0.006048492553187492
+      ],
+      "status": "experimental",
+      "symbol": "SOLUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "evaluation": null,
+      "excludedInvalidArtifacts": [],
+      "horizon": "1M",
+      "model": null,
+      "objective": "direction",
+      "status": "unavailable",
+      "symbol": "SOLUSDT"
+    },
+    {
+      "evaluation": null,
+      "excludedInvalidArtifacts": [],
+      "horizon": "1M",
+      "model": null,
+      "objective": "volatility",
+      "status": "unavailable",
+      "symbol": "SOLUSDT"
+    },
+    {
+      "artifactSha256": "59fa9daf141b3ee91df5d3e5de87fb8855294936be725fbd1214117215956f70",
+      "evaluation": {
+        "balancedAccuracy": 0.3445199135869253,
+        "baselineRelativeImprovement": 0.010350729720775775,
+        "brier": 0.643984695705082,
+        "calibrationError": 0.009122830239171233,
+        "candidate": "neutral-ablate-cross_asset",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": null,
+        "mcc": 0.04278769250471706,
+        "period": "development",
+        "primaryLoss": 1.066703512933548
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1m",
+      "model": "BNBUSDT-1m-neutral-ablate-cross_asset-59fa9daf141b",
+      "objective": "direction",
+      "status": "experimental",
+      "symbol": "BNBUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "3953c562d39b397956bc3c6a50f964aee3f52735c2840a857ee56f9a0a70f74f",
+      "evaluation": {
+        "baselineRelativeImprovement": -0.027356162714367915,
+        "calibrationError": null,
+        "candidate": "xgboost_rv",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": 0.8878968253968254,
+        "period": "development",
+        "primaryLoss": 0.0002775568440763722,
+        "qlike": -14.446895356400942
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1m",
+      "intervalCalibration": {
+        "measuredCoverage": 0.8878968253968254,
+        "radius": 2.760429196687168,
+        "samples": 2520
+      },
+      "model": "BNBUSDT-1m-xgboost_rv-3953c562d39b",
+      "objective": "volatility",
+      "riskThresholds": [
+        0.00014417841821999565,
+        0.0003875240555879156
+      ],
+      "status": "experimental",
+      "symbol": "BNBUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "f015fbd47f84ba4a5c0501afe340213657cc57b669218e0b87892b2335ad4cb2",
+      "evaluation": {
+        "balancedAccuracy": 0.35733259422104524,
+        "baselineRelativeImprovement": 0.00527297284684447,
+        "brier": 0.6475924624718051,
+        "calibrationError": 0.03518658506753613,
+        "candidate": "neutral-ablate-multiscale",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": null,
+        "mcc": 0.05660475779607316,
+        "period": "development",
+        "primaryLoss": 1.0713501151993745
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "15m",
+      "model": "BNBUSDT-15m-neutral-ablate-multiscale-f015fbd47f84",
+      "objective": "direction",
+      "status": "experimental",
+      "symbol": "BNBUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "3ad7c3a05b6f9a0e740f9367163c1194bf8eef916ef50282fa81521cdc3a4a4d",
+      "evaluation": {
+        "baselineRelativeImprovement": 0.03830338059656202,
+        "calibrationError": null,
+        "candidate": "rich-rv-all",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": 0.887234834387793,
+        "period": "development",
+        "primaryLoss": 0.0005108162820598332,
+        "qlike": -11.85958686415078
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "15m",
+      "intervalCalibration": {
+        "measuredCoverage": 0.887234834387793,
+        "radius": 0.6366921470016758,
+        "samples": 1343
+      },
+      "model": "BNBUSDT-15m-rich-rv-all-3ad7c3a05b6f",
+      "objective": "volatility",
+      "riskThresholds": [
+        0.0012254671159452133,
+        0.0019118804369371
+      ],
+      "status": "experimental",
+      "symbol": "BNBUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "39281b6eccb8ba920e52c0aa4b5cf1bdecd214e643dac951aec8217a5c66719c",
+      "evaluation": {
+        "balancedAccuracy": 0.3540102497280193,
+        "baselineRelativeImprovement": 0.0095676505484521,
+        "brier": 0.6477192048585428,
+        "calibrationError": 0.024294279524491653,
+        "candidate": "neutral-ablate-structure",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": null,
+        "mcc": 0.04993354021763913,
+        "period": "development",
+        "primaryLoss": 1.071619248633217
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1h",
+      "model": "BNBUSDT-1h-neutral-ablate-structure-39281b6eccb8",
+      "objective": "direction",
+      "status": "experimental",
+      "symbol": "BNBUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "225fc12c5547c11cfe895fde1f704bf73af39ce78c7ae750634640a3d8199787",
+      "evaluation": {
+        "baselineRelativeImprovement": 0.09248541907936925,
+        "calibrationError": null,
+        "candidate": "lightgbm_rv",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": 0.9115747640337805,
+        "period": "development",
+        "primaryLoss": 0.000862683962865065,
+        "qlike": -10.418576333127131
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1h",
+      "intervalCalibration": {
+        "measuredCoverage": 0.9115747640337805,
+        "radius": 0.4976714142595373,
+        "samples": 335
+      },
+      "model": "BNBUSDT-1h-lightgbm_rv-225fc12c5547",
+      "objective": "volatility",
+      "riskThresholds": [
+        0.0026567420683010633,
+        0.004003095613083761
+      ],
+      "status": "experimental",
+      "symbol": "BNBUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "evaluation": null,
+      "excludedInvalidArtifacts": [],
+      "horizon": "1M",
+      "model": null,
+      "objective": "direction",
+      "status": "unavailable",
+      "symbol": "BNBUSDT"
+    },
+    {
+      "evaluation": null,
+      "excludedInvalidArtifacts": [],
+      "horizon": "1M",
+      "model": null,
+      "objective": "volatility",
+      "status": "unavailable",
+      "symbol": "BNBUSDT"
+    },
+    {
+      "artifactSha256": "1562298707fc2be52b7e5c00aa55e26991797bfbd8b08b2b170e564bfcdf038d",
+      "evaluation": {
+        "balancedAccuracy": 0.35331683675845826,
+        "baselineRelativeImprovement": 0.01126024822994176,
+        "brier": 0.6457710058631904,
+        "calibrationError": 0.016816165534944864,
+        "candidate": "neutral-ablate-structure",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": null,
+        "mcc": 0.06471774917494617,
+        "period": "development",
+        "primaryLoss": 1.0692598793727917
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1m",
+      "model": "XRPUSDT-1m-neutral-ablate-structure-1562298707fc",
+      "objective": "direction",
+      "status": "experimental",
+      "symbol": "XRPUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "ac56f72146ff2baa52bd8f0f36a2bb2bf0c4daf3f9ddad90e4dbb22abeca6ec1",
+      "evaluation": {
+        "baselineRelativeImprovement": -0.036701356436103616,
+        "calibrationError": null,
+        "candidate": "xgboost_rv",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": 0.9032738095238095,
+        "period": "development",
+        "primaryLoss": 0.0004270598349446084,
+        "qlike": -13.646230135330104
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1m",
+      "intervalCalibration": {
+        "measuredCoverage": 0.9032738095238095,
+        "radius": 10.08020184685764,
+        "samples": 2520
+      },
+      "model": "XRPUSDT-1m-xgboost_rv-ac56f72146ff",
+      "objective": "volatility",
+      "riskThresholds": [
+        0.0001810392202537195,
+        0.0004929518554656249
+      ],
+      "status": "experimental",
+      "symbol": "XRPUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "b11b8072041813cd3f043c8024438ba5feea688360f94a512040898d34db3783",
+      "evaluation": {
+        "balancedAccuracy": 0.35129964299678473,
+        "baselineRelativeImprovement": 0.006242288549759167,
+        "brier": 0.6447015712505634,
+        "calibrationError": 0.02578606827229297,
+        "candidate": "neutral-ablate-multiscale",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": null,
+        "mcc": 0.05195590695209569,
+        "period": "development",
+        "primaryLoss": 1.0679592494131331
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "15m",
+      "model": "XRPUSDT-15m-neutral-ablate-multiscale-b11b80720418",
+      "objective": "direction",
+      "status": "experimental",
+      "symbol": "XRPUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "11401e3206151786c9cfc6df6bc0ca27f17aff463ec6a0af8f21773f5016ce76",
+      "evaluation": {
+        "baselineRelativeImprovement": -0.2071831542754241,
+        "calibrationError": null,
+        "candidate": "rich-rv-structure",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": 0.8868626721250465,
+        "period": "development",
+        "primaryLoss": 0.0009437440671315266,
+        "qlike": -11.122555049382537
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "15m",
+      "intervalCalibration": {
+        "measuredCoverage": 0.8868626721250465,
+        "radius": 0.6055187462274656,
+        "samples": 1343
+      },
+      "model": "XRPUSDT-15m-rich-rv-structure-11401e320615",
+      "objective": "volatility",
+      "riskThresholds": [
+        0.0015561093232590354,
+        0.0024835907409465224
+      ],
+      "status": "experimental",
+      "symbol": "XRPUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "ab53a86e78279269e93b03f76ea02bc733a194d6074d7eb53def5e0dedb0c7f0",
+      "evaluation": {
+        "balancedAccuracy": 0.3402816422681527,
+        "baselineRelativeImprovement": 0.006957351865787831,
+        "brier": 0.6477134248439809,
+        "calibrationError": 0.026233017919208183,
+        "candidate": "neutral-xgboost",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": null,
+        "mcc": 0.02388473291013813,
+        "period": "development",
+        "primaryLoss": 1.0711313073643287
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1h",
+      "model": "XRPUSDT-1h-neutral-xgboost-ab53a86e7827",
+      "objective": "direction",
+      "status": "experimental",
+      "symbol": "XRPUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "7645ea6c3ed1fa8751f2ceb40b4cc3663ff751167013788c73ea599b4ae752f5",
+      "evaluation": {
+        "baselineRelativeImprovement": 0.07456763518197518,
+        "calibrationError": null,
+        "candidate": "rich-rv-trend",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": 0.88474913065077,
+        "period": "development",
+        "primaryLoss": 0.0013649573017430494,
+        "qlike": -9.676750833647928
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1h",
+      "intervalCalibration": {
+        "measuredCoverage": 0.88474913065077,
+        "radius": 0.4683093019615283,
+        "samples": 335
+      },
+      "model": "XRPUSDT-1h-rich-rv-trend-7645ea6c3ed1",
+      "objective": "volatility",
+      "riskThresholds": [
+        0.0034377378450339544,
+        0.0051972950658027905
+      ],
+      "status": "experimental",
+      "symbol": "XRPUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "evaluation": null,
+      "excludedInvalidArtifacts": [],
+      "horizon": "1M",
+      "model": null,
+      "objective": "direction",
+      "status": "unavailable",
+      "symbol": "XRPUSDT"
+    },
+    {
+      "evaluation": null,
+      "excludedInvalidArtifacts": [],
+      "horizon": "1M",
+      "model": null,
+      "objective": "volatility",
+      "status": "unavailable",
+      "symbol": "XRPUSDT"
+    },
+    {
+      "artifactSha256": "786a74a0c37e37cc3f49595d89c7e5f9adf5bfad1a38fa2b88e2010bc77aa435",
+      "evaluation": {
+        "balancedAccuracy": 0.38114018073310696,
+        "baselineRelativeImprovement": 0.012525786910285941,
+        "brier": 0.6567781407521757,
+        "calibrationError": 0.03683856732409112,
+        "candidate": "neutral-ablate-activity",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": null,
+        "mcc": 0.08203337531434192,
+        "period": "development",
+        "primaryLoss": 1.0853089120365178
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1m",
+      "model": "ADAUSDT-1m-neutral-ablate-activity-786a74a0c37e",
+      "objective": "direction",
+      "status": "experimental",
+      "symbol": "ADAUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "5a26269930815980d6f1f3c5c15d46200f14897446fb90699483d6afb0a6c242",
+      "evaluation": {
+        "baselineRelativeImprovement": -0.3189351299307819,
+        "calibrationError": null,
+        "candidate": "lightgbm_rv",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": 0.9202628968253969,
+        "period": "development",
+        "primaryLoss": 0.0008371835354883388,
+        "qlike": -12.551601693704344
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1m",
+      "intervalCalibration": {
+        "measuredCoverage": 0.9202628968253969,
+        "radius": 11.495470626956994,
+        "samples": 2520
+      },
+      "model": "ADAUSDT-1m-lightgbm_rv-5a2626993081",
+      "objective": "volatility",
+      "riskThresholds": [
+        0.0003916193510007382,
+        0.0006922810937608492
+      ],
+      "status": "experimental",
+      "symbol": "ADAUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "630f20498fc1fbff2ee88bf120d0ee7d2c4298ccea8b240f3856328b5794d646",
+      "evaluation": {
+        "balancedAccuracy": 0.33712845370093786,
+        "baselineRelativeImprovement": 0.004995074698725621,
+        "brier": 0.6427444795647651,
+        "calibrationError": 0.01779999631392632,
+        "candidate": "neutral-logistic_36k",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": null,
+        "mcc": 0.024532771142365524,
+        "period": "development",
+        "primaryLoss": 1.0642339087281454
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "15m",
+      "model": "ADAUSDT-15m-neutral-logistic_36k-630f20498fc1",
+      "objective": "direction",
+      "status": "experimental",
+      "symbol": "ADAUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "62f5bb9ed8c46340ea7f3b28c5d8ca36eac8b08c88aa5c0837ba19e3c1bdbbd6",
+      "evaluation": {
+        "baselineRelativeImprovement": 0.05640556290539167,
+        "calibrationError": null,
+        "candidate": "rich-rv-cross_asset",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": 0.8988959186205185,
+        "period": "development",
+        "primaryLoss": 0.0010172054184938118,
+        "qlike": -10.123954794993642
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "15m",
+      "intervalCalibration": {
+        "measuredCoverage": 0.8988959186205185,
+        "radius": 0.5150474890192864,
+        "samples": 1343
+      },
+      "model": "ADAUSDT-15m-rich-rv-cross_asset-62f5bb9ed8c4",
+      "objective": "volatility",
+      "riskThresholds": [
+        0.0024233935853663034,
+        0.0036204654482043597
+      ],
+      "status": "experimental",
+      "symbol": "ADAUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "fe770219814dcf5bfeb895edbe3b0834a943779ae9a5409a669952ec2aa13d84",
+      "evaluation": {
+        "balancedAccuracy": 0.33889726413805593,
+        "baselineRelativeImprovement": 0.0016115536856713408,
+        "brier": 0.6439573162117321,
+        "calibrationError": 0.027015233675916947,
+        "candidate": "neutral-ablate-clock",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": null,
+        "mcc": 0.023054336415494942,
+        "period": "development",
+        "primaryLoss": 1.0663188558437176
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1h",
+      "model": "ADAUSDT-1h-neutral-ablate-clock-fe770219814d",
+      "objective": "direction",
+      "status": "experimental",
+      "symbol": "ADAUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "4d880389b1121e82e16df2ae6f8983972309fdac10d312e77605fa9c76fb92ff",
+      "evaluation": {
+        "baselineRelativeImprovement": 0.09616593415046426,
+        "calibrationError": null,
+        "candidate": "rich-rv-activity",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": 0.9120715350223547,
+        "period": "development",
+        "primaryLoss": 0.001686374208058387,
+        "qlike": -8.699395366952904
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1h",
+      "intervalCalibration": {
+        "measuredCoverage": 0.9120715350223547,
+        "radius": 0.41031465560989044,
+        "samples": 335
+      },
+      "model": "ADAUSDT-1h-rich-rv-activity-4d880389b112",
+      "objective": "volatility",
+      "riskThresholds": [
+        0.005194508944973522,
+        0.007599364481007668
+      ],
+      "status": "experimental",
+      "symbol": "ADAUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "evaluation": null,
+      "excludedInvalidArtifacts": [],
+      "horizon": "1M",
+      "model": null,
+      "objective": "direction",
+      "status": "unavailable",
+      "symbol": "ADAUSDT"
+    },
+    {
+      "evaluation": null,
+      "excludedInvalidArtifacts": [],
+      "horizon": "1M",
+      "model": null,
+      "objective": "volatility",
+      "status": "unavailable",
+      "symbol": "ADAUSDT"
+    },
+    {
+      "artifactSha256": "37f020ee42dfcdbdfd809cf8acf2ddba343320f72280e8190518fbf0bf2f7e7f",
+      "evaluation": {
+        "balancedAccuracy": 0.34921692988265135,
+        "baselineRelativeImprovement": 0.010816580151290056,
+        "brier": 0.652330964829559,
+        "calibrationError": 0.027197304349185575,
+        "candidate": "neutral-ablate-multiscale",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": null,
+        "mcc": 0.050720575825798225,
+        "period": "development",
+        "primaryLoss": 1.0783783290332722
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1m",
+      "model": "DOGEUSDT-1m-neutral-ablate-multiscale-37f020ee42df",
+      "objective": "direction",
+      "status": "experimental",
+      "symbol": "DOGEUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "b340f21a83bac45237292c0d076c0092e5cc3b3cbc2d3925a8271d7beb808a5d",
+      "evaluation": {
+        "baselineRelativeImprovement": -0.025223890015849904,
+        "calibrationError": null,
+        "candidate": "har",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": 0.9129464285714286,
+        "period": "development",
+        "primaryLoss": 0.0004360930898074781,
+        "qlike": -13.42531793138793
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1m",
+      "intervalCalibration": {
+        "measuredCoverage": 0.9129464285714286,
+        "radius": 10.548503143091772,
+        "samples": 2520
+      },
+      "model": "DOGEUSDT-1m-har-b340f21a83ba",
+      "objective": "volatility",
+      "riskThresholds": [
+        0.00024046178473509982,
+        0.0006327999408306929
+      ],
+      "status": "experimental",
+      "symbol": "DOGEUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "faaf74929f31aa60922b6d8de471fa96b6b92ff31c0aa49e2bf5173e16fa76b5",
+      "evaluation": {
+        "balancedAccuracy": 0.3509093097240819,
+        "baselineRelativeImprovement": 0.0066020353752113126,
+        "brier": 0.6442346240908524,
+        "calibrationError": 0.028919330199666842,
+        "candidate": "neutral-ablate-multiscale",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": null,
+        "mcc": 0.049804842568391135,
+        "period": "development",
+        "primaryLoss": 1.0667176971406627
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "15m",
+      "model": "DOGEUSDT-15m-neutral-ablate-multiscale-faaf74929f31",
+      "objective": "direction",
+      "status": "experimental",
+      "symbol": "DOGEUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "45f5fcd10be3fbe5cfddad25a9ae7021f765e59bd4eca900ea817a058fae8e44",
+      "evaluation": {
+        "baselineRelativeImprovement": 0.02342702679421671,
+        "calibrationError": null,
+        "candidate": "rich-rv-multiscale",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": 0.8801637513956085,
+        "period": "development",
+        "primaryLoss": 0.0008119517423551373,
+        "qlike": -11.00770470072869
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "15m",
+      "intervalCalibration": {
+        "measuredCoverage": 0.8801637513956085,
+        "radius": 0.6086059214119874,
+        "samples": 1343
+      },
+      "model": "DOGEUSDT-15m-rich-rv-multiscale-45f5fcd10be3",
+      "objective": "volatility",
+      "riskThresholds": [
+        0.0019178152453800815,
+        0.0028890187930257984
+      ],
+      "status": "experimental",
+      "symbol": "DOGEUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "cf744807b669b4b4effe69a339e06c7bd3d369d0f20c5cd044a89ba8f687fefb",
+      "evaluation": {
+        "balancedAccuracy": 0.34376254528361044,
+        "baselineRelativeImprovement": 0.0055337584213741575,
+        "brier": 0.6449580708408102,
+        "calibrationError": 0.03242220104021775,
+        "candidate": "neutral-ablate-multiscale",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": null,
+        "mcc": 0.030159050562406465,
+        "period": "development",
+        "primaryLoss": 1.068596558489431
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1h",
+      "model": "DOGEUSDT-1h-neutral-ablate-multiscale-cf744807b669",
+      "objective": "direction",
+      "status": "experimental",
+      "symbol": "DOGEUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "4bbc868c70897926550d05138378d46cf4cbec08aa1bdc629d9e55df0e01d4ea",
+      "evaluation": {
+        "baselineRelativeImprovement": 0.09333963204032503,
+        "calibrationError": null,
+        "candidate": "rich-rv-all",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": 0.8753104818678589,
+        "period": "development",
+        "primaryLoss": 0.0014512503709026268,
+        "qlike": -9.552498216681137
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1h",
+      "intervalCalibration": {
+        "measuredCoverage": 0.8753104818678589,
+        "radius": 0.5047662702624995,
+        "samples": 335
+      },
+      "model": "DOGEUSDT-1h-rich-rv-all-4bbc868c7089",
+      "objective": "volatility",
+      "riskThresholds": [
+        0.004168409234232408,
+        0.006081068513392459
+      ],
+      "status": "experimental",
+      "symbol": "DOGEUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "evaluation": null,
+      "excludedInvalidArtifacts": [],
+      "horizon": "1M",
+      "model": null,
+      "objective": "direction",
+      "status": "unavailable",
+      "symbol": "DOGEUSDT"
+    },
+    {
+      "evaluation": null,
+      "excludedInvalidArtifacts": [],
+      "horizon": "1M",
+      "model": null,
+      "objective": "volatility",
+      "status": "unavailable",
+      "symbol": "DOGEUSDT"
+    },
+    {
+      "artifactSha256": "a072033f578fbf77efb31cce52359de7cfe5413e9c86445a3519b5fffbc5d7d8",
+      "evaluation": {
+        "balancedAccuracy": 0.3430066969737688,
+        "baselineRelativeImprovement": 0.0026896646466427754,
+        "brier": 0.6524117081197558,
+        "calibrationError": 0.02543042261257796,
+        "candidate": "neutral-ablate-structure",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": null,
+        "mcc": 0.025463336496700958,
+        "period": "development",
+        "primaryLoss": 1.0788035455477343
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1m",
+      "model": "LINKUSDT-1m-neutral-ablate-structure-a072033f578f",
+      "objective": "direction",
+      "status": "experimental",
+      "symbol": "LINKUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "0541de1616d0ebce5d566e99b3aa8868cb47b4a1a4a37f009ff5720e6f6ce5c9",
+      "evaluation": {
+        "baselineRelativeImprovement": -0.19625466185199114,
+        "calibrationError": null,
+        "candidate": "har_regularized",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": 0.9076140873015873,
+        "period": "development",
+        "primaryLoss": 0.0005406449968816225,
+        "qlike": -13.273204717271003
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1m",
+      "intervalCalibration": {
+        "measuredCoverage": 0.9076140873015873,
+        "radius": 10.978222591181371,
+        "samples": 2520
+      },
+      "model": "LINKUSDT-1m-har_regularized-0541de1616d0",
+      "objective": "volatility",
+      "riskThresholds": [
+        0.00020711802640251963,
+        0.000762430099589926
+      ],
+      "status": "experimental",
+      "symbol": "LINKUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "3c9ac8345a52b68dae8daf254bebdc7d956e6a4738738d859b5632458fb945d1",
+      "evaluation": {
+        "balancedAccuracy": 0.35264278206864813,
+        "baselineRelativeImprovement": 0.0017464820751561527,
+        "brier": 0.6505755752460639,
+        "calibrationError": 0.03952740763115198,
+        "candidate": "neutral-ablate-structure",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": null,
+        "mcc": 0.0454129444622915,
+        "period": "development",
+        "primaryLoss": 1.0758219201399248
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "15m",
+      "model": "LINKUSDT-15m-neutral-ablate-structure-3c9ac8345a52",
+      "objective": "direction",
+      "status": "experimental",
+      "symbol": "LINKUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "6191f2165dddb1afeb41f92a42cfa6709f59061682b3b1fe6092cc4e95795161",
+      "evaluation": {
+        "baselineRelativeImprovement": 0.06871826808381765,
+        "calibrationError": null,
+        "candidate": "rich-rv-multiscale",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": 0.8889715916139437,
+        "period": "development",
+        "primaryLoss": 0.0008317182094899205,
+        "qlike": -10.79039284663169
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "15m",
+      "intervalCalibration": {
+        "measuredCoverage": 0.8889715916139437,
+        "radius": 0.6248576762546545,
+        "samples": 1343
+      },
+      "model": "LINKUSDT-15m-rich-rv-multiscale-6191f2165ddd",
+      "objective": "volatility",
+      "riskThresholds": [
+        0.0022831404169671066,
+        0.0033942305817802063
+      ],
+      "status": "experimental",
+      "symbol": "LINKUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "492ef9b2e6802e84cbc3476ad30b46dadfe8ff87c34904fcf5a023ee535f6c6c",
+      "evaluation": {
+        "balancedAccuracy": 0.3548416854874488,
+        "baselineRelativeImprovement": 0.003917027189283884,
+        "brier": 0.6525827600654204,
+        "calibrationError": 0.03341643715181745,
+        "candidate": "neutral-xgboost",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": null,
+        "mcc": 0.04647150749908801,
+        "period": "development",
+        "primaryLoss": 1.0783607162744706
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1h",
+      "model": "LINKUSDT-1h-neutral-xgboost-492ef9b2e680",
+      "objective": "direction",
+      "status": "experimental",
+      "symbol": "LINKUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "artifactSha256": "b213964181d8e4312ec9501392ea9e06bbad7a3953184a650c2363dd321ec709",
+      "evaluation": {
+        "baselineRelativeImprovement": 0.07396564704141673,
+        "calibrationError": null,
+        "candidate": "xgboost_rv",
+        "confirmationEnd": null,
+        "developmentEligible": false,
+        "futureConfirmed": false,
+        "intervalCoverage": 0.8797814207650273,
+        "period": "development",
+        "primaryLoss": 0.0014949264532937798,
+        "qlike": -9.34504842548446
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1h",
+      "intervalCalibration": {
+        "measuredCoverage": 0.8797814207650273,
+        "radius": 0.533706985268207,
+        "samples": 335
+      },
+      "model": "LINKUSDT-1h-xgboost_rv-b213964181d8",
+      "objective": "volatility",
+      "riskThresholds": [
+        0.004986034936869541,
+        0.006959930325996178
+      ],
+      "status": "experimental",
+      "symbol": "LINKUSDT",
+      "trainingTargetEnd": 1784678339999
+    },
+    {
+      "evaluation": null,
+      "excludedInvalidArtifacts": [],
+      "horizon": "1M",
+      "model": null,
+      "objective": "direction",
+      "status": "unavailable",
+      "symbol": "LINKUSDT"
+    },
+    {
+      "evaluation": null,
+      "excludedInvalidArtifacts": [],
+      "horizon": "1M",
+      "model": null,
+      "objective": "volatility",
+      "status": "unavailable",
+      "symbol": "LINKUSDT"
+    }
+  ],
+  "policy": "local-development-ranking-v1",
+  "prices": [
+    {
+      "algorithm": "xgboost",
+      "artifactSha256": "c1b6d1510519e0b67497444989f218c8c0d2e1aee20d39145857c53122e9daab",
+      "baselineValidationReturnRmse": 0.0005861063086572343,
+      "evaluationMetrics": {
+        "baselineHoldoutReturnRmse": 0.000476396930339752,
+        "holdoutDirectionalAccuracy": 0.47125,
+        "holdoutReturnRmse": 0.0004794499118951075,
+        "validationReturnRmse": 0.0005864980896631342
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1m",
+      "modelVersion": "BTCUSDT-1m-xgboost-dee783bdcb1ce6fb",
+      "status": "experimental",
+      "symbol": "BTCUSDT",
+      "trainingPeriod": {
+        "lastTarget": 1793491199999,
+        "start": 1761960779999
+      }
+    },
+    {
+      "algorithm": "xgboost",
+      "artifactSha256": "f471a107b08b6c8719c2c743150238a1a02e5afffa0b839da5a202ffc0960aa9",
+      "baselineValidationReturnRmse": 0.0019344830145462987,
+      "evaluationMetrics": {
+        "baselineHoldoutReturnRmse": 0.00183575888286386,
+        "holdoutDirectionalAccuracy": 0.5179166666666667,
+        "holdoutReturnRmse": 0.0018351181986764153,
+        "validationReturnRmse": 0.0019358736745440628
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "15m",
+      "modelVersion": "BTCUSDT-15m-xgboost-66f2d4e1b52a6b2f",
+      "status": "experimental",
+      "symbol": "BTCUSDT",
+      "trainingPeriod": {
+        "lastTarget": 1793491199999,
+        "start": 1761960779999
+      }
+    },
+    {
+      "algorithm": "ridge",
+      "artifactSha256": "7f0b8e7fcebe57c14ac7d472e7816e64b4ebc7c0fa56a05da10fa4b9c91d42f4",
+      "baselineValidationReturnRmse": 0.003997798178350335,
+      "evaluationMetrics": {
+        "baselineHoldoutReturnRmse": 0.003576308577723014,
+        "holdoutDirectionalAccuracy": 0.5076388888888889,
+        "holdoutReturnRmse": 0.0035719625578261266,
+        "validationReturnRmse": 0.004002304494567015
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1h",
+      "modelVersion": "BTCUSDT-1h-ridge-9a580100a8bcacd3",
+      "status": "experimental",
+      "symbol": "BTCUSDT",
+      "trainingPeriod": {
+        "lastTarget": 1793491199999,
+        "start": 1761960779999
+      }
+    },
+    {
+      "algorithm": null,
+      "artifactSha256": null,
+      "baselineValidationReturnRmse": null,
+      "evaluationMetrics": null,
+      "excludedInvalidArtifacts": [],
+      "horizon": "1M",
+      "modelVersion": null,
+      "status": "unavailable",
+      "symbol": "BTCUSDT",
+      "trainingPeriod": null
+    },
+    {
+      "algorithm": "random_forest",
+      "artifactSha256": "4ee5ca44cd992eecb29e7183f9a53a28b61e5132c71d18529c97635bd94e41da",
+      "baselineValidationReturnRmse": 0.0007856758814042266,
+      "evaluationMetrics": {
+        "baselineHoldoutReturnRmse": 0.0006724093752430791,
+        "holdoutDirectionalAccuracy": 0.5010416666666667,
+        "holdoutReturnRmse": 0.0006763735903987582,
+        "validationReturnRmse": 0.0007863119891487896
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1m",
+      "modelVersion": "ETHUSDT-1m-random_forest-d5768e4211c8d0d9",
+      "status": "experimental",
+      "symbol": "ETHUSDT",
+      "trainingPeriod": {
+        "lastTarget": 1793491199999,
+        "start": 1761960779999
+      }
+    },
+    {
+      "algorithm": "xgboost",
+      "artifactSha256": "0c69137808884506ccc72a29db60b7ebc4c1affc4bb0ef87d40920d40d5be343",
+      "baselineValidationReturnRmse": 0.002601823150519951,
+      "evaluationMetrics": {
+        "baselineHoldoutReturnRmse": 0.0025302849870328247,
+        "holdoutDirectionalAccuracy": 0.5208333333333334,
+        "holdoutReturnRmse": 0.0025274631742867094,
+        "validationReturnRmse": 0.0026023237898177244
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "15m",
+      "modelVersion": "ETHUSDT-15m-xgboost-ad4a93c99f2058c6",
+      "status": "experimental",
+      "symbol": "ETHUSDT",
+      "trainingPeriod": {
+        "lastTarget": 1793491199999,
+        "start": 1761960779999
+      }
+    },
+    {
+      "algorithm": "lstm",
+      "artifactSha256": "ca63d162cb3209373471cf62f3552c7244061344b43dbf57d746538488b7f11b",
+      "baselineValidationReturnRmse": 0.005369797285420634,
+      "evaluationMetrics": {
+        "baselineHoldoutReturnRmse": 0.004797356203704562,
+        "holdoutDirectionalAccuracy": 0.4798611111111111,
+        "holdoutReturnRmse": 0.004824070293689884,
+        "validationReturnRmse": 0.0053781520325656244
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1h",
+      "modelVersion": "ETHUSDT-1h-lstm-c66c5d874fe597fe",
+      "status": "experimental",
+      "symbol": "ETHUSDT",
+      "trainingPeriod": {
+        "lastTarget": 1793491199999,
+        "start": 1761960779999
+      }
+    },
+    {
+      "algorithm": null,
+      "artifactSha256": null,
+      "baselineValidationReturnRmse": null,
+      "evaluationMetrics": null,
+      "excludedInvalidArtifacts": [],
+      "horizon": "1M",
+      "modelVersion": null,
+      "status": "unavailable",
+      "symbol": "ETHUSDT",
+      "trainingPeriod": null
+    },
+    {
+      "algorithm": "lightgbm",
+      "artifactSha256": "35b5be0131ddb10616439d2cbaf022edcfc1542202215f57703aeac421ca6d42",
+      "baselineValidationReturnRmse": 0.0008698403309868377,
+      "evaluationMetrics": {
+        "baselineHoldoutReturnRmse": 0.0008168805896894004,
+        "holdoutDirectionalAccuracy": 0.469375,
+        "holdoutReturnRmse": 0.0008193725022051995,
+        "validationReturnRmse": 0.0008687085193322517
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1m",
+      "modelVersion": "SOLUSDT-1m-lightgbm-46d2c7488fc7f4aa",
+      "status": "experimental",
+      "symbol": "SOLUSDT",
+      "trainingPeriod": {
+        "lastTarget": 1793491199999,
+        "start": 1761960779999
+      }
+    },
+    {
+      "algorithm": "lightgbm",
+      "artifactSha256": "c4d8f702a0544a7ff747bc063d8c4025322d0d2ee6528be15c17859599f1925e",
+      "baselineValidationReturnRmse": 0.0030724529860177772,
+      "evaluationMetrics": {
+        "baselineHoldoutReturnRmse": 0.003047912486854183,
+        "holdoutDirectionalAccuracy": 0.4870833333333333,
+        "holdoutReturnRmse": 0.0030449168807209943,
+        "validationReturnRmse": 0.003075876759267033
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "15m",
+      "modelVersion": "SOLUSDT-15m-lightgbm-8279747be4f73607",
+      "status": "experimental",
+      "symbol": "SOLUSDT",
+      "trainingPeriod": {
+        "lastTarget": 1793491199999,
+        "start": 1761960779999
+      }
+    },
+    {
+      "algorithm": "hist_gradient_boosting",
+      "artifactSha256": "9a1ea28f2e7fe1d61c142132593b9c34ac0658a06b3741be057d184127d7c44b",
+      "baselineValidationReturnRmse": 0.006062940625833287,
+      "evaluationMetrics": {
+        "baselineHoldoutReturnRmse": 0.0057945977374832406,
+        "holdoutDirectionalAccuracy": 0.49166666666666664,
+        "holdoutReturnRmse": 0.005783180806345507,
+        "validationReturnRmse": 0.006070864857970236
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1h",
+      "modelVersion": "SOLUSDT-1h-hist_gradient_boosting-3ee512d1291c4422",
+      "status": "experimental",
+      "symbol": "SOLUSDT",
+      "trainingPeriod": {
+        "lastTarget": 1793491199999,
+        "start": 1761960779999
+      }
+    },
+    {
+      "algorithm": null,
+      "artifactSha256": null,
+      "baselineValidationReturnRmse": null,
+      "evaluationMetrics": null,
+      "excludedInvalidArtifacts": [],
+      "horizon": "1M",
+      "modelVersion": null,
+      "status": "unavailable",
+      "symbol": "SOLUSDT",
+      "trainingPeriod": null
+    },
+    {
+      "algorithm": "ridge",
+      "artifactSha256": "c7f5eba145225574865fce5e230b9599e42a03295dc716e379cc51137c1cb989",
+      "baselineValidationReturnRmse": 0.0005156055598290276,
+      "evaluationMetrics": {
+        "baselineHoldoutReturnRmse": 0.0005645135165912366,
+        "holdoutDirectionalAccuracy": 0.48125,
+        "holdoutReturnRmse": 0.0005837574359371248,
+        "validationReturnRmse": 0.0005149399652345919
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1m",
+      "modelVersion": "BNBUSDT-1m-ridge-d6adb5cea5e2883c",
+      "status": "experimental",
+      "symbol": "BNBUSDT",
+      "trainingPeriod": {
+        "lastTarget": 1793491199999,
+        "start": 1761960779999
+      }
+    },
+    {
+      "algorithm": "xgboost",
+      "artifactSha256": "ab4c297b6f9afe2fcfa5b602b14e37b22f9cb584fed3b3f2699f7bdc7db9f95c",
+      "baselineValidationReturnRmse": 0.0019188018655032348,
+      "evaluationMetrics": {
+        "baselineHoldoutReturnRmse": 0.002195654916550929,
+        "holdoutDirectionalAccuracy": 0.49270833333333336,
+        "holdoutReturnRmse": 0.002186431708367114,
+        "validationReturnRmse": 0.0019176034513634216
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "15m",
+      "modelVersion": "BNBUSDT-15m-xgboost-a6ba4a6d06eb3825",
+      "status": "experimental",
+      "symbol": "BNBUSDT",
+      "trainingPeriod": {
+        "lastTarget": 1793491199999,
+        "start": 1761960779999
+      }
+    },
+    {
+      "algorithm": "random_forest",
+      "artifactSha256": "c7c7a3dfa4a070ed9686b86c758fe0517ec2c437a9c9469d0670ada404932f4c",
+      "baselineValidationReturnRmse": 0.0038161037481478526,
+      "evaluationMetrics": {
+        "baselineHoldoutReturnRmse": 0.004212953695538632,
+        "holdoutDirectionalAccuracy": 0.4861111111111111,
+        "holdoutReturnRmse": 0.004216166508180585,
+        "validationReturnRmse": 0.003814433213489773
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1h",
+      "modelVersion": "BNBUSDT-1h-random_forest-9b63f55b93ec278d",
+      "status": "experimental",
+      "symbol": "BNBUSDT",
+      "trainingPeriod": {
+        "lastTarget": 1793491199999,
+        "start": 1761960779999
+      }
+    },
+    {
+      "algorithm": null,
+      "artifactSha256": null,
+      "baselineValidationReturnRmse": null,
+      "evaluationMetrics": null,
+      "excludedInvalidArtifacts": [],
+      "horizon": "1M",
+      "modelVersion": null,
+      "status": "unavailable",
+      "symbol": "BNBUSDT",
+      "trainingPeriod": null
+    },
+    {
+      "algorithm": "xgboost",
+      "artifactSha256": "620a071cd5f0733b4842ce3dba311152ec21fac7b7004105d835d4a0ceb6821b",
+      "baselineValidationReturnRmse": 0.0009113810293129351,
+      "evaluationMetrics": {
+        "baselineHoldoutReturnRmse": 0.0008896100388154531,
+        "holdoutDirectionalAccuracy": 0.45770833333333333,
+        "holdoutReturnRmse": 0.0009017907830139454,
+        "validationReturnRmse": 0.0009122822320452822
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1m",
+      "modelVersion": "XRPUSDT-1m-xgboost-201669bab05a0b07",
+      "status": "experimental",
+      "symbol": "XRPUSDT",
+      "trainingPeriod": {
+        "lastTarget": 1793491199999,
+        "start": 1761960779999
+      }
+    },
+    {
+      "algorithm": "lstm",
+      "artifactSha256": "28d606d7d188016ba1fbae2ee14aa7da449008ea5b604ae19d19b8c0f113b19b",
+      "baselineValidationReturnRmse": 0.003301660394922778,
+      "evaluationMetrics": {
+        "baselineHoldoutReturnRmse": 0.0033092402263814997,
+        "holdoutDirectionalAccuracy": 0.499375,
+        "holdoutReturnRmse": 0.0033130451995966063,
+        "validationReturnRmse": 0.0033063108053015384
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "15m",
+      "modelVersion": "XRPUSDT-15m-lstm-30da090707e910ab",
+      "status": "experimental",
+      "symbol": "XRPUSDT",
+      "trainingPeriod": {
+        "lastTarget": 1793491199999,
+        "start": 1761960779999
+      }
+    },
+    {
+      "algorithm": "lstm",
+      "artifactSha256": "53154546f08c317d7009492ac54d5dfc6460c361b8a2c1b3046a38a00f9fdc1e",
+      "baselineValidationReturnRmse": 0.006805382717633107,
+      "evaluationMetrics": {
+        "baselineHoldoutReturnRmse": 0.00644335561650833,
+        "holdoutDirectionalAccuracy": 0.5013888888888889,
+        "holdoutReturnRmse": 0.0064521345426088676,
+        "validationReturnRmse": 0.006829382105159206
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1h",
+      "modelVersion": "XRPUSDT-1h-lstm-63f1b40bd137154f",
+      "status": "experimental",
+      "symbol": "XRPUSDT",
+      "trainingPeriod": {
+        "lastTarget": 1793491199999,
+        "start": 1761960779999
+      }
+    },
+    {
+      "algorithm": null,
+      "artifactSha256": null,
+      "baselineValidationReturnRmse": null,
+      "evaluationMetrics": null,
+      "excludedInvalidArtifacts": [],
+      "horizon": "1M",
+      "modelVersion": null,
+      "status": "unavailable",
+      "symbol": "XRPUSDT",
+      "trainingPeriod": null
+    },
+    {
+      "algorithm": "lightgbm",
+      "artifactSha256": "cbe32996d46c2b2980f0046fa0315b20cbb33995889abb0c06be3a043d4992e0",
+      "baselineValidationReturnRmse": 0.0011747365202660787,
+      "evaluationMetrics": {
+        "baselineHoldoutReturnRmse": 0.001203895148030584,
+        "holdoutDirectionalAccuracy": 0.38729166666666665,
+        "holdoutReturnRmse": 0.0012152070480484208,
+        "validationReturnRmse": 0.0011726039867275577
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1m",
+      "modelVersion": "ADAUSDT-1m-lightgbm-a3903dc92782309f",
+      "status": "experimental",
+      "symbol": "ADAUSDT",
+      "trainingPeriod": {
+        "lastTarget": 1793491199999,
+        "start": 1761960779999
+      }
+    },
+    {
+      "algorithm": "xgboost",
+      "artifactSha256": "bf67f4ccfa383f537b77010c5472d6960150865b35e1ea12d3fc74343b35662b",
+      "baselineValidationReturnRmse": 0.00413084115908536,
+      "evaluationMetrics": {
+        "baselineHoldoutReturnRmse": 0.0044293509978481,
+        "holdoutDirectionalAccuracy": 0.4822916666666667,
+        "holdoutReturnRmse": 0.004425612957182999,
+        "validationReturnRmse": 0.004133706533111399
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "15m",
+      "modelVersion": "ADAUSDT-15m-xgboost-cc8b2d50aca40b4e",
+      "status": "experimental",
+      "symbol": "ADAUSDT",
+      "trainingPeriod": {
+        "lastTarget": 1793491199999,
+        "start": 1761960779999
+      }
+    },
+    {
+      "algorithm": "ridge",
+      "artifactSha256": "4435ba923e1b5ed91f7b5bbcd577d23bc764b37f61dc01ebefe1b770fecb8f6d",
+      "baselineValidationReturnRmse": 0.0082850739227947,
+      "evaluationMetrics": {
+        "baselineHoldoutReturnRmse": 0.008383684846553963,
+        "holdoutDirectionalAccuracy": 0.4986111111111111,
+        "holdoutReturnRmse": 0.008392663850486091,
+        "validationReturnRmse": 0.008303671729166882
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1h",
+      "modelVersion": "ADAUSDT-1h-ridge-40dd915541a90f60",
+      "status": "experimental",
+      "symbol": "ADAUSDT",
+      "trainingPeriod": {
+        "lastTarget": 1793491199999,
+        "start": 1761960779999
+      }
+    },
+    {
+      "algorithm": null,
+      "artifactSha256": null,
+      "baselineValidationReturnRmse": null,
+      "evaluationMetrics": null,
+      "excludedInvalidArtifacts": [],
+      "horizon": "1M",
+      "modelVersion": null,
+      "status": "unavailable",
+      "symbol": "ADAUSDT",
+      "trainingPeriod": null
+    },
+    {
+      "algorithm": "ridge",
+      "artifactSha256": "7d6922635169e11f9199eecdd3f84ee274c0e3523c9e89e11e7577f735f625fc",
+      "baselineValidationReturnRmse": 0.000875874658166956,
+      "evaluationMetrics": {
+        "baselineHoldoutReturnRmse": 0.0009444708351493222,
+        "holdoutDirectionalAccuracy": 0.46,
+        "holdoutReturnRmse": 0.000994650750600421,
+        "validationReturnRmse": 0.0008724048189470214
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1m",
+      "modelVersion": "DOGEUSDT-1m-ridge-41d9c26720ea5622",
+      "status": "experimental",
+      "symbol": "DOGEUSDT",
+      "trainingPeriod": {
+        "lastTarget": 1793491199999,
+        "start": 1761960779999
+      }
+    },
+    {
+      "algorithm": "lightgbm",
+      "artifactSha256": "e4f310ea08eb2d829ccb25157c163f2c63c256e79c7007fc8a9b0a18d054ae43",
+      "baselineValidationReturnRmse": 0.003073143198849226,
+      "evaluationMetrics": {
+        "baselineHoldoutReturnRmse": 0.0036368121458190765,
+        "holdoutDirectionalAccuracy": 0.5197916666666667,
+        "holdoutReturnRmse": 0.003634323618696814,
+        "validationReturnRmse": 0.0030800575261429562
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "15m",
+      "modelVersion": "DOGEUSDT-15m-lightgbm-02b3133f019b427c",
+      "status": "experimental",
+      "symbol": "DOGEUSDT",
+      "trainingPeriod": {
+        "lastTarget": 1793491199999,
+        "start": 1761960779999
+      }
+    },
+    {
+      "algorithm": "lightgbm",
+      "artifactSha256": "8716a5eaa3cbfd319fabdccc744c1b88b92d759b5b0a7be1583a8271d3adcdf8",
+      "baselineValidationReturnRmse": 0.006219564923430756,
+      "evaluationMetrics": {
+        "baselineHoldoutReturnRmse": 0.006948289663587461,
+        "holdoutDirectionalAccuracy": 0.49027777777777776,
+        "holdoutReturnRmse": 0.0069692739490985756,
+        "validationReturnRmse": 0.006228996882293892
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1h",
+      "modelVersion": "DOGEUSDT-1h-lightgbm-e91aa132a295c60f",
+      "status": "experimental",
+      "symbol": "DOGEUSDT",
+      "trainingPeriod": {
+        "lastTarget": 1793491199999,
+        "start": 1761960779999
+      }
+    },
+    {
+      "algorithm": null,
+      "artifactSha256": null,
+      "baselineValidationReturnRmse": null,
+      "evaluationMetrics": null,
+      "excludedInvalidArtifacts": [],
+      "horizon": "1M",
+      "modelVersion": null,
+      "status": "unavailable",
+      "symbol": "DOGEUSDT",
+      "trainingPeriod": null
+    },
+    {
+      "algorithm": "lightgbm",
+      "artifactSha256": "2697f98bf161e04da03d15e5adb5cbb97a32bb2f852857a11898590e7989041d",
+      "baselineValidationReturnRmse": 0.000875877722132083,
+      "evaluationMetrics": {
+        "baselineHoldoutReturnRmse": 0.001034107944928733,
+        "holdoutDirectionalAccuracy": 0.4839583333333333,
+        "holdoutReturnRmse": 0.001041087452013892,
+        "validationReturnRmse": 0.0008795931231086148
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1m",
+      "modelVersion": "LINKUSDT-1m-lightgbm-fd4621a7f76a3c0d",
+      "status": "experimental",
+      "symbol": "LINKUSDT",
+      "trainingPeriod": {
+        "lastTarget": 1793491199999,
+        "start": 1761960779999
+      }
+    },
+    {
+      "algorithm": "hist_gradient_boosting",
+      "artifactSha256": "f1750fa793206c58acf492a5abe6c326f00628d05d16567a5e25e77c58425542",
+      "baselineValidationReturnRmse": 0.0031509109104621664,
+      "evaluationMetrics": {
+        "baselineHoldoutReturnRmse": 0.003951446406836328,
+        "holdoutDirectionalAccuracy": 0.513125,
+        "holdoutReturnRmse": 0.003943550429770545,
+        "validationReturnRmse": 0.0031537471919006327
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "15m",
+      "modelVersion": "LINKUSDT-15m-hist_gradient_boosting-8cea20ef7d7907d3",
+      "status": "experimental",
+      "symbol": "LINKUSDT",
+      "trainingPeriod": {
+        "lastTarget": 1793491199999,
+        "start": 1761960779999
+      }
+    },
+    {
+      "algorithm": "lstm",
+      "artifactSha256": "21684d75bd2d23364784c6350a1c28789a58fbfdd8a8660c8309e762830126f2",
+      "baselineValidationReturnRmse": 0.006264356117253747,
+      "evaluationMetrics": {
+        "baselineHoldoutReturnRmse": 0.00782936060339097,
+        "holdoutDirectionalAccuracy": 0.49930555555555556,
+        "holdoutReturnRmse": 0.007834790123537862,
+        "validationReturnRmse": 0.006286171003297944
+      },
+      "excludedInvalidArtifacts": [],
+      "horizon": "1h",
+      "modelVersion": "LINKUSDT-1h-lstm-2fd7b07c2a0b0feb",
+      "status": "experimental",
+      "symbol": "LINKUSDT",
+      "trainingPeriod": {
+        "lastTarget": 1793491199999,
+        "start": 1761960779999
+      }
+    },
+    {
+      "algorithm": null,
+      "artifactSha256": null,
+      "baselineValidationReturnRmse": null,
+      "evaluationMetrics": null,
+      "excludedInvalidArtifacts": [],
+      "horizon": "1M",
+      "modelVersion": null,
+      "status": "unavailable",
+      "symbol": "LINKUSDT",
+      "trainingPeriod": null
+    }
+  ],
+  "selectionUsesHoldout": false
+}

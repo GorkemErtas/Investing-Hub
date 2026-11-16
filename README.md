@@ -36,9 +36,13 @@ retain their existing separate configuration.
 ## Models and preserved features
 
 Local experimental selection minimizes development log loss for direction,
-QLIKE for volatility and return RMSE for price, with deterministic tie-breaking.
+MAE (then QLIKE) for volatility and return RMSE for price, with deterministic tie-breaking.
 Final holdout results never select a model. Statistical diagnostics remain visible;
 local availability does not imply baseline superiority or confirmed predictability.
+[The 24-pair MAE-first comparison](ml/reports/selection-quality/COMPARISON.md) records
+18 changed volatility models, lower recorded development MAE and worse QLIKE in
+those pairs. [Stability and leakage diagnostics](ml/reports/selection-quality/STABILITY.md)
+show regime/event sensitivity and uncertainty limitations; no candidate models were retrained.
 [All local selections](ml/reports/local-selection.json) and the preserved
 [Phase 2 research](docs/OBJECTIVE_FINDINGS.md) document the measured limitations.
 

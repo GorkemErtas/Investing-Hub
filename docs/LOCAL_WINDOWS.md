@@ -69,7 +69,7 @@ archives or modify the original research. Source defaults are the existing
 `local-prepare --help` documents overrides for moved/private datasets and studies.
 
 Direction minimizes calibrated three-class development log loss, then Brier.
-Volatility minimizes development QLIKE, then MAE. Price minimizes development
+Volatility minimizes development MAE, then QLIKE. Price minimizes development
 return RMSE. Metrics rounded to 12 decimals break numerical ties using fixed
 algorithm simplicity order, then candidate ID. Ablation fits are eligible; binary
 conditional-on-nonzero controls and GARCH without a verified live-state artifact
@@ -98,6 +98,28 @@ risk categories become unavailable. Internet failure produces unavailable/expire
 values, while cached forecasts remain usable only until their original expiry.
 
 ## Research and tests
+
+The current volatility policy is MAE-first, with QLIKE retained as a tie-breaker
+and diagnostic. [All 24 before/after selections](../ml/reports/selection-quality/COMPARISON.md)
+and [stability/leakage findings](../ml/reports/selection-quality/STABILITY.md) use
+the same original calibration-selected baselines; every alternative baseline is
+reported too. Missing/zero baseline percentages stay unknown, and interval coverage
+is matched to the saved artifact's own last-fold calibration. No performance gate
+was added. To reproduce the review (no new candidate fitting):
+
+```powershell
+.\.venv\Scripts\python.exe ml/forecast_v2.py local-prepare
+.\.venv\Scripts\python.exe ml/forecast_v2.py selection-review --replay
+# Re-export from cached replays without repeating evaluation:
+.\.venv\Scripts\python.exe ml/forecast_v2.py selection-review
+```
+
+The replay command uses at most 600 seconds, 60 seconds per isolated pair and one
+numerical thread; incomplete attempts remain explicit. It scores only frozen
+direction/volatility artifacts on the original last development fold and rebuilds
+the fixed original momentum baseline on its original train/calibration rows.
+Earlier fold scores and price walk-forward results come from preserved evidence.
+Price deployment refits are never rescored on dates they may have trained on.
 
 [Turkish ML summary](ML_YEREL.md) lists actual selected models and performance.
 [Local selection evidence](../ml/reports/local-selection.json) records metrics,
