@@ -14,7 +14,7 @@
     "medium": "Moderate",
     "high": "High",
     "volatilityUnits": "Expected total movement over this horizon, expressed as log-return standard deviation. Not annualized; it does not indicate direction or probability of loss.",
-    "interval": "90% calibrated movement interval:",
+    "interval": "Calibrated movement band (90% target coverage):",
     "measuredCoverage": "Measured historical coverage",
     "expires": "Expires",
     "futureRequired": "A historical candidate needs confirmation on genuinely future data before a forecast can be shown.",

@@ -14,7 +14,7 @@
     "medium": "Orta",
     "high": "Yüksek",
     "volatilityUnits": "Bu ufuktaki beklenen toplam hareket, log-getiri standart sapması olarak gösterilir. Yıllıklandırılmamıştır; yön veya zarar olasılığını göstermez.",
-    "interval": "%90 kalibre edilmiş hareket aralığı:",
+    "interval": "%90 kapsam hedefli kalibre edilmiş hareket aralığı:",
     "measuredCoverage": "Ölçülen geçmiş kapsam",
     "expires": "Son geçerlilik",
     "futureRequired": "Geçmiş verideki aday, öngörü gösterilmeden önce gerçekten gelecekteki verilerle doğrulanmalıdır.",

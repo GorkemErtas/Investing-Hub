@@ -16,8 +16,14 @@ import {
 import { createMobileRouter, type MobileModule } from "./mobile/routes.js";
 import { limiterIdentity } from "./limiterIdentity.js";
 import { forecastHorizonSchema } from "@investing-hub/shared/forecasts";
-import { createForecastReader, type ForecastReader } from "./predictions/forecasts.js";
-import { createObjectiveReader, type ObjectiveReader } from "./predictions/objectives.js";
+import {
+  createForecastReader,
+  type ForecastReader,
+} from "./predictions/forecasts.js";
+import {
+  createObjectiveReader,
+  type ObjectiveReader,
+} from "./predictions/objectives.js";
 
 export function createApp(
   config: Config,
@@ -113,12 +119,20 @@ export function createApp(
     res.json(await predictions.read(symbolSchema.parse(req.params.symbol)));
   });
   app.get("/api/v2/forecasts/:symbol", async (req, res) => {
-    const { horizon } = z.strictObject({ horizon: forecastHorizonSchema.default("1m") }).parse(req.query);
-    res.json(await forecasts.read(symbolSchema.parse(req.params.symbol), horizon));
+    const { horizon } = z
+      .strictObject({ horizon: forecastHorizonSchema.default("1m") })
+      .parse(req.query);
+    res.json(
+      await forecasts.read(symbolSchema.parse(req.params.symbol), horizon),
+    );
   });
   app.get("/api/v3/forecasts/:symbol", async (req, res) => {
-    const { horizon } = z.strictObject({ horizon: forecastHorizonSchema.default("1m") }).parse(req.query);
-    res.json(await objectives.read(symbolSchema.parse(req.params.symbol), horizon));
+    const { horizon } = z
+      .strictObject({ horizon: forecastHorizonSchema.default("1m") })
+      .parse(req.query);
+    res.json(
+      await objectives.read(symbolSchema.parse(req.params.symbol), horizon),
+    );
   });
   // Optional private services do not intercept public market/prediction endpoints.
   const privatePaths = ["/api/auth", "/api/me", "/api/portfolios"];

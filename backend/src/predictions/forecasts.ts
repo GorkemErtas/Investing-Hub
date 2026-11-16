@@ -42,7 +42,10 @@ export function createForecastReader(
   config: Config,
   now = Date.now,
 ): ForecastReader {
-  const load = createSnapshotLoader(config.FORECASTS_EXPORT_PATH, forecastPublicationSchema);
+  const load = createSnapshotLoader(
+    config.FORECASTS_EXPORT_PATH,
+    forecastPublicationSchema,
+  );
   return {
     async read(symbol, horizon) {
       if (horizon === "1M")

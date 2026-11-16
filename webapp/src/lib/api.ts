@@ -69,7 +69,8 @@ export const useForecast = (symbol: Symbol, horizon: ForecastHorizon) =>
 export const useObjectiveForecast = (symbol: Symbol, horizon: ForecastHorizon) =>
   useQuery({
     queryKey: ['forecast-objectives-v3', symbol, horizon],
-    queryFn: ({ signal }) => get(`/v3/forecasts/${symbol}?horizon=${horizon}`, objectiveForecastSchema, signal),
+    queryFn: ({ signal }) =>
+      get(`/v3/forecasts/${symbol}?horizon=${horizon}`, objectiveForecastSchema, signal),
     staleTime: 10000,
     refetchInterval: 15000,
     retry: 1,

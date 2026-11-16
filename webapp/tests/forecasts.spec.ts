@@ -5,7 +5,10 @@ import { forecastFixture } from '../../shared/tests/forecasts-fixtures';
 import { objectiveFixture, objectiveTestNow } from '../../shared/tests/objective-fixtures';
 
 const NOW = objectiveTestNow;
-async function fixtures(page: Page, mode: 'available' | 'unavailable' | 'error' | 'directionOnly' = 'available') {
+async function fixtures(
+  page: Page,
+  mode: 'available' | 'unavailable' | 'error' | 'directionOnly' = 'available',
+) {
   await page.clock.install({ time: new Date(NOW) });
   await page.addInitScript(() => localStorage.setItem('ih:language:v1', JSON.stringify('en-US')));
   await page.route('**/api/**', (route) => {
@@ -19,13 +22,28 @@ async function fixtures(page: Page, mode: 'available' | 'unavailable' | 'error' 
       stale: false,
     };
     if (url.pathname.includes('/v3/forecasts/')) {
-      if (mode === 'error') return route.fulfill({ status: 503, json: { error: { code: 'SERVICE_ERROR' } } });
+      if (mode === 'error')
+        return route.fulfill({ status: 503, json: { error: { code: 'SERVICE_ERROR' } } });
       const f = objectiveFixture(symbol, url.searchParams.get('horizon') as ForecastHorizon, NOW);
-      const off = { status: 'unavailable' as const, reason: 'no_robust_direction_advantage', generatedAt: null,
-        modelVersion: null, algorithm: null, evaluation: null };
-      if (mode === 'unavailable') f.direction = { ...off, direction: null, probabilities: null, calibrated: false };
-      if (mode === 'unavailable' || mode === 'directionOnly') f.volatility = { ...off,
-        reason: 'no_robust_volatility_advantage', expectedVolatility: null, riskCategory: null, interval: null, units: 'horizon_log_return_std' };
+      const off = {
+        status: 'unavailable' as const,
+        reason: 'no_robust_direction_advantage',
+        generatedAt: null,
+        modelVersion: null,
+        algorithm: null,
+        evaluation: null,
+      };
+      if (mode === 'unavailable')
+        f.direction = { ...off, direction: null, probabilities: null, calibrated: false };
+      if (mode === 'unavailable' || mode === 'directionOnly')
+        f.volatility = {
+          ...off,
+          reason: 'no_robust_volatility_advantage',
+          expectedVolatility: null,
+          riskCategory: null,
+          interval: null,
+          units: 'horizon_log_return_std',
+        };
       return route.fulfill({ json: f });
     }
     if (url.pathname.includes('/v2/forecasts/')) {
@@ -175,7 +193,9 @@ test('provider errors show retry controls without a numeric fallback', async ({ 
   await expect(panel.getByRole('button', { name: 'Try again' })).toBeVisible();
 });
 
-test('direction availability is independent of volatility and price projections require explicit expansion', async ({ page }) => {
+test('direction availability is independent of volatility and price projections require explicit expansion', async ({
+  page,
+}) => {
   await fixtures(page, 'directionOnly');
   await page.goto('/');
   const panel = page.locator('#forecast');
@@ -184,12 +204,16 @@ test('direction availability is independent of volatility and price projections 
   await expect(panel.locator('.objective-value')).toHaveCount(0);
   await expect(panel).toContainText('No model passed the quality');
   await panel.getByText('Experimental price projection', { exact: true }).click();
-  await expect(panel).toContainText('Success in direction or volatility does not validate a future price');
+  await expect(panel).toContainText(
+    'Success in direction or volatility does not validate a future price',
+  );
   await expect(panel.locator('.forecast-price')).toHaveCount(0);
   // directionOnly fixture deliberately has no accepted price model.
 });
 
-test('optional numerical price projection is explicitly experimental and never the primary objective', async ({ page }) => {
+test('optional numerical price projection is explicitly experimental and never the primary objective', async ({
+  page,
+}) => {
   await fixtures(page);
   await page.goto('/');
   const panel = page.locator('#forecast');

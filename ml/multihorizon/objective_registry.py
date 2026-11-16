@@ -21,7 +21,9 @@ def confirmation_valid(value, artifact_sha, now_ms):
             value['trainingTargetEndMs'] < FUTURE_START and value['effectiveWeeklyBlocks'] >= 8 and
             value['allFoldsWin'] is True and value['calibrationPass'] is True and
             value['relativeLossImprovement'] >= .01 and value['simultaneousLowerImprovement'] > 0 and
-            value['familySize'] >= 912 and len(value['datasetFingerprint']) == 64)
+            value['familySize'] >= 912 and len(value['datasetFingerprint']) == 64 and
+            value['originCoverage'] == 'all_completed_minute_phases' and value['overlapAwareEvaluation'] is True and
+            value['minimumPerPhaseSamples'] >= 100)
     except (KeyError, TypeError):
         return False
 

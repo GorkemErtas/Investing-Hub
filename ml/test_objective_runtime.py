@@ -18,7 +18,8 @@ def confirmation(checksum):
         'startMs': FUTURE_START, 'endExclusiveMs': FUTURE_END, 'frozenAtMs': FUTURE_START-10000,
         'trainingTargetEndMs': FUTURE_START-20000, 'effectiveWeeklyBlocks': 12,
         'allFoldsWin': True, 'calibrationPass': True, 'relativeLossImprovement': .02,
-        'simultaneousLowerImprovement': .001, 'familySize': 912, 'datasetFingerprint': 'a'*64}
+        'simultaneousLowerImprovement': .001, 'familySize': 912, 'datasetFingerprint': 'a'*64,
+        'originCoverage': 'all_completed_minute_phases', 'overlapAwareEvaluation': True, 'minimumPerPhaseSamples': 100}
 
 
 class ObjectiveRuntimeTests(unittest.TestCase):
@@ -27,7 +28,8 @@ class ObjectiveRuntimeTests(unittest.TestCase):
         self.assertFalse(confirmation_valid(value, 'b'*64, FUTURE_START-1000))
         self.assertTrue(confirmation_valid(value, 'b'*64, FUTURE_END+1000))
         for field, invalid in [('frozenAtMs', FUTURE_START+1), ('familySize', 144),
-                               ('calibrationPass', False), ('relativeLossImprovement', .001)]:
+                               ('calibrationPass', False), ('relativeLossImprovement', .001),
+                               ('originCoverage', 'quarter_hour_only')]:
             with self.subTest(field=field):
                 self.assertFalse(confirmation_valid({**value, field: invalid}, 'b'*64, FUTURE_END+1000))
 
