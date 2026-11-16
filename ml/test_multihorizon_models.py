@@ -35,6 +35,18 @@ class ModelTests(unittest.TestCase):
                 self.assertTrue((np.diff(data.source_time.iloc[test]) >= minutes*60000).all())
                 self.assertLessEqual(len(train), DEFAULT_CONFIG['maxTrainRows'])
 
+    def test_xgboost_split_comparisons_use_float32_input_and_thresholds(self):
+        artifact = {'schema': 'minute-finite-v2.1', 'features': list(FEATURES), 'algorithm': 'xgboost',
+            'weight': 1., 'bias': 0., 'trees': [[[0, .100000001, 1, 2, 0., True],
+                [-1, 0., -1, -1, -.001, False], [-1, 0., -1, -1, .001, False]]]}
+        x = np.zeros((1, len(FEATURES)))
+        x[0, 0] = .1  # Rounded input equals the float32 split, so strict '<' is false.
+        self.assertEqual(numeric_predict(artifact, x)[0], .001)
+        artifact['algorithm'] = 'random_forest'
+        artifact['trees'][0][0] = [0, .1000000002, 1, 2, 0., False]
+        x[0, 0] = .1000000001
+        self.assertEqual(numeric_predict(artifact, x)[0], .001)
+
     def test_selection_never_accepts_marginal_advantage_or_incomplete_comparison(self):
         actual = np.tile([.01, -.01], 90*5)
         times = np.repeat(np.arange(90), 10)*86400000

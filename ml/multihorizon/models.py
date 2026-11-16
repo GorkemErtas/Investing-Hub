@@ -168,11 +168,18 @@ def numeric_predict(artifact, x):
         return ((h @ np.asarray(artifact['head']['weight']).T+artifact['head']['bias']).ravel()*artifact['yScale']+artifact['yMean'])
     if x.ndim != 2 or len(artifact['trees']) > 256:
         raise ValueError('invalid_tree_artifact')
+    # XGBoost quantizes input and split thresholds to float32 before comparison.
+    # Comparing original float64 indicators with rounded JSON thresholds can route
+    # exact-boundary rows to a different leaf even though the tree is unchanged.
+    if name in ('xgboost', 'random_forest'):
+        x = x.astype(np.float32).astype(float)
     result = np.full(len(x), artifact['bias'], dtype=float)
     for tree in artifact['trees']:
         if not 1 <= len(tree) <= 1024:
             raise ValueError('oversized_tree')
         nodes = np.asarray(tree, dtype=float)
+        if name == 'xgboost':
+            nodes[:, 1] = nodes[:, 1].astype(np.float32).astype(float)
         positions = np.zeros(len(x), dtype=int)
         for _ in range(32):
             current = nodes[positions]
