@@ -1,15 +1,15 @@
 import { i18n } from '../lib/i18n';
 import { useTranslation } from 'react-i18next';
-import { useState } from 'react';
-import { ArrowRight, ArrowUpRight, BarChart3, Layers3, Wallet, FlaskConical } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { assets, type Symbol } from '@investing-hub/shared/contracts';
+import { ArrowRight, ArrowUpRight, BarChart3, Layers3, Wallet } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { assets, symbolSchema, type Symbol } from '@investing-hub/shared/contracts';
 import { account, type Portfolio } from '@investing-hub/shared/portfolio';
 import { useMarkets } from '../lib/api';
 import { money } from '../lib/format';
 import { Change, Coin, ErrorState, Notice, Skeleton, Stat, Status } from '../components/ui';
 import { PriceChart } from '../components/PriceChart';
 import { MarketTable } from '../components/MarketTable';
+import { ForecastPanel } from '../components/ForecastPanel';
 
 export function Dashboard({
   theme,
@@ -28,7 +28,17 @@ export function Dashboard({
 }) {
   useTranslation();
   const markets = useMarkets();
-  const [symbol, setSymbol] = useState<Symbol>('BTCUSDT');
+  const [params, setParams] = useSearchParams();
+  const parsedSymbol = symbolSchema.safeParse(params.get('symbol'));
+  const symbol = parsedSymbol.success ? parsedSymbol.data : 'BTCUSDT';
+  const setSymbol = (next: Symbol) =>
+    setParams(
+      (previous) => {
+        previous.set('symbol', next);
+        return previous;
+      },
+      { replace: true },
+    );
   const data = markets.data?.data ?? [];
   const prices = Object.fromEntries(data.map((m) => [m.symbol, m.price]));
   const ledger = account(portfolio?.transactions ?? [], prices);
@@ -119,23 +129,7 @@ export function Dashboard({
               </p>
             )}
           </section>
-          <section className="prediction-teaser">
-            <div className="prediction-icon">
-              <FlaskConical size={22} />
-            </div>
-            <span className="pill">{i18n.t('dashboard.localPriceEstimates')}</span>
-            <h2>
-              {i18n.t('dashboard.betterQuestions')}
-              <br />
-              {i18n.t('dashboard.honestForecasts')}
-            </h2>
-            <p>{i18n.t('dashboard.seeTheNextDayNumericForecastFrom')}</p>
-            <Link to={`/predictions?symbol=${symbol}`}>
-              {i18n.t('dashboard.openPricePredictions')}
-              <ArrowRight size={16} />
-            </Link>
-            <div className="teaser-grid" aria-hidden="true" />
-          </section>
+          <ForecastPanel symbol={symbol} market={data.find((item) => item.symbol === symbol)} />
         </aside>
       </div>
       {markets.isPending ? (

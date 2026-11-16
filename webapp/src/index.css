@@ -258,6 +258,90 @@ select {
   height: 32px;
   flex-shrink: 0;
 }
+.forecast-panel {
+  min-width: 0;
+  scroll-margin-top: 24px;
+}
+.forecast-panel h2 {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.forecast-content {
+  padding: 0 22px 22px;
+}
+.forecast-market {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12px;
+  margin-bottom: 20px;
+}
+.forecast-horizons {
+  display: flex;
+  width: 100%;
+}
+.forecast-horizons button {
+  flex: 1;
+  min-height: 40px;
+}
+.forecast-horizons button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.forecast-note {
+  font-size: 11px;
+  line-height: 1.65;
+}
+.forecast-price {
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  overflow-wrap: anywhere;
+}
+.forecast-price small {
+  font-size: 12px;
+  color: var(--muted);
+}
+.forecast-change {
+  font-size: 12px;
+}
+.forecast-details {
+  display: grid;
+  gap: 10px;
+  font-size: 11px;
+  margin: 20px 0;
+}
+.forecast-details > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px;
+}
+.forecast-details dt {
+  color: var(--muted);
+}
+.forecast-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.forecast-model {
+  font-size: 12px;
+  line-height: 1.7;
+}
+.forecast-model summary {
+  cursor: pointer;
+  padding: 10px 0;
+}
+.forecast-version {
+  overflow-wrap: anywhere;
+}
+.forecast-empty {
+  padding: 22px 0;
+  font-size: 13px;
+  line-height: 1.7;
+}
 .guest-profile strong {
   display: block;
   font-size: 11px;

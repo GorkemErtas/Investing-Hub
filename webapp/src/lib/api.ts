@@ -1,6 +1,7 @@
 import { ApiError } from '@investing-hub/shared/client';
 import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
+import { forecastSchema, type ForecastHorizon } from '@investing-hub/shared/forecasts';
 import {
   candlesResponseSchema,
   marketsResponseSchema,
@@ -53,5 +54,14 @@ export const usePrediction = (symbol: Symbol) =>
     queryKey: ['prediction', symbol],
     queryFn: ({ signal }) => get(`/predictions/${symbol}`, predictionSchema, signal),
     staleTime: 300000,
+    retry: 1,
+  });
+export const useForecast = (symbol: Symbol, horizon: ForecastHorizon) =>
+  useQuery({
+    queryKey: ['forecast-v2', symbol, horizon],
+    queryFn: ({ signal }) =>
+      get(`/v2/forecasts/${symbol}?horizon=${horizon}`, forecastSchema, signal),
+    staleTime: 10000,
+    refetchInterval: 15000,
     retry: 1,
   });

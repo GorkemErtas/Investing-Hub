@@ -156,8 +156,16 @@ export function MarketTable({
                     </div>
                   </td>
                   <td>
-                    <Link className="text-button" to={`/predictions?symbol=${m.symbol}`}>
-                      {i18n.t('common:nav.predictions')}
+                    <Link
+                      className="text-button"
+                      to={`/?symbol=${m.symbol}#forecast`}
+                      onClick={() =>
+                        document
+                          .querySelector('#forecast')
+                          ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                      }
+                    >
+                      {i18n.t('forecast.open')}
                       <span aria-hidden="true">↗</span>
                     </Link>
                   </td>
