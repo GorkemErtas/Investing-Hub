@@ -33,10 +33,14 @@ def unavailable(symbol, horizon, now, reason, *, stale=False):
 
 
 class BinanceMinutes:
-    def __init__(self, *, request=urllib.request.urlopen, clock=lambda: int(time.time()*1000), pause=time.sleep):
+    def __init__(self, *, request=urllib.request.urlopen, clock=lambda: int(time.time()*1000), pause=time.sleep, history_size=HISTORY):
+        if not HISTORY <= history_size <= 2000:
+            raise ValueError('bounded_minute_history_required')
         self.request, self.clock, self.pause = request, clock, pause
         self.blocked_until = 0
-        self.history = {symbol: deque(maxlen=HISTORY) for symbol in SYMBOLS}
+        self.history_size = history_size
+        self.history = {symbol: deque(maxlen=history_size) for symbol in SYMBOLS}
+        self.retrieved = {}
 
     def candles(self, symbol):
         if symbol not in SYMBOLS:
@@ -44,8 +48,34 @@ class BinanceMinutes:
         if self.clock() < self.blocked_until:
             raise ValueError('provider_rate_limited')
         history = self.history[symbol]
-        params = urllib.parse.urlencode({'symbol': symbol, 'interval': '1m', 'limit': HISTORY+1, 'timeZone': '0'})
-        # One bounded tail request avoids persisted-history recovery and gap backfills.
+        completed_close = self.clock()//60000*60000-1
+        if history and history[-1]['close_time'] == completed_close and symbol in self.retrieved:
+            return pd.DataFrame(history), self.retrieved[symbol]
+        rows = self._rows({'symbol': symbol, 'interval': '1m', 'limit': min(1000, self.history_size+1), 'timeZone': '0'})
+        # At most two bounded pages support one-day HAR features without durable streams.
+        if len(rows) < self.history_size+1 and self.history_size > 999:
+            older = self._rows({'symbol': symbol, 'interval': '1m', 'limit': self.history_size+1-len(rows),
+                                'endTime': int(rows[0][0])-1, 'timeZone': '0'})
+            rows = older+rows
+        frame = pd.DataFrame(rows, columns=COLUMNS).apply(pd.to_numeric, errors='raise')
+        now = self.clock()
+        if (frame.open_time > now).any() or (np.diff(frame.open_time) <= 0).any():
+            raise ValueError('provider_chronology')
+        if (frame.close_time.iloc[:-1] >= now).any():
+            raise ValueError('provider_incomplete_history')
+        frame = frame[frame.close_time < now]
+        validated = validate_candles(frame, unit='ms', now_ms=now)
+        if len(validated) < self.history_size or now-int(validated.close_time.iloc[-1]) > 90_000:
+            raise ValueError('provider_history_stale_or_short')
+        history.clear()
+        history.extend(validated.iloc[-self.history_size:].to_dict('records'))
+        self.retrieved[symbol] = now
+        return pd.DataFrame(history), now
+
+    def _rows(self, parameters):
+        if self.clock() < self.blocked_until:
+            raise ValueError('provider_rate_limited')
+        params = urllib.parse.urlencode(parameters)
         url = 'https://data-api.binance.vision/api/v3/klines?'+params
         for attempt in range(2):
             try:
@@ -54,22 +84,9 @@ class BinanceMinutes:
                 if len(raw) > 1024*1024:
                     raise ValueError('provider_response_too_large')
                 rows = json.loads(raw)
-                if not isinstance(rows, list) or not 1 <= len(rows) <= HISTORY+1 or any(len(r) != 12 for r in rows):
+                if not isinstance(rows, list) or not 1 <= len(rows) <= int(parameters['limit']) or any(not isinstance(r, list) or len(r) != 12 for r in rows):
                     raise ValueError('provider_schema')
-                frame = pd.DataFrame(rows, columns=COLUMNS).apply(pd.to_numeric, errors='raise')
-                now = self.clock()
-                if (frame.open_time > now).any() or (np.diff(frame.open_time) <= 0).any():
-                    raise ValueError('provider_chronology')
-                # Only the final current candle may be incomplete.
-                if (frame.close_time.iloc[:-1] >= now).any():
-                    raise ValueError('provider_incomplete_history')
-                frame = frame[frame.close_time < now]
-                validated = validate_candles(frame, unit='ms', now_ms=now)
-                if len(validated) < HISTORY or now-int(validated.close_time.iloc[-1]) > 90_000:
-                    raise ValueError('provider_history_stale_or_short')
-                history.clear()
-                history.extend(validated.iloc[-HISTORY:].to_dict('records'))
-                return pd.DataFrame(history), now
+                return rows
             except urllib.error.HTTPError as error:
                 if error.code in (418, 429):
                     retry = error.headers.get('Retry-After', '60')
@@ -163,15 +180,30 @@ class Engine:
         return {'version': 'forecast-publication-v2', 'generatedAt': iso(self.clock()), 'forecasts': results}
 
 
-def run_worker(registry, output, *, once=False, stop=None):
+def run_worker(registry, output, *, once=False, stop=None, objective_registry=None, objective_output=None):
+    from contextlib import ExitStack
     from threading import Event
     from job_lock import job_lock
     stop = stop or Event()
-    engine = Engine(registry, BinanceMinutes())
-    with job_lock(output):
+    if objective_registry is not None:
+        from .objective_features import OBJECTIVE_HISTORY
+        from .objective_live import ObjectiveEngine
+        if objective_output is None or objective_output.resolve() == output.resolve():
+            raise ValueError('separate_objective_publication_required')
+        provider = BinanceMinutes(history_size=OBJECTIVE_HISTORY)
+        objective_engine = ObjectiveEngine(objective_registry, provider)
+    else:
+        provider, objective_engine = BinanceMinutes(), None
+    engine = Engine(registry, provider)
+    with ExitStack() as locks:
+        locks.enter_context(job_lock(output))
+        if objective_engine:
+            locks.enter_context(job_lock(objective_output))
         while not stop.is_set():
             began = time.perf_counter()
             atomic_json(output, engine.cycle())
+            if objective_engine:
+                atomic_json(objective_output, objective_engine.cycle())
             LOG.info(json.dumps({'event': 'forecast_cycle_published', 'seconds': time.perf_counter()-began}))
             if once:
                 return

@@ -102,9 +102,13 @@ def supervise(database, output, enabled, minute_enabled=False):
                 minute_worker = None
                 minute_retry = now.timestamp()+60
             if minute_enabled and minute_worker is None and now.timestamp() >= minute_retry:
-                minute_worker = subprocess.Popen([sys.executable, 'ml/forecast_v2.py', 'worker',
+                command = [sys.executable, 'ml/forecast_v2.py', 'worker',
                     '--registry', os.environ['FORECAST_REGISTRY_PATH'],
-                    '--output', os.environ['FORECASTS_EXPORT_PATH']], cwd=ROOT)
+                    '--output', os.environ['FORECASTS_EXPORT_PATH']]
+                if os.environ.get('ML_OBJECTIVES_ENABLED', 'false') == 'true':
+                    command.extend(['--objective-registry', os.environ['OBJECTIVE_REGISTRY_PATH'],
+                                    '--objective-output', os.environ['OBJECTIVE_FORECASTS_EXPORT_PATH']])
+                minute_worker = subprocess.Popen(command, cwd=ROOT)
                 log('minute_worker_started')
             if worker is not None:
                 timed_out = time.monotonic()-started >= JOB_TIMEOUT_SECONDS
@@ -168,6 +172,13 @@ def main():
         output = Path(os.environ['PREDICTIONS_EXPORT_PATH']).resolve()
         enabled = os.environ.get('ML_DAILY_ENABLED', 'true')
         minute_enabled = os.environ.get('ML_MINUTE_ENABLED', 'false')
+        objectives_enabled = os.environ.get('ML_OBJECTIVES_ENABLED', 'false')
+        if objectives_enabled not in ('true', 'false'):
+            raise ValueError('invalid_objective_setting')
+        if objectives_enabled == 'true' and (minute_enabled != 'true' or
+            Path(os.environ.get('OBJECTIVE_REGISTRY_PATH', '')).resolve() != Path('/data/ml/objective-registry/registry.json') or
+            Path(os.environ.get('OBJECTIVE_FORECASTS_EXPORT_PATH', '')).resolve() != Path('/data/ml/objective-forecasts.json')):
+            raise ValueError('invalid_objective_persistent_paths')
         if minute_enabled not in ('true', 'false'):
             raise ValueError('invalid_minute_setting')
         if minute_enabled == 'true' and (

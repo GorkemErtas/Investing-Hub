@@ -24,6 +24,8 @@ def main(argv=None):
     worker.add_argument('--registry', type=Path, default=Path('ml/artifacts/registry-v2/registry.json'))
     worker.add_argument('--output', type=Path, default=Path('ml/data/forecasts-v2.json'))
     worker.add_argument('--once', action='store_true')
+    worker.add_argument('--objective-registry', type=Path)
+    worker.add_argument('--objective-output', type=Path, default=Path('ml/data/objective-forecasts.json'))
     report = commands.add_parser('report')
     report.add_argument('--study', type=Path, default=Path('ml/artifacts/multihorizon/study.json'))
     report.add_argument('--output', type=Path, default=Path('ml/reports'))
@@ -39,7 +41,25 @@ def main(argv=None):
     research.add_argument('--symbol')
     research.add_argument('--horizon', choices=['1m', '15m', '1h'])
     research.add_argument('--pair-process', action='store_true', help=argparse.SUPPRESS)
+    objectives_report = commands.add_parser('objective-report')
+    objectives_report.add_argument('--study', type=Path, default=Path('ml/artifacts/objectives-study-2026-11-16'))
+    objectives_report.add_argument('--output', type=Path, default=Path('ml/reports/objectives-phase2'))
+    objectives_report.add_argument('--explain', action='store_true')
+    objectives_catalog = commands.add_parser('objective-catalog')
+    objectives_catalog.add_argument('--study', type=Path, default=Path('ml/artifacts/objectives-study-2026-11-16'))
+    objectives_catalog.add_argument('--output', type=Path, default=Path('ml/artifacts/objective-registry/registry.json'))
     args = parser.parse_args(argv)
+    if args.command == 'objective-report':
+        from multihorizon.objective_reports import export_objective_report
+        result = export_objective_report(args.study, args.output, explain=args.explain)
+        print(json.dumps({'configurations': result['plannedConfigurations'], 'incomplete': len(result['incompleteOrFailed']),
+                          'productionAccepted': result['productionAcceptedObjectives']}))
+        return 0
+    if args.command == 'objective-catalog':
+        from multihorizon.objective_registry import catalog_from_study
+        result = catalog_from_study(args.study, args.output)
+        print(json.dumps({'pairs': len(result['entries']), 'status': 'research_only_until_future_confirmation'}))
+        return 0
     if args.command == 'objective-research':
         from multihorizon.objective_research import run_study, run_pair
         if args.pair_process:
@@ -72,7 +92,10 @@ def main(argv=None):
         stop = Event()
         for signum in (signal.SIGINT, signal.SIGTERM):
             signal.signal(signum, lambda *_: stop.set())
-        run_worker(Registry(args.registry), args.output, once=args.once, stop=stop)
+        from multihorizon.objective_registry import ObjectiveRegistry
+        run_worker(Registry(args.registry), args.output, once=args.once, stop=stop,
+            objective_registry=ObjectiveRegistry(args.objective_registry) if args.objective_registry else None,
+            objective_output=args.objective_output)
         return 0
     if args.command == 'benchmark':
         from multihorizon.data import SYMBOLS, save_json
