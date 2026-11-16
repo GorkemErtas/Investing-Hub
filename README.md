@@ -8,6 +8,16 @@ volatility** for 1m, 15m and 1h. Price projection is optional and experimental;
 1M remains disabled. Existing daily predictions and historical evidence are retained.
 All model outputs are experimental and may perform worse than a simple baseline.
 
+## Portfolio presentation
+
+**Investing Hub** is a local-first, full-stack cryptocurrency research and simulated-portfolio application with React web, React Native/Expo mobile, a Node.js/Express API, and optional MongoDB accounts. Its experimental Python ML pipeline uses historical minute-level market data to forecast **direction probabilities**, **future realized volatility**, and optional **price projections** for eight assets across 1m, 15m and 1h horizons.
+
+**What to demonstrate:** market charts and guest portfolios; a coin's direction/volatility ForecastPanel; the selected algorithm, development loss and baseline comparison; and how offline or expired predictions become unavailable instead of showing invented values. The model-selection and evaluation reports are reproducible and distinguish development performance from future validation.
+
+**Measured research scope:** 4,204,800 historical one-minute candles, 768 registered direction/volatility experiments, and 24 coin/horizon combinations. MAE-first volatility selection changed 18 of 24 selected models and reduced recorded pairwise development MAE by 3.88% on average versus the previous QLIKE-first policy. This is a **development-data comparison**, not independent evidence of future accuracy or a trading advantage. Seven of eight selected 1m volatility models still trail the original baseline on MAE. See [before/after evidence](ml/reports/selection-quality/COMPARISON.md) and [limitations](docs/SELECTION_QUALITY.md).
+
+**Availability:** the former Railway deployment has been removed. There is **no public live demo**; use the Windows local startup below. No trained weights or historical raw datasets are committed to Git, so a fresh clone may show unavailable ML forecasts until the original ignored artifacts are restored. Guest market/portfolio features can be demonstrated with `.\dev.ps1 -NoML`.
+
 ## Windows quick start
 
 Install Node **24 or 26**, npm and Python **3.13**, then run in PowerShell:
