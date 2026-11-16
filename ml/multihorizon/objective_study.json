@@ -1,0 +1,48 @@
+{
+  "version": "direction-volatility-study-v1",
+  "registeredOn": "2026-11-16",
+  "seed": 42,
+  "symbols": ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", "ADAUSDT", "DOGEUSDT", "LINKUSDT"],
+  "horizons": ["1m", "15m", "1h"],
+  "validationWindows": [["2026-06-10", "2026-07-08"], ["2026-07-08", "2026-08-05"], ["2026-08-05", "2026-09-02"]],
+  "calibrationDays": 14,
+  "embargoMinutes": 1,
+  "maxEvaluationRows": 2800,
+  "maxCalibrationRows": 2800,
+  "futureConfirmation": {"start": "2026-12-01", "endExclusive": "2027-03-01", "status": "not_observed", "requiresFrozenModelBeforeStart": true},
+  "historicalHoldoutPolicy": "All supplied history, including the inspected September/October holdout, is development evidence. It is never final confirmation. No new trials are chosen from its results.",
+  "resourceBudget": {"threads": 1, "maxWallSeconds": 3600, "pairTimeoutSeconds": 180, "maxProcessRssMiB": 2048, "maxTrainRows": 36000},
+  "direction": {
+    "definitions": {"binary": "up/down conditional on nonzero future log return; zero labels excluded identically for every candidate", "neutral": "down/neutral/up using origin-known max(1bp, 0.5 * past-60-minute sigma * sqrt(h))", "costDiagnostic": "Compare neutral shares with round-trip cost 24bp; do not assume directional accuracy covers costs"},
+    "calibration": "temperature scaling fitted on a separate purged 14-day past window, never on validation; compare raw/calibrated proper scores",
+    "baselines": ["uniform", "training_class_prior", "majority", "calibrated_simple_momentum"],
+    "trials": [
+      {"id": "logistic_12k", "algorithm": "logistic", "features": "legacy", "rows": 12000, "days": 180, "C": 0.1, "modes": ["binary", "neutral"]},
+      {"id": "logistic_36k", "algorithm": "logistic", "features": "legacy", "rows": 36000, "days": 180, "C": 0.1, "modes": ["neutral"]},
+      {"id": "logistic_rich", "algorithm": "logistic", "features": "rich", "rows": 36000, "days": 90, "C": 0.1, "modes": ["binary", "neutral"]},
+      {"id": "logistic_regularized", "algorithm": "logistic", "features": "rich", "rows": 36000, "days": 90, "C": 0.01, "modes": ["neutral"]},
+      {"id": "forest", "algorithm": "random_forest", "features": "rich", "rows": 16000, "days": 90, "trees": 32, "depth": 5, "modes": ["neutral"]},
+      {"id": "lightgbm", "algorithm": "lightgbm", "features": "rich", "rows": 36000, "days": 90, "trees": 80, "leaves": 7, "l2": 10, "modes": ["binary", "neutral"]},
+      {"id": "lightgbm_regularized", "algorithm": "lightgbm", "features": "rich", "rows": 36000, "days": 90, "trees": 120, "leaves": 15, "l2": 30, "modes": ["neutral"]},
+      {"id": "xgboost", "algorithm": "xgboost", "features": "rich", "rows": 36000, "days": 90, "trees": 80, "depth": 3, "l2": 10, "modes": ["neutral"]},
+      {"id": "lstm", "algorithm": "lstm", "features": "rich", "rows": 12000, "days": 90, "hidden": 8, "epochs": 5, "lookback": 16, "modes": ["neutral"]}
+    ]
+  },
+  "volatility": {
+    "target": "sum of squared completed one-minute log returns strictly after origin through horizon; displayed sqrt(target), nonannualized horizon log-return standard deviation",
+    "baselines": ["training_mean_variance", "rolling_horizon", "ewma_60", "ewma_240"],
+    "trials": [
+      {"id": "har", "algorithm": "har_rv", "features": "har", "rows": 36000, "days": 180, "alpha": 1},
+      {"id": "har_regularized", "algorithm": "har_rv", "features": "har", "rows": 36000, "days": 90, "alpha": 100},
+      {"id": "lightgbm_rv", "algorithm": "lightgbm", "features": "rich", "rows": 36000, "days": 90, "trees": 80, "leaves": 7, "l2": 10},
+      {"id": "xgboost_rv", "algorithm": "xgboost", "features": "rich", "rows": 36000, "days": 90, "trees": 80, "depth": 3, "l2": 10},
+      {"id": "garch", "algorithm": "garch", "features": "returns", "rows": 10000, "days": 90, "maxIterations": 100}
+    ],
+    "interval": "90% split-conformal absolute log-volatility residual interval fitted on past calibration data; report actual validation coverage, never invent confidence"
+  },
+  "ablations": ["multiscale", "volatility", "activity", "structure", "trend", "cross_asset", "clock"],
+  "ablationModels": {"direction": "logistic_rich neutral", "volatility": "har-style log-RV ridge on rich features alpha100"},
+  "selection": {"minimumRelativeLossImprovement": 0.01, "requireEveryFoldWin": true, "maximumDirectionEce": 0.05, "minimumVolatilityCoverage": 0.85, "maximumVolatilityCoverage": 0.97, "familyAlpha": 0.05, "priorPhaseComparisons": 144, "uncertainty": "paired daily losses; seven-day moving-block bootstrap descriptive 95% intervals, HAC Student-t one-sided Bonferroni evidence across all planned hypotheses including prior phase; approximate dependence assumptions disclosed", "productionActivation": "never from historical study; requires separately scored frozen future confirmation"},
+  "costs": {"perUnitTurnover": 0.0012, "probabilityDecisionThreshold": 0.6, "note": "10bp costs plus 2bp slippage per turnover unit, including liquidation; sampled non-overlapping decisions are diagnostic, not executable strategy proof"},
+  "explainability": {"permutationRepeats": 3, "method": "one-day circular feature-group shifts on validation for fixed rich logistic and HAR-style RV models; dependence/correlation caveats", "shap": "deferred: no prospective-validated complex candidate; avoid expensive explanations of unproven price signals"}
+}
