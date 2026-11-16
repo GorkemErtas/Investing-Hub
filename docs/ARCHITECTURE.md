@@ -1,5 +1,11 @@
 # Architecture
 
+The historical minute migration adds an isolated v2 dataset/benchmark/registry,
+an opt-in bounded inference worker and a forecast panel inside the existing coin
+chart view. The daily v1 path described below remains active for compatibility.
+See [migration diagram and gates](FORECAST_MIGRATION.md), [feature contract](FORECAST_FEATURES.md),
+[operations/API](FORECAST_OPERATIONS.md) and [actual benchmark evidence](../ml/reports/FORECAST_BENCHMARK.md).
+
 Investing Hub is one modular monolith with two platform-specific applications. It keeps a low-cost, database-free public composition and optional private mobile capabilities in the same API process.
 
 ```mermaid

@@ -1,5 +1,12 @@
 # Local price forecasting
 
+Minute multi-horizon v2 now lives in `multihorizon/` with the separate
+`forecast_v2.py` command surface. See [operations and reproduction](../docs/FORECAST_OPERATIONS.md),
+[validation fingerprints](reports/historical-v2-validation.json) and
+[real-data benchmark/selection evidence](reports/FORECAST_BENCHMARK.md).
+The daily pipeline below is retained until replacement quality and operations
+are verified; v2 never mutates its SQLite lifecycle.
+
 One offline Python pipeline reuses the existing verified Binance daily OHLCV SQLite dataset. It trains/evaluates four candidates, selects one per coin, writes immutable next-day forecasts and atomically publishes `ml/data/predictions.json`. HTTP handlers never load models or run Python. There is no third-party generative AI integration.
 
 All supported commands run through `ml/pipeline.py` (or `ml/run.ps1` on Windows); training and forecasting modules contain the implementation. Stored model metadata retains the training-source hash from its original fit. Source cleanup does not change those historical records or require retraining; a future explicit fit records the updated source hash.

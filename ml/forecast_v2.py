@@ -24,7 +24,24 @@ def main(argv=None):
     worker.add_argument('--registry', type=Path, default=Path('ml/artifacts/registry-v2/registry.json'))
     worker.add_argument('--output', type=Path, default=Path('ml/data/forecasts-v2.json'))
     worker.add_argument('--once', action='store_true')
+    report = commands.add_parser('report')
+    report.add_argument('--study', type=Path, default=Path('ml/artifacts/multihorizon/study.json'))
+    report.add_argument('--output', type=Path, default=Path('ml/reports'))
+    repair = commands.add_parser('repair-artifacts')
+    repair.add_argument('--study', type=Path, default=Path('ml/artifacts/multihorizon/study.json'))
+    repair.add_argument('--dataset', type=Path, default=Path('ml/data/normalized-v2'))
+    repair.add_argument('--output', type=Path, default=Path('ml/artifacts/multihorizon/study-repaired.json'))
+    repair.add_argument('--algorithm', choices=['xgboost', 'random_forest'], default='xgboost')
     args = parser.parse_args(argv)
+    if args.command == 'repair-artifacts':
+        from multihorizon.repair import repair_artifacts
+        repair_artifacts(args.study, args.dataset, args.output, args.algorithm)
+        return 0
+    if args.command == 'report':
+        from multihorizon.reporting import export_report
+        failures = export_report(args.study, args.output)
+        print(json.dumps({'failedCandidates': failures}))
+        return 1 if failures else 0
     if args.command == 'registry':
         from multihorizon.registry import build_registry
         result = build_registry(args.study, args.output)
