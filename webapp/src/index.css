@@ -258,6 +258,16 @@ select {
   height: 32px;
   flex-shrink: 0;
 }
+.objective-tabs { display: flex; margin: 16px 0 8px; }
+.objective-tabs button { flex: 1; min-height: 40px; }
+.objective-result { font-size: 12px; line-height: 1.7; }
+.objective-value { font-size: 28px; font-weight: 600; margin: 18px 0 6px; }
+.direction-probabilities { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+.direction-probabilities > div { flex: 1; min-width: 60px; background: var(--panel-alt); border-radius: 6px; padding: 10px 7px; }
+.direction-probabilities span, .direction-probabilities strong { display: block; }
+.direction-probabilities span { color: var(--muted); font-size: 10px; }
+.optional-price { border-top: 1px solid var(--border); margin-top: 16px; }
+.price-projection { font-size: 12px; }
 .forecast-panel {
   min-width: 0;
   scroll-margin-top: 24px;
