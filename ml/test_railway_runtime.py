@@ -130,6 +130,31 @@ class RailwayRuntimeTests(unittest.TestCase):
                 self.assertEqual(runtime.supervise(database, database.with_suffix('.json'), True), 1)
             self.assertTrue(worker.terminated)
 
+    def test_optional_minute_worker_is_supervised_without_fitting_or_daily_mutation(self):
+        class Process:
+            returncode = None
+            terminated = False
+            def poll(self): return self.returncode
+            def terminate(self):
+                self.terminated = True
+                self.returncode = -15
+            def wait(self, **_): return self.returncode
+        class Event:
+            waits = 0
+            def is_set(self): return self.waits >= 2
+            def wait(self, _): self.waits += 1
+        api, minute = Process(), Process()
+        with temporary_directory() as temporary:
+            with patch('runtime.signal.signal'), patch('runtime.threading.Event', return_value=Event()), \
+                patch('runtime.subprocess.Popen', side_effect=[api, minute]) as launch, \
+                patch.dict('runtime.os.environ', {'FORECAST_REGISTRY_PATH': str(temporary/'registry.json'),
+                                                 'FORECASTS_EXPORT_PATH': str(temporary/'forecasts.json')}):
+                self.assertEqual(runtime.supervise(temporary/'absent.sqlite3', temporary/'daily.json', False, True), 0)
+            self.assertEqual(launch.call_count, 2)
+            self.assertIn('worker', launch.call_args_list[1].args[0])
+            self.assertNotIn('train', launch.call_args_list[1].args[0])
+            self.assertTrue(minute.terminated)
+
     def test_daily_success_failure_and_timeout_persist_correct_retry_state(self):
         class Process:
             terminated = False

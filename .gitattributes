@@ -1,1 +1,4 @@
 *.sh text eol=lf
+ml/reports/objectives-phase2/** text eol=lf
+ml/reports/selection-quality/** text eol=lf
+ml/reports/local-selection*.json text eol=lf

@@ -1,0 +1,1289 @@
+{
+  "payload": {
+    "createdAt": "2026-11-16T12:18:24.164544+00:00",
+    "entries": [
+      {
+        "horizon": "1m",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.0243604092597437,
+              "calibrationError": 0.031335960256966416,
+              "candidate": "neutral-lightgbm_regularized",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0403688401201652
+            },
+            "modelVersion": null,
+            "reason": "no_robust_direction_advantage",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": -0.0047375234369899655,
+              "calibrationError": null,
+              "candidate": "garch",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.8912450396825397,
+              "period": "development",
+              "primaryLoss": 0.0002798545093625125
+            },
+            "modelVersion": null,
+            "reason": "no_robust_volatility_advantage",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "BTCUSDT"
+      },
+      {
+        "horizon": "15m",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.007947442944518657,
+              "calibrationError": 0.021539131726417762,
+              "candidate": "neutral-logistic_rich",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0669440131757495
+            },
+            "modelVersion": null,
+            "reason": "no_robust_direction_advantage",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.03999208110599417,
+              "calibrationError": null,
+              "candidate": "lightgbm_rv",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.8553529338791713,
+              "period": "development",
+              "primaryLoss": 0.0005664471906496566
+            },
+            "modelVersion": null,
+            "reason": "no_robust_volatility_advantage",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "BTCUSDT"
+      },
+      {
+        "horizon": "1h",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.008114126472398842,
+              "calibrationError": 0.02059719648453167,
+              "candidate": "neutral-logistic_36k",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0655026585176601
+            },
+            "modelVersion": null,
+            "reason": "no_robust_direction_advantage",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.02949424078902485,
+              "calibrationError": null,
+              "candidate": "har_regularized",
+              "confirmationEnd": null,
+              "developmentEligible": true,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.877297565822156,
+              "period": "development",
+              "primaryLoss": 0.0010585281194342216
+            },
+            "modelVersion": null,
+            "reason": "future_confirmation_required",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "BTCUSDT"
+      },
+      {
+        "horizon": "1M",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.0243604092597437,
+              "calibrationError": 0.031335960256966416,
+              "candidate": "neutral-lightgbm_regularized",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0403688401201652
+            },
+            "modelVersion": null,
+            "reason": "no_robust_direction_advantage",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": -0.0047375234369899655,
+              "calibrationError": null,
+              "candidate": "garch",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.8912450396825397,
+              "period": "development",
+              "primaryLoss": 0.0002798545093625125
+            },
+            "modelVersion": null,
+            "reason": "no_robust_volatility_advantage",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "BTCUSDT"
+      },
+      {
+        "horizon": "1m",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.016847365600606956,
+              "calibrationError": 0.024440964156407143,
+              "candidate": "neutral-lightgbm_regularized",
+              "confirmationEnd": null,
+              "developmentEligible": true,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0588173006832358
+            },
+            "modelVersion": null,
+            "reason": "future_confirmation_required",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": -0.014887278993416464,
+              "calibrationError": null,
+              "candidate": "lightgbm_rv",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.8989335317460317,
+              "period": "development",
+              "primaryLoss": 0.00037035239560984025
+            },
+            "modelVersion": null,
+            "reason": "no_robust_volatility_advantage",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "ETHUSDT"
+      },
+      {
+        "horizon": "15m",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.011940540977170233,
+              "calibrationError": 0.019600505689100354,
+              "candidate": "neutral-logistic_regularized",
+              "confirmationEnd": null,
+              "developmentEligible": true,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0541095203925237
+            },
+            "modelVersion": null,
+            "reason": "future_confirmation_required",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.057249804994515485,
+              "calibrationError": null,
+              "candidate": "lightgbm_rv",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.8655253690609106,
+              "period": "development",
+              "primaryLoss": 0.0007767954613042556
+            },
+            "modelVersion": null,
+            "reason": "no_robust_volatility_advantage",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "ETHUSDT"
+      },
+      {
+        "horizon": "1h",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.012592294983028052,
+              "calibrationError": 0.03346862172034377,
+              "candidate": "neutral-logistic_regularized",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0486646369692854
+            },
+            "modelVersion": null,
+            "reason": "no_robust_direction_advantage",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.11602565928221387,
+              "calibrationError": null,
+              "candidate": "lightgbm_rv",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.8688524590163934,
+              "period": "development",
+              "primaryLoss": 0.0013581107530708206
+            },
+            "modelVersion": null,
+            "reason": "no_robust_volatility_advantage",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "ETHUSDT"
+      },
+      {
+        "horizon": "1M",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.016847365600606956,
+              "calibrationError": 0.024440964156407143,
+              "candidate": "neutral-lightgbm_regularized",
+              "confirmationEnd": null,
+              "developmentEligible": true,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0588173006832358
+            },
+            "modelVersion": null,
+            "reason": "future_confirmation_required",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": -0.014887278993416464,
+              "calibrationError": null,
+              "candidate": "lightgbm_rv",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.8989335317460317,
+              "period": "development",
+              "primaryLoss": 0.00037035239560984025
+            },
+            "modelVersion": null,
+            "reason": "no_robust_volatility_advantage",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "ETHUSDT"
+      },
+      {
+        "horizon": "1m",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.007141713307207032,
+              "calibrationError": 0.018121965083510275,
+              "candidate": "neutral-logistic_regularized",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0777087680339723
+            },
+            "modelVersion": null,
+            "reason": "no_robust_direction_advantage",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": -0.07806215095198565,
+              "calibrationError": null,
+              "candidate": "xgboost_rv",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.8995535714285714,
+              "period": "development",
+              "primaryLoss": 0.0004625323822192128
+            },
+            "modelVersion": null,
+            "reason": "no_robust_volatility_advantage",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "SOLUSDT"
+      },
+      {
+        "horizon": "15m",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.006514736835580237,
+              "calibrationError": 0.024602543222193806,
+              "candidate": "neutral-logistic_regularized",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0650399583207117
+            },
+            "modelVersion": null,
+            "reason": "no_robust_direction_advantage",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.02412237905238257,
+              "calibrationError": null,
+              "candidate": "xgboost_rv",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.8833891576727453,
+              "period": "development",
+              "primaryLoss": 0.0008138517489680088
+            },
+            "modelVersion": null,
+            "reason": "no_robust_volatility_advantage",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "SOLUSDT"
+      },
+      {
+        "horizon": "1h",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.006305869749153592,
+              "calibrationError": 0.0326723317713312,
+              "candidate": "neutral-forest",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0664276647915647
+            },
+            "modelVersion": null,
+            "reason": "no_robust_direction_advantage",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.12294378529321448,
+              "calibrationError": null,
+              "candidate": "lightgbm_rv",
+              "confirmationEnd": null,
+              "developmentEligible": true,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.8931942374565326,
+              "period": "development",
+              "primaryLoss": 0.0013675094462417083
+            },
+            "modelVersion": null,
+            "reason": "future_confirmation_required",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "SOLUSDT"
+      },
+      {
+        "horizon": "1M",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.007141713307207032,
+              "calibrationError": 0.018121965083510275,
+              "candidate": "neutral-logistic_regularized",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0777087680339723
+            },
+            "modelVersion": null,
+            "reason": "no_robust_direction_advantage",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": -0.07806215095198565,
+              "calibrationError": null,
+              "candidate": "xgboost_rv",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.8995535714285714,
+              "period": "development",
+              "primaryLoss": 0.0004625323822192128
+            },
+            "modelVersion": null,
+            "reason": "no_robust_volatility_advantage",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "SOLUSDT"
+      },
+      {
+        "horizon": "1m",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.009759810556227433,
+              "calibrationError": 0.009906939001369403,
+              "candidate": "neutral-logistic_regularized",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0673404411540939
+            },
+            "modelVersion": null,
+            "reason": "no_robust_direction_advantage",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": -0.027356162714367915,
+              "calibrationError": null,
+              "candidate": "xgboost_rv",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.8878968253968254,
+              "period": "development",
+              "primaryLoss": 0.0002775568440763722
+            },
+            "modelVersion": null,
+            "reason": "no_robust_volatility_advantage",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "BNBUSDT"
+      },
+      {
+        "horizon": "15m",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.004847793053755045,
+              "calibrationError": 0.03639565035574245,
+              "candidate": "neutral-logistic_regularized",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0718080462778237
+            },
+            "modelVersion": null,
+            "reason": "no_robust_direction_advantage",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.04756039909179899,
+              "calibrationError": null,
+              "candidate": "lightgbm_rv",
+              "confirmationEnd": null,
+              "developmentEligible": true,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.8837613199354919,
+              "period": "development",
+              "primaryLoss": 0.0005058993096224866
+            },
+            "modelVersion": null,
+            "reason": "future_confirmation_required",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "BNBUSDT"
+      },
+      {
+        "horizon": "1h",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.009011263134036995,
+              "calibrationError": 0.02355295774810796,
+              "candidate": "neutral-logistic_regularized",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0722212437753533
+            },
+            "modelVersion": null,
+            "reason": "no_robust_direction_advantage",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.09248541907936925,
+              "calibrationError": null,
+              "candidate": "lightgbm_rv",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.9115747640337805,
+              "period": "development",
+              "primaryLoss": 0.000862683962865065
+            },
+            "modelVersion": null,
+            "reason": "no_robust_volatility_advantage",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "BNBUSDT"
+      },
+      {
+        "horizon": "1M",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.009759810556227433,
+              "calibrationError": 0.009906939001369403,
+              "candidate": "neutral-logistic_regularized",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0673404411540939
+            },
+            "modelVersion": null,
+            "reason": "no_robust_direction_advantage",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": -0.027356162714367915,
+              "calibrationError": null,
+              "candidate": "xgboost_rv",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.8878968253968254,
+              "period": "development",
+              "primaryLoss": 0.0002775568440763722
+            },
+            "modelVersion": null,
+            "reason": "no_robust_volatility_advantage",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "BNBUSDT"
+      },
+      {
+        "horizon": "1m",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.011099691810984025,
+              "calibrationError": 0.01740349497796373,
+              "candidate": "neutral-logistic_regularized",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0694335110456965
+            },
+            "modelVersion": null,
+            "reason": "no_robust_direction_advantage",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": -0.036701356436103616,
+              "calibrationError": null,
+              "candidate": "xgboost_rv",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.9032738095238095,
+              "period": "development",
+              "primaryLoss": 0.0004270598349446084
+            },
+            "modelVersion": null,
+            "reason": "no_robust_volatility_advantage",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "XRPUSDT"
+      },
+      {
+        "horizon": "15m",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.00573684655230855,
+              "calibrationError": 0.027561027300739768,
+              "candidate": "neutral-logistic_regularized",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.068502431569105
+            },
+            "modelVersion": null,
+            "reason": "no_robust_direction_advantage",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": -0.027162585779340498,
+              "calibrationError": null,
+              "candidate": "har",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.8888475375263615,
+              "period": "development",
+              "primaryLoss": 0.000803008717339641
+            },
+            "modelVersion": null,
+            "reason": "no_robust_volatility_advantage",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "XRPUSDT"
+      },
+      {
+        "horizon": "1h",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.006957351865787831,
+              "calibrationError": 0.026233017919208183,
+              "candidate": "neutral-xgboost",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0711313073643287
+            },
+            "modelVersion": null,
+            "reason": "no_robust_direction_advantage",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.05551561301631058,
+              "calibrationError": null,
+              "candidate": "har_regularized",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.892200695479384,
+              "period": "development",
+              "primaryLoss": 0.0013930578931602383
+            },
+            "modelVersion": null,
+            "reason": "no_robust_volatility_advantage",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "XRPUSDT"
+      },
+      {
+        "horizon": "1M",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.011099691810984025,
+              "calibrationError": 0.01740349497796373,
+              "candidate": "neutral-logistic_regularized",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0694335110456965
+            },
+            "modelVersion": null,
+            "reason": "no_robust_direction_advantage",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": -0.036701356436103616,
+              "calibrationError": null,
+              "candidate": "xgboost_rv",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.9032738095238095,
+              "period": "development",
+              "primaryLoss": 0.0004270598349446084
+            },
+            "modelVersion": null,
+            "reason": "no_robust_volatility_advantage",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "XRPUSDT"
+      },
+      {
+        "horizon": "1m",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.011811266281939403,
+              "calibrationError": 0.036159888336574915,
+              "candidate": "neutral-logistic_regularized",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0860942242963205
+            },
+            "modelVersion": null,
+            "reason": "no_robust_direction_advantage",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.008784603610857644,
+              "calibrationError": null,
+              "candidate": "garch",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.9286954365079365,
+              "period": "development",
+              "primaryLoss": 0.0006291660530894246
+            },
+            "modelVersion": null,
+            "reason": "no_robust_volatility_advantage",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "ADAUSDT"
+      },
+      {
+        "horizon": "15m",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.004995074698725621,
+              "calibrationError": 0.01779999631392632,
+              "candidate": "neutral-logistic_36k",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0642339087281454
+            },
+            "modelVersion": null,
+            "reason": "no_robust_direction_advantage",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.09486987452905193,
+              "calibrationError": null,
+              "candidate": "xgboost_rv",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.9068353802257785,
+              "period": "development",
+              "primaryLoss": 0.0009757404578453646
+            },
+            "modelVersion": null,
+            "reason": "no_robust_volatility_advantage",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "ADAUSDT"
+      },
+      {
+        "horizon": "1h",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.0011402354401147674,
+              "calibrationError": 0.028564564256204367,
+              "candidate": "neutral-logistic_regularized",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0668222426108576
+            },
+            "modelVersion": null,
+            "reason": "no_robust_direction_advantage",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.15016874089360444,
+              "calibrationError": null,
+              "candidate": "xgboost_rv",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.920019870839543,
+              "period": "development",
+              "primaryLoss": 0.001585615734910116
+            },
+            "modelVersion": null,
+            "reason": "no_robust_volatility_advantage",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "ADAUSDT"
+      },
+      {
+        "horizon": "1M",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.011811266281939403,
+              "calibrationError": 0.036159888336574915,
+              "candidate": "neutral-logistic_regularized",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0860942242963205
+            },
+            "modelVersion": null,
+            "reason": "no_robust_direction_advantage",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.008784603610857644,
+              "calibrationError": null,
+              "candidate": "garch",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.9286954365079365,
+              "period": "development",
+              "primaryLoss": 0.0006291660530894246
+            },
+            "modelVersion": null,
+            "reason": "no_robust_volatility_advantage",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "ADAUSDT"
+      },
+      {
+        "horizon": "1m",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.010694892298281578,
+              "calibrationError": 0.02466558092429712,
+              "candidate": "neutral-logistic_rich",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0785109895095375
+            },
+            "modelVersion": null,
+            "reason": "no_robust_direction_advantage",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.00127575314818551,
+              "calibrationError": null,
+              "candidate": "garch",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.9095982142857143,
+              "period": "development",
+              "primaryLoss": 0.00042482110192391335
+            },
+            "modelVersion": null,
+            "reason": "no_robust_volatility_advantage",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "DOGEUSDT"
+      },
+      {
+        "horizon": "15m",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.006234187124018131,
+              "calibrationError": 0.028294907670097444,
+              "candidate": "neutral-logistic_regularized",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0671126951710423
+            },
+            "modelVersion": null,
+            "reason": "no_robust_direction_advantage",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": -0.048290979494532094,
+              "calibrationError": null,
+              "candidate": "har",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.8827688872348344,
+              "period": "development",
+              "primaryLoss": 0.0008715802204741154
+            },
+            "modelVersion": null,
+            "reason": "no_robust_volatility_advantage",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "DOGEUSDT"
+      },
+      {
+        "horizon": "1h",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.004423684060733346,
+              "calibrationError": 0.031167859307350658,
+              "candidate": "neutral-lstm",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0697893809220609
+            },
+            "modelVersion": null,
+            "reason": "no_robust_direction_advantage",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.04281618917472407,
+              "calibrationError": null,
+              "candidate": "har_regularized",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.8817685047193244,
+              "period": "development",
+              "primaryLoss": 0.00153212096786385
+            },
+            "modelVersion": null,
+            "reason": "no_robust_volatility_advantage",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "DOGEUSDT"
+      },
+      {
+        "horizon": "1M",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.010694892298281578,
+              "calibrationError": 0.02466558092429712,
+              "candidate": "neutral-logistic_rich",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0785109895095375
+            },
+            "modelVersion": null,
+            "reason": "no_robust_direction_advantage",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.00127575314818551,
+              "calibrationError": null,
+              "candidate": "garch",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.9095982142857143,
+              "period": "development",
+              "primaryLoss": 0.00042482110192391335
+            },
+            "modelVersion": null,
+            "reason": "no_robust_volatility_advantage",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "DOGEUSDT"
+      },
+      {
+        "horizon": "1m",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.0014969846225064698,
+              "calibrationError": 0.021079856346023797,
+              "candidate": "neutral-lightgbm_regularized",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0800936830236347
+            },
+            "modelVersion": null,
+            "reason": "no_robust_direction_advantage",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": -0.013518486109259209,
+              "calibrationError": null,
+              "candidate": "garch",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.9069940476190477,
+              "period": "development",
+              "primaryLoss": 0.0004580577332201893
+            },
+            "modelVersion": null,
+            "reason": "no_robust_volatility_advantage",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "LINKUSDT"
+      },
+      {
+        "horizon": "15m",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.0017147400348707098,
+              "calibrationError": 0.022999087075246245,
+              "candidate": "neutral-logistic_12k",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0758561286672337
+            },
+            "modelVersion": null,
+            "reason": "no_robust_direction_advantage",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.02607456525700569,
+              "calibrationError": null,
+              "candidate": "lightgbm_rv",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.8812802381838482,
+              "period": "development",
+              "primaryLoss": 0.0008698028652343847
+            },
+            "modelVersion": null,
+            "reason": "no_robust_volatility_advantage",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "LINKUSDT"
+      },
+      {
+        "horizon": "1h",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.003917027189283884,
+              "calibrationError": 0.03341643715181745,
+              "candidate": "neutral-xgboost",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0783607162744706
+            },
+            "modelVersion": null,
+            "reason": "no_robust_direction_advantage",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.07396564704141673,
+              "calibrationError": null,
+              "candidate": "xgboost_rv",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.8797814207650273,
+              "period": "development",
+              "primaryLoss": 0.0014949264532937798
+            },
+            "modelVersion": null,
+            "reason": "no_robust_volatility_advantage",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "LINKUSDT"
+      },
+      {
+        "horizon": "1M",
+        "objectives": {
+          "direction": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": 0.0014969846225064698,
+              "calibrationError": 0.021079856346023797,
+              "candidate": "neutral-lightgbm_regularized",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": null,
+              "period": "development",
+              "primaryLoss": 1.0800936830236347
+            },
+            "modelVersion": null,
+            "reason": "no_robust_direction_advantage",
+            "status": "unavailable"
+          },
+          "volatility": {
+            "algorithm": null,
+            "evaluation": {
+              "baselineRelativeImprovement": -0.013518486109259209,
+              "calibrationError": null,
+              "candidate": "garch",
+              "confirmationEnd": null,
+              "developmentEligible": false,
+              "futureConfirmed": false,
+              "intervalCoverage": 0.9069940476190477,
+              "period": "development",
+              "primaryLoss": 0.0004580577332201893
+            },
+            "modelVersion": null,
+            "reason": "no_robust_volatility_advantage",
+            "status": "unavailable"
+          }
+        },
+        "symbol": "LINKUSDT"
+      }
+    ],
+    "version": "objective-registry-v1"
+  },
+  "sha256": "7eb1af67078fcd97dd9b375b4eb81ab2377222e17a89a368636d7b97aa15de6e"
+}

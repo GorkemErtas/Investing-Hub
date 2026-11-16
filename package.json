@@ -12,12 +12,15 @@
     "node": "^24.0.0 || ^26.0.0"
   },
   "scripts": {
-    "dev": "npm run build -w shared && concurrently -k -n api,web \"npm run dev -w backend\" \"npm run dev -w webapp\"",
+    "dev": "tsx scripts/dev.ts",
+    "local:check": "tsx scripts/dev.ts --check",
+    "verify:local": "tsx scripts/verify-local.ts",
+    "dev:web-stack": "npm run build -w shared && concurrently -k -n api,web \"npm run dev -w backend\" \"npm run dev -w webapp\"",
     "dev:api": "npm run build -w shared && npm run dev -w backend",
     "dev:web": "npm run build -w shared && npm run dev -w webapp",
     "dev:mobile": "npm run build -w shared && npm --prefix mobileapp start",
     "build": "npm run build -w shared && npm run build -w backend && npm run build -w webapp",
-    "typecheck": "npm run typecheck -w shared && npm run typecheck -w backend && npm run typecheck -w webapp",
+    "typecheck": "npm run typecheck -w shared && npm run typecheck -w backend && npm run typecheck -w webapp && tsc -p scripts/tsconfig.json",
     "test": "npm run build -w shared && npm run test -w shared && npm run test -w backend && npm run test -w webapp",
     "lint": "npm run lint -w webapp",
     "test:browser": "npm run test:browser -w webapp",

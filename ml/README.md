@@ -1,5 +1,27 @@
 # Local price forecasting
 
+Current Windows startup is `.\dev.ps1` from repository root. It selects existing
+direction, volatility and optional price artifacts by development loss and runs
+one frozen minute worker, without training or statistical activation thresholds.
+Outputs are explicitly experimental; old gated research decisions are preserved.
+See [local operations](../docs/LOCAL_WINDOWS.md), [Türkçe ML summary](../docs/ML_YEREL.md)
+and [local selection metrics](reports/local-selection.json). The daily system below
+remains supported independently; Railway is legacy reference only.
+
+Volatility now ranks development **MAE first, QLIKE second**. The preserved
+[QLIKE-first manifest](reports/local-selection-v1.json), current manifest and
+[24-pair comparison](reports/selection-quality/COMPARISON.md) distinguish experimental
+availability from baseline outperformance and independent validation. The
+[stability review](reports/selection-quality/STABILITY.md) reports folds, regimes,
+event tails and calibration limitations without imposing new activation gates.
+
+Minute multi-horizon v2 now lives in `multihorizon/` with the separate
+`forecast_v2.py` command surface. See [operations and reproduction](../docs/FORECAST_OPERATIONS.md),
+[validation fingerprints](reports/historical-v2-validation.json) and
+[real-data benchmark/selection evidence](reports/FORECAST_BENCHMARK.md).
+The daily pipeline below is retained until replacement quality and operations
+are verified; v2 never mutates its SQLite lifecycle.
+
 One offline Python pipeline reuses the existing verified Binance daily OHLCV SQLite dataset. It trains/evaluates four candidates, selects one per coin, writes immutable next-day forecasts and atomically publishes `ml/data/predictions.json`. HTTP handlers never load models or run Python. There is no third-party generative AI integration.
 
 All supported commands run through `ml/pipeline.py` (or `ml/run.ps1` on Windows); training and forecasting modules contain the implementation. Stored model metadata retains the training-source hash from its original fit. Source cleanup does not change those historical records or require retraining; a future explicit fit records the updated source hash.
@@ -75,6 +97,17 @@ Publication holds a SQLite writer reservation through the atomic JSON replacemen
 ```
 
 Tests cover actual trainable candidates for all eight synthetic assets, common chronological windows, scaler isolation, deterministic selection and LSTM weights, artifact parity/corruption, no future-feature leakage, explicit unavailable output, non-destructive source synchronization and the complete CLI. Actual market-data results and preserved-record checks are in [the measured run](../docs/PRICE_PREDICTIONS.md), with all 32 candidate measurements in the ignored `ml/data/price-predictions-verification.json`.
+
+## Direction and volatility research
+
+PR #9 extends the existing minute pipeline with independently calibrated direction
+and future realized-volatility objectives. The complete 768-configuration study,
+per-pair results, ablations, calibration figures and resource limits are in
+[Phase 2 findings](../docs/OBJECTIVE_FINDINGS.md). Five candidates meet development
+gates; none is accepted for live numerical publication. The genuinely future
+confirmation period starts December 2026. Existing price research and the daily
+SQLite lifecycle remain intact. See [objective operations](../docs/OBJECTIVE_FORECASTS.md)
+for reproducible commands, separate objective gates and the strict v3 API.
 
 ## Daily operation
 

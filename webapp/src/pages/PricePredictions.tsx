@@ -1,6 +1,8 @@
 import { i18n } from '../lib/i18n';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { symbolSchema } from '@investing-hub/shared/contracts';
 import { assets, type Symbol } from '@investing-hub/shared/contracts';
 import { usePrediction } from '../lib/api';
 import { Coin, ErrorState, Skeleton } from '../components/ui';
@@ -78,8 +80,14 @@ function PredictionCard({ symbol }: { symbol: Symbol }) {
 }
 export function PricePredictions() {
   useTranslation();
+  const [params] = useSearchParams();
+  const parsed = symbolSchema.safeParse(params.get('symbol'));
+  const symbol = parsed.success ? parsed.data : 'BTCUSDT';
   return (
     <>
+      <p className="notice">
+        <Link to={`/?symbol=${symbol}#forecast`}>{i18n.t('forecast.migration')}</Link>
+      </p>
       <div className="page-heading">
         <div>
           <div className="eyebrow">{i18n.t('pricePredictions.localMachineLearning')}</div>

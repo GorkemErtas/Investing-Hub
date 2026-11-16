@@ -1,0 +1,3 @@
+# Local research and frozen objective inference; not copied into the legacy Docker image.
+-r requirements-multihorizon.txt
+arch==9.0.0

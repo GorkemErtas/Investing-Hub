@@ -1,0 +1,11 @@
+{
+  "ageMs": 24568,
+  "btcTwoPageRetrievalMs": 4063.2733999991615,
+  "completedBtcMinutes": 1536,
+  "featureAndEthRetrievalMs": 4014.923499998986,
+  "featureCount": 52,
+  "lastCloseMs": 1794829319999,
+  "lastFeaturesFinite": true,
+  "processRssMiB": 91.18359375,
+  "retrievedAtMs": 1794829344567
+}

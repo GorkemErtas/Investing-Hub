@@ -1,0 +1,116 @@
+{
+  "direction": {
+    "algorithm": "logistic",
+    "calibrated": true,
+    "direction": "neutral",
+    "evaluation": {
+      "balancedAccuracy": 0.3554072009475462,
+      "baselineRelativeImprovement": 0.008503906746279877,
+      "brier": 0.6438152405006619,
+      "calibrationError": 0.01869814302513744,
+      "candidate": "neutral-ablate-activity",
+      "confirmationEnd": null,
+      "developmentEligible": false,
+      "futureConfirmed": false,
+      "intervalCoverage": null,
+      "mcc": 0.06364434410993558,
+      "period": "development",
+      "primaryLoss": 1.0663455411314857
+    },
+    "generatedAt": "2026-11-16T15:11:27.496Z",
+    "modelVersion": "BTCUSDT-15m-neutral-ablate-activity-f26f5c5fefe3",
+    "probabilities": {
+      "down": 0.2678402189349286,
+      "neutral": 0.47717852288167656,
+      "up": 0.25498125818339484
+    },
+    "reason": "local_experimental_development_selection",
+    "status": "experimental"
+  },
+  "exactUiValuesMatchedApi": true,
+  "fakeClockUsed": false,
+  "offlineExpiredNumbersRemoved": true,
+  "otherCoins": [
+    {
+      "direction": "experimental",
+      "symbol": "BTCUSDT",
+      "volatility": "experimental"
+    },
+    {
+      "direction": "experimental",
+      "symbol": "ETHUSDT",
+      "volatility": "experimental"
+    },
+    {
+      "direction": "experimental",
+      "symbol": "SOLUSDT",
+      "volatility": "experimental"
+    },
+    {
+      "direction": "experimental",
+      "symbol": "BNBUSDT",
+      "volatility": "experimental"
+    },
+    {
+      "direction": "experimental",
+      "symbol": "XRPUSDT",
+      "volatility": "experimental"
+    },
+    {
+      "direction": "experimental",
+      "symbol": "ADAUSDT",
+      "volatility": "experimental"
+    },
+    {
+      "direction": "experimental",
+      "symbol": "DOGEUSDT",
+      "volatility": "experimental"
+    },
+    {
+      "direction": "experimental",
+      "symbol": "LINKUSDT",
+      "volatility": "experimental"
+    }
+  ],
+  "price": {
+    "model": "BTCUSDT-15m-xgboost-66f2d4e1b52a6b2f",
+    "predictedPrice": 64525.376988998054,
+    "sourceCandleTime": "2026-11-16T15:10:59.999Z"
+  },
+  "reconnectedNumbersRecovered": true,
+  "requestInterceptionUsed": false,
+  "sourceCandleTime": "2026-11-16T15:10:59.999Z",
+  "syntheticDataUsed": false,
+  "targetTime": "2026-11-16T15:25:59.999Z",
+  "verifiedAt": "2026-11-16T15:12:31.958Z",
+  "version": "local-real-ui-verification-v1",
+  "volatility": {
+    "algorithm": "lightgbm",
+    "evaluation": {
+      "baselineRelativeImprovement": 0.03999208110599417,
+      "calibrationError": null,
+      "candidate": "lightgbm_rv",
+      "confirmationEnd": null,
+      "developmentEligible": false,
+      "futureConfirmed": false,
+      "intervalCoverage": 0.8553529338791713,
+      "period": "development",
+      "primaryLoss": 0.0005664471906496566,
+      "qlike": -11.861766131103103
+    },
+    "expectedVolatility": 0.004729400640103917,
+    "generatedAt": "2026-11-16T15:11:27.499Z",
+    "interval": {
+      "lower": 0.002218243603757586,
+      "measuredCoverage": 0.8553529338791713,
+      "method": "past_split_conformal",
+      "nominalCoverage": 0.9,
+      "upper": 0.01008329380477654
+    },
+    "modelVersion": "BTCUSDT-15m-lightgbm_rv-df0394f479d7",
+    "reason": "local_experimental_development_selection",
+    "riskCategory": "high",
+    "status": "experimental",
+    "units": "horizon_log_return_std"
+  }
+}

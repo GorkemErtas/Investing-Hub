@@ -54,7 +54,7 @@ try {
   }
   const server = createApp(config, market, mobile).listen(
     config.PORT,
-    "0.0.0.0",
+    config.BIND_HOST,
     () => console.info(`Investing Hub API listening on port ${config.PORT}`),
   );
   server.requestTimeout = 15000;

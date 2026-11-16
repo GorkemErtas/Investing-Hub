@@ -34,7 +34,10 @@ WORKDIR /app
 ENV NODE_ENV=production PORT=8080 PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 \
     PATH="/opt/venv/bin:$PATH" WEB_DIST_PATH=/app/webapp/dist \
     ML_DATABASE_PATH=/data/ml/lifecycle.sqlite3 PREDICTIONS_EXPORT_PATH=/data/ml/predictions.json \
-    ML_DAILY_ENABLED=true OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
+    ML_DAILY_ENABLED=true ML_MINUTE_ENABLED=false OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 \
+    FORECASTS_EXPORT_PATH=/data/ml/forecasts-v2.json FORECAST_REGISTRY_PATH=/data/ml/registry-v2/registry.json \
+    ML_OBJECTIVES_ENABLED=false OBJECTIVE_REGISTRY_PATH=/data/ml/objective-registry/registry.json \
+    OBJECTIVE_FORECASTS_EXPORT_PATH=/data/ml/objective-forecasts.json
 COPY package.json ./
 COPY --from=node-dependencies /app/node_modules ./node_modules
 COPY --from=build /app/shared/package.json /app/shared/contracts.ts ./shared/
@@ -42,6 +45,7 @@ COPY --from=build /app/shared/dist ./shared/dist
 COPY --from=build /app/backend/dist ./backend/dist
 COPY --from=build /app/webapp/dist ./webapp/dist
 COPY ml/*.py ml/config.json ./ml/
+COPY ml/multihorizon ./ml/multihorizon
 COPY ml/reviews ./ml/reviews
 COPY deploy/railway ./deploy/railway
 RUN chmod 755 deploy/railway/entrypoint.sh

@@ -47,6 +47,14 @@ jobs:
       - run: npm --prefix mobileapp run test:browser
         env:
           EXPO_NO_DOTENV: "1"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forecast-browser-evidence
+          path: |
+            webapp/test-results
+            mobileapp/test-results
+          retention-days: 14
   python:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -55,7 +63,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - run: python -m pip install -r ml/requirements.txt
+      - run: python -m pip install -r ml/requirements-objectives.txt
       - run: python -m unittest discover -s ml -p 'test_*.py'
   docker:
     runs-on: ubuntu-latest

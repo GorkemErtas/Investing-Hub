@@ -1,6 +1,10 @@
 # Railway Docker deployment
 
-This is a deployment preparation, not a live deployment. Review the PR before connecting production. The VPS work in PR #2 is independent and is not required.
+**Legacy reference.** The Railway production service has been removed. The current
+workflow is [local Windows execution](LOCAL_WINDOWS.md). This retained Docker,
+backup and supervision configuration is useful for isolated compatibility tests;
+it is not required for local startup and no deployment is performed automatically.
+Instructions below describe the former optional hosting architecture.
 
 ## Architecture
 

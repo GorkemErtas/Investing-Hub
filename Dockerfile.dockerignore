@@ -30,4 +30,14 @@ ml/data
 ml/artifacts
 ml/archive
 ml/reports
+ml/runs
+ml/checkpoints
+ml/**/*.csv
+ml/**/*.parquet
+ml/**/*.npz
+ml/**/*.pt
+ml/**/*.pth
+ml/**/*.pkl
+ml/**/*.joblib
+ml/**/*.tmp
 ml/test_*.py

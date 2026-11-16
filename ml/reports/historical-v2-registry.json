@@ -1,0 +1,336 @@
+{
+  "payload": {
+    "entries": [
+      {
+        "algorithm": null,
+        "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+        "featureSchema": "minute-finite-v2.1",
+        "horizon": "1m",
+        "modelVersion": null,
+        "reason": "no_meaningful_validation_advantage",
+        "runId": "d3affa50c3869f56b758ef207389d9db5464abf3046affe3886c462c252df5ba",
+        "status": "unavailable",
+        "symbol": "BTCUSDT"
+      },
+      {
+        "algorithm": null,
+        "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+        "featureSchema": "minute-finite-v2.1",
+        "horizon": "15m",
+        "modelVersion": null,
+        "reason": "no_meaningful_validation_advantage",
+        "runId": "ea31ff6fe90818756f8f1fcae5c7bb8891fd3860182a81a1ea74e728e1796c34",
+        "status": "unavailable",
+        "symbol": "BTCUSDT"
+      },
+      {
+        "algorithm": null,
+        "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+        "featureSchema": "minute-finite-v2.1",
+        "horizon": "1h",
+        "modelVersion": null,
+        "reason": "no_meaningful_validation_advantage",
+        "runId": "9a580100a8bcacd3c07a7435bdacba16f834eec8d295f0e7cbb2998fd0fae978",
+        "status": "unavailable",
+        "symbol": "BTCUSDT"
+      },
+      {
+        "algorithm": null,
+        "horizon": "1M",
+        "modelVersion": null,
+        "reason": "monthly_insufficient_independent_outcomes",
+        "status": "unavailable",
+        "symbol": "BTCUSDT"
+      },
+      {
+        "algorithm": null,
+        "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+        "featureSchema": "minute-finite-v2.1",
+        "horizon": "1m",
+        "modelVersion": null,
+        "reason": "no_meaningful_validation_advantage",
+        "runId": "99f2e6d18b0071dd96a4636b36669602f6ba2ee4dccb9c162e5c638932190c4a",
+        "status": "unavailable",
+        "symbol": "ETHUSDT"
+      },
+      {
+        "algorithm": null,
+        "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+        "featureSchema": "minute-finite-v2.1",
+        "horizon": "15m",
+        "modelVersion": null,
+        "reason": "no_meaningful_validation_advantage",
+        "runId": "1080c7e3ba7078cc9cbc47be59d40a8db5cb083005425c12085792501bc731f4",
+        "status": "unavailable",
+        "symbol": "ETHUSDT"
+      },
+      {
+        "algorithm": null,
+        "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+        "featureSchema": "minute-finite-v2.1",
+        "horizon": "1h",
+        "modelVersion": null,
+        "reason": "no_meaningful_validation_advantage",
+        "runId": "c66c5d874fe597fee1cc4c222480e3fafdccdab3754af5ee07770ed24e5ff9b6",
+        "status": "unavailable",
+        "symbol": "ETHUSDT"
+      },
+      {
+        "algorithm": null,
+        "horizon": "1M",
+        "modelVersion": null,
+        "reason": "monthly_insufficient_independent_outcomes",
+        "status": "unavailable",
+        "symbol": "ETHUSDT"
+      },
+      {
+        "algorithm": null,
+        "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+        "featureSchema": "minute-finite-v2.1",
+        "horizon": "1m",
+        "modelVersion": null,
+        "reason": "no_meaningful_validation_advantage",
+        "runId": "46d2c7488fc7f4aa6ead1caec8fe89846f27208388b669da1468a0a2129adf26",
+        "status": "unavailable",
+        "symbol": "SOLUSDT"
+      },
+      {
+        "algorithm": null,
+        "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+        "featureSchema": "minute-finite-v2.1",
+        "horizon": "15m",
+        "modelVersion": null,
+        "reason": "no_meaningful_validation_advantage",
+        "runId": "8279747be4f73607dc2246e2189121e2483b23a6b292cb596900556b83efba7d",
+        "status": "unavailable",
+        "symbol": "SOLUSDT"
+      },
+      {
+        "algorithm": null,
+        "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+        "featureSchema": "minute-finite-v2.1",
+        "horizon": "1h",
+        "modelVersion": null,
+        "reason": "no_meaningful_validation_advantage",
+        "runId": "3ee512d1291c44228aad56b42e1341ae63cfcaa145cd15104dc64344ceb4decc",
+        "status": "unavailable",
+        "symbol": "SOLUSDT"
+      },
+      {
+        "algorithm": null,
+        "horizon": "1M",
+        "modelVersion": null,
+        "reason": "monthly_insufficient_independent_outcomes",
+        "status": "unavailable",
+        "symbol": "SOLUSDT"
+      },
+      {
+        "algorithm": null,
+        "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+        "featureSchema": "minute-finite-v2.1",
+        "horizon": "1m",
+        "modelVersion": null,
+        "reason": "no_meaningful_validation_advantage",
+        "runId": "d6adb5cea5e2883cb17ecd4dcaa94b824c2b73508ebdacc4020003f6a8fc7b34",
+        "status": "unavailable",
+        "symbol": "BNBUSDT"
+      },
+      {
+        "algorithm": null,
+        "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+        "featureSchema": "minute-finite-v2.1",
+        "horizon": "15m",
+        "modelVersion": null,
+        "reason": "no_meaningful_validation_advantage",
+        "runId": "a63e4a24b2d07f2676be29e54cf7ae821a4ff088e9301dc4faf4967a155c4f93",
+        "status": "unavailable",
+        "symbol": "BNBUSDT"
+      },
+      {
+        "algorithm": null,
+        "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+        "featureSchema": "minute-finite-v2.1",
+        "horizon": "1h",
+        "modelVersion": null,
+        "reason": "no_meaningful_validation_advantage",
+        "runId": "1834d375e32a852b6b057876c2f26532c143d78c4d7df700c25b8ea1bd473976",
+        "status": "unavailable",
+        "symbol": "BNBUSDT"
+      },
+      {
+        "algorithm": null,
+        "horizon": "1M",
+        "modelVersion": null,
+        "reason": "monthly_insufficient_independent_outcomes",
+        "status": "unavailable",
+        "symbol": "BNBUSDT"
+      },
+      {
+        "algorithm": null,
+        "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+        "featureSchema": "minute-finite-v2.1",
+        "horizon": "1m",
+        "modelVersion": null,
+        "reason": "no_meaningful_validation_advantage",
+        "runId": "abcfaab18a8afee10a997c05faed3b18a3a18225a08363859f1e55dfe00dada4",
+        "status": "unavailable",
+        "symbol": "XRPUSDT"
+      },
+      {
+        "algorithm": null,
+        "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+        "featureSchema": "minute-finite-v2.1",
+        "horizon": "15m",
+        "modelVersion": null,
+        "reason": "no_meaningful_validation_advantage",
+        "runId": "30da090707e910aba98404c723b2496733cd05964dfa6cb750cb9d77200bf1f4",
+        "status": "unavailable",
+        "symbol": "XRPUSDT"
+      },
+      {
+        "algorithm": null,
+        "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+        "featureSchema": "minute-finite-v2.1",
+        "horizon": "1h",
+        "modelVersion": null,
+        "reason": "no_meaningful_validation_advantage",
+        "runId": "63f1b40bd137154f0eeca6e17ffa27d7fe26d4db1962ce673656e8ff54bd6f3b",
+        "status": "unavailable",
+        "symbol": "XRPUSDT"
+      },
+      {
+        "algorithm": null,
+        "horizon": "1M",
+        "modelVersion": null,
+        "reason": "monthly_insufficient_independent_outcomes",
+        "status": "unavailable",
+        "symbol": "XRPUSDT"
+      },
+      {
+        "algorithm": null,
+        "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+        "featureSchema": "minute-finite-v2.1",
+        "horizon": "1m",
+        "modelVersion": null,
+        "reason": "no_meaningful_validation_advantage",
+        "runId": "a3903dc92782309f1e6ba11975f481446c19533daf0e0286a985f73e13d9019d",
+        "status": "unavailable",
+        "symbol": "ADAUSDT"
+      },
+      {
+        "algorithm": null,
+        "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+        "featureSchema": "minute-finite-v2.1",
+        "horizon": "15m",
+        "modelVersion": null,
+        "reason": "no_meaningful_validation_advantage",
+        "runId": "9d4b975c14470e06fc8fd4d342fd2f3b0068b12280e82318913a7fc5f5c9a0a0",
+        "status": "unavailable",
+        "symbol": "ADAUSDT"
+      },
+      {
+        "algorithm": null,
+        "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+        "featureSchema": "minute-finite-v2.1",
+        "horizon": "1h",
+        "modelVersion": null,
+        "reason": "no_meaningful_validation_advantage",
+        "runId": "40dd915541a90f60b5d2e3ac34026359bbec563687df574242ba448899d97002",
+        "status": "unavailable",
+        "symbol": "ADAUSDT"
+      },
+      {
+        "algorithm": null,
+        "horizon": "1M",
+        "modelVersion": null,
+        "reason": "monthly_insufficient_independent_outcomes",
+        "status": "unavailable",
+        "symbol": "ADAUSDT"
+      },
+      {
+        "algorithm": null,
+        "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+        "featureSchema": "minute-finite-v2.1",
+        "horizon": "1m",
+        "modelVersion": null,
+        "reason": "no_meaningful_validation_advantage",
+        "runId": "41d9c26720ea562238055ebd3c2b93530a1be3bda3f70d2bcfbdbeb10ecd0e7f",
+        "status": "unavailable",
+        "symbol": "DOGEUSDT"
+      },
+      {
+        "algorithm": null,
+        "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+        "featureSchema": "minute-finite-v2.1",
+        "horizon": "15m",
+        "modelVersion": null,
+        "reason": "no_meaningful_validation_advantage",
+        "runId": "02b3133f019b427c3d4a0c151c93784e590ee4ccc269da3716e560ddad91e1ab",
+        "status": "unavailable",
+        "symbol": "DOGEUSDT"
+      },
+      {
+        "algorithm": null,
+        "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+        "featureSchema": "minute-finite-v2.1",
+        "horizon": "1h",
+        "modelVersion": null,
+        "reason": "no_meaningful_validation_advantage",
+        "runId": "e91aa132a295c60f08828766e7f58b3950fbfb32333637aa050d1095d2fd61ca",
+        "status": "unavailable",
+        "symbol": "DOGEUSDT"
+      },
+      {
+        "algorithm": null,
+        "horizon": "1M",
+        "modelVersion": null,
+        "reason": "monthly_insufficient_independent_outcomes",
+        "status": "unavailable",
+        "symbol": "DOGEUSDT"
+      },
+      {
+        "algorithm": null,
+        "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+        "featureSchema": "minute-finite-v2.1",
+        "horizon": "1m",
+        "modelVersion": null,
+        "reason": "no_meaningful_validation_advantage",
+        "runId": "fd4621a7f76a3c0d28ca074eb605d120c04cf9a6a244c580ba3ea1872c7ce0c6",
+        "status": "unavailable",
+        "symbol": "LINKUSDT"
+      },
+      {
+        "algorithm": null,
+        "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+        "featureSchema": "minute-finite-v2.1",
+        "horizon": "15m",
+        "modelVersion": null,
+        "reason": "no_meaningful_validation_advantage",
+        "runId": "8cea20ef7d7907d3b4de07627beaf7998735a288de62068631ac421b43e01ee4",
+        "status": "unavailable",
+        "symbol": "LINKUSDT"
+      },
+      {
+        "algorithm": null,
+        "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+        "featureSchema": "minute-finite-v2.1",
+        "horizon": "1h",
+        "modelVersion": null,
+        "reason": "no_meaningful_validation_advantage",
+        "runId": "2fd7b07c2a0b0feb6b15d1d8536219eee12328b39a419b29b39d431229c70eea",
+        "status": "unavailable",
+        "symbol": "LINKUSDT"
+      },
+      {
+        "algorithm": null,
+        "horizon": "1M",
+        "modelVersion": null,
+        "reason": "monthly_insufficient_independent_outcomes",
+        "status": "unavailable",
+        "symbol": "LINKUSDT"
+      }
+    ],
+    "version": "forecast-registry-v2"
+  },
+  "sha256": "1f931e33f4b9f784f005165e56fb92f34f7da085af98ed24f53b254b6c83a027"
+}

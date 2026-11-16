@@ -78,7 +78,7 @@ def terminate(process):
         process.terminate()
 
 
-def supervise(database, output, enabled):
+def supervise(database, output, enabled, minute_enabled=False):
     state_path = database.parent/'scheduler.json'
     state = load_state(state_path)
     stop = threading.Event()
@@ -86,6 +86,8 @@ def supervise(database, output, enabled):
         signal.signal(signum, lambda *_: stop.set())
     api = subprocess.Popen(['node', 'backend/dist/server.js'], cwd=ROOT)
     worker = None
+    minute_worker = None
+    minute_retry = 0
     started = 0
     run_slot = None
     log('supervisor_started', dailyEnabled=enabled)
@@ -95,6 +97,19 @@ def supervise(database, output, enabled):
                 log('http_process_exited', exitCode=api.returncode)
                 return 1
             now = datetime.now(UTC)
+            if minute_worker is not None and minute_worker.poll() is not None:
+                log('minute_worker_exited', exitCode=minute_worker.returncode)
+                minute_worker = None
+                minute_retry = now.timestamp()+60
+            if minute_enabled and minute_worker is None and now.timestamp() >= minute_retry:
+                command = [sys.executable, 'ml/forecast_v2.py', 'worker',
+                    '--registry', os.environ['FORECAST_REGISTRY_PATH'],
+                    '--output', os.environ['FORECASTS_EXPORT_PATH']]
+                if os.environ.get('ML_OBJECTIVES_ENABLED', 'false') == 'true':
+                    command.extend(['--objective-registry', os.environ['OBJECTIVE_REGISTRY_PATH'],
+                                    '--objective-output', os.environ['OBJECTIVE_FORECASTS_EXPORT_PATH']])
+                minute_worker = subprocess.Popen(command, cwd=ROOT)
+                log('minute_worker_started')
             if worker is not None:
                 timed_out = time.monotonic()-started >= JOB_TIMEOUT_SECONDS
                 if timed_out and worker.poll() is None:
@@ -138,9 +153,10 @@ def supervise(database, output, enabled):
         # Both children receive TERM together. SQLite rollback-journal recovery
         # and the OS-released job lock make even a forced worker exit recoverable.
         terminate(worker)
+        terminate(minute_worker)
         terminate(api)
         deadline = time.monotonic()+SHUTDOWN_SECONDS
-        for process in (worker, api):
+        for process in (worker, minute_worker, api):
             if process is None:
                 continue
             try:
@@ -155,11 +171,25 @@ def main():
         database = Path(os.environ['ML_DATABASE_PATH']).resolve()
         output = Path(os.environ['PREDICTIONS_EXPORT_PATH']).resolve()
         enabled = os.environ.get('ML_DAILY_ENABLED', 'true')
+        minute_enabled = os.environ.get('ML_MINUTE_ENABLED', 'false')
+        objectives_enabled = os.environ.get('ML_OBJECTIVES_ENABLED', 'false')
+        if objectives_enabled not in ('true', 'false'):
+            raise ValueError('invalid_objective_setting')
+        if objectives_enabled == 'true' and (minute_enabled != 'true' or
+            Path(os.environ.get('OBJECTIVE_REGISTRY_PATH', '')).resolve() != Path('/data/ml/objective-registry/registry.json') or
+            Path(os.environ.get('OBJECTIVE_FORECASTS_EXPORT_PATH', '')).resolve() != Path('/data/ml/objective-forecasts.json')):
+            raise ValueError('invalid_objective_persistent_paths')
+        if minute_enabled not in ('true', 'false'):
+            raise ValueError('invalid_minute_setting')
+        if minute_enabled == 'true' and (
+            Path(os.environ.get('FORECAST_REGISTRY_PATH', '')).resolve() != Path('/data/ml/registry-v2/registry.json') or
+            Path(os.environ.get('FORECASTS_EXPORT_PATH', '')).resolve() != Path('/data/ml/forecasts-v2.json')):
+            raise ValueError('invalid_minute_persistent_paths')
         if enabled not in ('true', 'false') or database.parent != Path('/data/ml') or output != database.parent/'predictions.json':
             raise ValueError('invalid_persistent_paths_or_daily_setting')
         # A second supervisor on the same disk must not start another HTTP/ML pair.
         with job_lock(database.parent/'service'):
-            return supervise(database, output, enabled == 'true')
+            return supervise(database, output, enabled == 'true', minute_enabled == 'true')
     except Exception as error:
         log('supervisor_failed', error=type(error).__name__)
         return 1
