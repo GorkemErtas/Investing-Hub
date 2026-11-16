@@ -12,6 +12,17 @@ def main(argv=None):
     local.add_argument('--price-study', type=Path, default=Path('ml/artifacts/multihorizon/study-final.json'))
     local.add_argument('--dataset', type=Path, default=Path('ml/data/normalized-v2'))
     local.add_argument('--output', type=Path, default=Path('ml/artifacts/local'))
+    review = commands.add_parser('selection-review', help='Review frozen development evidence and optional bounded last-fold replay')
+    review.add_argument('--study', type=Path, default=Path('ml/artifacts/objectives-study-2026-11-16'))
+    review.add_argument('--price-study', type=Path, default=Path('ml/artifacts/multihorizon/study-final.json'))
+    review.add_argument('--dataset', type=Path, default=Path('ml/data/normalized-v2'))
+    review.add_argument('--previous', type=Path, default=Path('ml/reports/local-selection-v1.json'))
+    review.add_argument('--output', type=Path, default=Path('ml/reports/selection-quality'))
+    review.add_argument('--replay-output', type=Path, default=Path('ml/artifacts/selection-review'))
+    review.add_argument('--replay', action='store_true')
+    review.add_argument('--pair-process', action='store_true', help=argparse.SUPPRESS)
+    review.add_argument('--symbol')
+    review.add_argument('--horizon', choices=['1m', '15m', '1h'])
     normalize = commands.add_parser('normalize')
     normalize.add_argument('--source', type=Path, default=Path('ml/data/coin'))
     normalize.add_argument('--output', type=Path, default=Path('ml/data/normalized-v2'))
@@ -55,6 +66,25 @@ def main(argv=None):
     objectives_catalog.add_argument('--study', type=Path, default=Path('ml/artifacts/objectives-study-2026-11-16'))
     objectives_catalog.add_argument('--output', type=Path, default=Path('ml/artifacts/objective-registry/registry.json'))
     args = parser.parse_args(argv)
+    if args.command == 'selection-review':
+        from multihorizon.selection_review import replay_pair, run_replays
+        if args.pair_process:
+            from multihorizon.benchmark import ResourceMonitor
+            from multihorizon.data import save_json
+            with ResourceMonitor() as memory:
+                path = args.replay_output/f'{args.symbol}-{args.horizon}.json'
+                value = replay_pair(args.study, args.dataset, args.symbol, args.horizon, path)
+            value['sampledPeakRssMiB'] = memory.peak/1024**2
+            if value['sampledPeakRssMiB'] > 2048:
+                raise MemoryError('review_memory_budget')
+            save_json(path, value)
+            return 0
+        if args.replay:
+            run_replays(args.study, args.dataset, args.replay_output)
+        from multihorizon.selection_review import export_review
+        result = export_review(args.study, args.price_study, args.previous, args.replay_output, args.output)
+        print(json.dumps(result['summary']))
+        return 0
     if args.command == 'local-prepare':
         from multihorizon.local_selection import prepare_local
         result = prepare_local(args.study, args.price_study, args.dataset, args.output)

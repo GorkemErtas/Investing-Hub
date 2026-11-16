@@ -8,19 +8,22 @@ from .data import SYMBOLS, MINUTE, digest, load_symbol, save_json, sha256
 from .features import FEATURES, FEATURE_VERSION, HORIZONS
 from .objective_features import OBJECTIVE_FEATURE_VERSION
 from .objective_registry import objective_unavailable
+from .evidence_metrics import runtime_evaluation, finite
 
-POLICY = 'local-development-ranking-v1'
+POLICY = 'local-development-ranking-v2-mae-first'
 ORDER = {'logistic': 0, 'ridge': 0, 'har_rv': 0, 'random_forest': 1,
          'hist_gradient_boosting': 2, 'lightgbm': 3, 'xgboost': 4, 'lstm': 5}
 
 
-def rank_objectives(rows, objective):
+def rank_objectives(rows, objective, *, volatility_primary='mae'):
     """No holdout, significance, fold-win, improvement or future-confirmation inputs."""
-    primary, secondary = ('logLoss', 'brier') if objective == 'direction' else ('qlike', 'mae')
+    if volatility_primary not in ('mae', 'qlike'):
+        raise ValueError('unsupported_volatility_selection_metric')
+    primary, secondary = ('logLoss', 'brier') if objective == 'direction' else (volatility_primary, 'qlike' if volatility_primary == 'mae' else 'mae')
     eligible = [r for r in rows if r.get('status') == 'completed' and
         r['trial']['objective'] == objective and r.get('artifact') and
         (objective != 'direction' or r['trial'].get('mode') == 'neutral') and
-        all(math.isfinite(r['metrics'].get(k, float('nan'))) for k in (primary, secondary))]
+        all(finite(r['metrics'].get(k)) and (k == 'qlike' or r['metrics'][k] >= 0) for k in (primary, secondary))]
     return sorted(eligible, key=lambda r: (round(r['metrics'][primary], 12),
         round(r['metrics'][secondary], 12), ORDER.get(r['trial']['algorithm'], 99), r['trial']['id']))
 
@@ -47,6 +50,18 @@ def risk_thresholds(frame, row, horizon):
     if len(chosen) < 100:
         return None
     return np.quantile(np.sqrt(variance.iloc[chosen]), [.33, .67]).tolist()
+
+
+def last_fold_interval_calibration(row):
+    if not row.get('folds'):
+        return None
+    fold = row['folds'][-1]
+    calibration, coverage = fold.get('calibration', {}), fold.get('metrics', {}).get('intervalCoverage')
+    radius, samples = calibration.get('radius'), calibration.get('samples', 0)
+    if (calibration.get('method') != 'past_split_conformal_log_sigma' or not finite(radius) or radius < 0 or
+            not finite(coverage) or not 0 <= coverage <= 1 or samples <= 0):
+        return None
+    return {'radius': radius, 'measuredCoverage': coverage, 'samples': samples}
 
 
 def build_local_objectives(study, destination, dataset):
@@ -87,13 +102,7 @@ def build_local_objectives(study, destination, dataset):
                             raise ValueError('artifact_identity')
                         if objective == 'direction' and (artifact['classes'] != 3 or not math.isfinite(artifact['temperature']) or artifact['temperature'] <= 0):
                             raise ValueError('calibrated_three_class_artifact_required')
-                        metric = row['metrics']
-                        evaluation = {'period': 'development', 'candidate': trial['id'],
-                            'primaryLoss': metric['logLoss' if objective == 'direction' else 'mae'],
-                            'baselineRelativeImprovement': row['baselineRelativeImprovement'],
-                            'calibrationError': metric.get('ece'), 'intervalCoverage': metric.get('intervalCoverage'),
-                            'developmentEligible': row['developmentEligible'], 'futureConfirmed': False, 'confirmationEnd': None,
-                            **{k: metric[k] for k in ('balancedAccuracy', 'mcc', 'brier', 'qlike') if k in metric}}
+                        evaluation = runtime_evaluation(row)
                         item = {'status': 'experimental', 'reason': 'local_experimental_development_selection',
                             'modelVersion': f'{symbol}-{horizon}-{trial["id"]}-{info["sha256"][:12]}',
                             'algorithm': trial['algorithm'], 'artifact': relative, 'artifactSha256': info['sha256'],
@@ -101,9 +110,7 @@ def build_local_objectives(study, destination, dataset):
                             'trainingTargetEnd': row['folds'][-1]['trainTargetEnd']}
                         if objective == 'volatility':
                             item['riskThresholds'] = risk_thresholds(frame, row, HORIZONS[horizon]) if frame is not None else None
-                            calibration = row['folds'][-1]['calibration']
-                            item['intervalCalibration'] = {'radius': calibration['radius'],
-                                'measuredCoverage': metric['intervalCoverage'], 'samples': calibration['samples']}
+                            item['intervalCalibration'] = last_fold_interval_calibration(row)
                         objectives[objective] = item
                         break
                     except (OSError, ValueError, KeyError, TypeError) as error:
@@ -121,7 +128,7 @@ def build_local_objectives(study, destination, dataset):
 
 def rank_prices(report):
     return sorted((name for name, c in report['candidates'].items() if name != 'naive' and
-        c['status'] == 'ok' and name in report['artifacts'] and math.isfinite(c['validation']['returnRmse'])),
+        c['status'] == 'ok' and name in report['artifacts'] and finite(c.get('validation', {}).get('returnRmse')) and c['validation']['returnRmse'] >= 0),
         key=lambda name: (round(report['candidates'][name]['validation']['returnRmse'], 12), ORDER.get(name, 99), name))
 
 
@@ -154,6 +161,9 @@ def build_local_prices(study, destination):
                             featureSchema=FEATURE_VERSION, datasetFingerprint=report['datasetFingerprint'],
                             trainingPeriod=info['trainingPeriod'], selectionPolicy=POLICY,
                             evaluationMetrics={'validationReturnRmse': c['validation']['returnRmse'],
+                                'baselineValidationReturnRmse': report['candidates']['naive']['validation']['returnRmse'],
+                                **({'validationReturnMae': c['validation']['returnMae']} if 'returnMae' in c['validation'] else {}),
+                                **({'baselineValidationReturnMae': report['candidates']['naive']['validation']['returnMae']} if 'returnMae' in report['candidates']['naive']['validation'] else {}),
                                 'holdoutReturnRmse': c['holdout']['metrics']['returnRmse'],
                                 'baselineHoldoutReturnRmse': c['holdout']['baseline']['returnRmse'],
                                 'holdoutDirectionalAccuracy': c['holdout']['metrics']['directionalAccuracy']})

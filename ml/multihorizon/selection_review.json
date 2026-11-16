@@ -1,0 +1,14 @@
+{
+  "version": "selection-review-v1",
+  "scope": "existing chronological development folds only; replay last development fold with its frozen artifacts",
+  "candidateFits": 0,
+  "baselineReconstruction": "one fixed original momentum baseline per pair on original training/calibration rows; not a new candidate or tuning trial",
+  "resourceBudget": {"maxSeconds": 600, "pairTimeoutSeconds": 60, "threads": 1, "maxRssMiB": 2048},
+  "volatilityRanking": ["mae", "qlike", "simplicity", "candidate_id"],
+  "roundingDecimals": 12,
+  "baselinePolicy": "preserve calibration-selected comparator and report every existing baseline; do not choose a comparator from validation scores",
+  "tailDiagnostics": {"fraction": 0.01, "sort": "stable exact top ceil(n*0.01)", "axes": ["realized_volatility", "absolute_net_return", "absolute_paired_primary_loss_difference"]},
+  "intervalDiagnostics": {"nominalCoverage": 0.9, "wideRatio": 10, "coverageDeviation": 0.05, "interpretation": "descriptive flags, never activation gates"},
+  "priceReplay": "forbidden: deployment refits can contain development dates; use recorded walk-forward scores only",
+  "inferenceStatus": "experimental; no new performance gates"
+}
