@@ -90,12 +90,13 @@ export function createObjectiveReader(
         if (Date.parse(f.generatedAt) > clock)
           throw Error("Future publication");
         const active = [f.direction, f.volatility].filter(
-          (o) => o.status === "validated",
+          (o) => o.status !== "unavailable",
         );
+        const confirmed = active.filter((o) => o.status === "validated");
         if (
-          active.length &&
+          confirmed.length &&
           (clock < objectiveConfirmationEndMs ||
-            active.some(
+            confirmed.some(
               (o) => Date.parse(o.evaluation!.confirmationEnd!) > clock,
             ))
         )

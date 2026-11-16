@@ -78,8 +78,8 @@ export function ForecastPanel({ symbol, market }: { symbol: Symbol; market?: Mar
     !!f.sourceCandleTime &&
     clock - Date.parse(f.sourceCandleTime) <= 90000 &&
     Date.parse(f.generatedAt) <= clock;
-  const available = selected?.status === 'validated' && fresh;
-  const stale = !!f?.stale || (selected?.status === 'validated' && !fresh);
+  const available = !!selected && selected.status !== 'unavailable' && fresh;
+  const stale = !!f?.stale || (!!selected && selected.status !== 'unavailable' && !fresh);
   const asset = assets.find((a) => a.symbol === symbol)!;
   const number = (value: number) =>
     new Intl.NumberFormat(i18n.resolvedLanguage, { maximumSignificantDigits: 4 }).format(value);
@@ -106,7 +106,7 @@ export function ForecastPanel({ symbol, market }: { symbol: Symbol; market?: Mar
           </h2>
         </div>
         <span className="pill">
-          {t(available ? 'objectiveForecast.validated' : 'forecast.unavailable')}
+          {t(available ? 'forecast.experimental' : 'forecast.unavailable')}
         </span>
       </div>
       <div className="forecast-content">
@@ -183,7 +183,9 @@ export function ForecastPanel({ symbol, market }: { symbol: Symbol; market?: Mar
                   <p className="objective-value">{probability(f.volatility.expectedVolatility)}</p>
                   <p>
                     {t('objectiveForecast.movementLevel')}{' '}
-                    <strong>{t(`objectiveForecast.${f.volatility.riskCategory}`)}</strong>
+                    <strong>
+                      {t(`objectiveForecast.${f.volatility.riskCategory ?? 'riskUnavailable'}`)}
+                    </strong>
                   </p>
                   <p className="forecast-note muted">{t('objectiveForecast.volatilityUnits')}</p>
                   {f.volatility.interval && (
@@ -197,6 +199,9 @@ export function ForecastPanel({ symbol, market }: { symbol: Symbol; market?: Mar
                   )}
                 </>
               ) : null}
+              <p className="forecast-note">
+                {t('objectiveForecast.model')}: {selected?.algorithm}
+              </p>
               <dl className="forecast-details">
                 <div>
                   <dt>{t('forecast.target')}</dt>
@@ -236,7 +241,7 @@ export function ForecastPanel({ symbol, market }: { symbol: Symbol; market?: Mar
               {t(
                 evaluation.futureConfirmed
                   ? 'objectiveForecast.futureConfirmed'
-                  : 'objectiveForecast.developmentOnly',
+                  : 'objectiveForecast.localExperimental',
               )}
             </p>
             <p className="forecast-version">
@@ -259,6 +264,24 @@ export function ForecastPanel({ symbol, market }: { symbol: Symbol; market?: Mar
                 <dt>{t('objectiveForecast.baselineImprovement')}</dt>
                 <dd>{percent(evaluation.baselineRelativeImprovement * 100)}</dd>
               </div>
+              {evaluation.qlike !== undefined && (
+                <div>
+                  <dt>QLIKE</dt>
+                  <dd>{number(evaluation.qlike)}</dd>
+                </div>
+              )}
+              {evaluation.balancedAccuracy !== undefined && (
+                <div>
+                  <dt>{t('objectiveForecast.balancedAccuracy')}</dt>
+                  <dd>{probability(evaluation.balancedAccuracy)}</dd>
+                </div>
+              )}
+              {evaluation.mcc !== undefined && (
+                <div>
+                  <dt>MCC</dt>
+                  <dd>{number(evaluation.mcc)}</dd>
+                </div>
+              )}
               {evaluation.calibrationError !== null && (
                 <div>
                   <dt>{t('objectiveForecast.calibrationError')}</dt>
@@ -272,6 +295,9 @@ export function ForecastPanel({ symbol, market }: { symbol: Symbol; market?: Mar
                 </div>
               )}
             </dl>
+            {evaluation.baselineRelativeImprovement <= 0 && (
+              <p className="forecast-note">{t('objectiveForecast.belowBaseline')}</p>
+            )}
           </details>
         )}
         <details

@@ -104,6 +104,28 @@ describe("objective publication API", () => {
       expect((await reader.read("BTCUSDT", "1m")).direction.reason).toBe(
         "future_confirmation_required",
       );
+      for (const forecast of publication.forecasts.filter(
+        (f) => f.horizon !== "1M",
+      )) {
+        for (const objective of [forecast.direction, forecast.volatility]) {
+          objective.status = "experimental";
+          objective.evaluation!.period = "development";
+          objective.evaluation!.futureConfirmed = false;
+          objective.evaluation!.confirmationEnd = null;
+          objective.evaluation!.developmentEligible = false;
+          objective.evaluation!.baselineRelativeImprovement = -0.05;
+        }
+      }
+      await save();
+      const experimental = await reader.read("BTCUSDT", "1m");
+      expect(experimental.direction.status).toBe("experimental");
+      expect(
+        experimental.direction.evaluation!.baselineRelativeImprovement,
+      ).toBe(-0.05);
+      now += 60000;
+      expect(
+        (await reader.read("BTCUSDT", "1m")).direction.probabilities,
+      ).toBeNull();
       expect((await reader.read("BTCUSDT", "1M")).direction.reason).toBe(
         "monthly_insufficient_independent_outcomes",
       );

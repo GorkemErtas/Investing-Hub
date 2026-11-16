@@ -7,7 +7,7 @@ import { objectiveFixture, objectiveTestNow } from '../../shared/tests/objective
 const NOW = objectiveTestNow;
 async function fixtures(
   page: Page,
-  mode: 'available' | 'unavailable' | 'error' | 'directionOnly' = 'available',
+  mode: 'available' | 'unavailable' | 'error' | 'directionOnly' | 'local' = 'available',
 ) {
   await page.clock.install({ time: new Date(NOW) });
   await page.addInitScript(() => localStorage.setItem('ih:language:v1', JSON.stringify('en-US')));
@@ -25,6 +25,16 @@ async function fixtures(
       if (mode === 'error')
         return route.fulfill({ status: 503, json: { error: { code: 'SERVICE_ERROR' } } });
       const f = objectiveFixture(symbol, url.searchParams.get('horizon') as ForecastHorizon, NOW);
+      if (mode === 'local') {
+        for (const objective of [f.direction, f.volatility]) {
+          objective.status = 'experimental';
+          objective.evaluation!.period = 'development';
+          objective.evaluation!.futureConfirmed = false;
+          objective.evaluation!.confirmationEnd = null;
+          objective.evaluation!.developmentEligible = false;
+          objective.evaluation!.baselineRelativeImprovement = -0.1;
+        }
+      }
       const off = {
         status: 'unavailable' as const,
         reason: 'no_robust_direction_advantage',
@@ -180,6 +190,21 @@ test('unavailable forecasts, Turkish copy, light mode and narrow screens preserv
     path: 'test-results/objectives-unified-mobile-tr-light.png',
     fullPage: true,
   });
+});
+
+test('local experimental models display probabilities and honest below-baseline evaluation without confirmation', async ({
+  page,
+}) => {
+  await fixtures(page, 'local');
+  await page.goto('/');
+  const panel = page.locator('#forecast');
+  await expect(panel.locator('.objective-value')).toHaveText('Upward');
+  await expect(panel).toContainText('Experimental');
+  await panel.getByText('Model and historical evaluation', { exact: true }).click();
+  await expect(panel).toContainText('did not beat its baseline');
+  await expect(panel).toContainText('not future confirmation');
+  await panel.getByRole('button', { name: 'Volatility', exact: true }).click();
+  await expect(panel.locator('.objective-value')).toHaveText('0.4%');
 });
 
 test('provider errors show retry controls without a numeric fallback', async ({ page }) => {

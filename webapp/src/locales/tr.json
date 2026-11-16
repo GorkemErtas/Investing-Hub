@@ -1,5 +1,10 @@
 {
   "objectiveForecast": {
+    "model": "Model",
+    "riskUnavailable": "Ölçülmedi",
+    "localExperimental": "Geçmiş geliştirme verisiyle seçilen deneysel model. Bu sonuçlar gelecek dönem doğrulaması değildir ve doğruluk garantisi vermez.",
+    "belowBaseline": "Bu model, gösterilen geçmiş kayıp ölçütünde temel modeli geçemedi.",
+    "balancedAccuracy": "Dengeli doğruluk",
     "title": "Yön ve oynaklık",
     "objective": "Öngörü hedefi",
     "direction": "Yön",

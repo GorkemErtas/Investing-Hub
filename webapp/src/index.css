@@ -610,6 +610,7 @@ h1 {
 }
 .dashboard-grid {
   display: grid;
+  align-items: start;
   grid-template-columns: minmax(0, 1fr) 285px;
   gap: 21px;
   margin-bottom: 25px;

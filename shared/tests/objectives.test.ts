@@ -3,6 +3,23 @@ import { objectiveForecastSchema } from "../objectives";
 import { objectiveFixture } from "./objective-fixtures";
 
 describe("independent direction and volatility contracts", () => {
+  it("allows honest experimental development outputs before future confirmation without performance thresholds", () => {
+    const f = objectiveFixture();
+    for (const objective of [f.direction, f.volatility]) {
+      objective.status = "experimental";
+      objective.evaluation!.period = "development";
+      objective.evaluation!.futureConfirmed = false;
+      objective.evaluation!.confirmationEnd = null;
+      objective.evaluation!.developmentEligible = false;
+      objective.evaluation!.baselineRelativeImprovement = -0.1;
+    }
+    f.direction.evaluation!.calibrationError = 0.2;
+    f.volatility.interval!.measuredCoverage = 0.7;
+    f.volatility.riskCategory = null;
+    expect(objectiveForecastSchema.safeParse(f).success).toBe(true);
+    f.direction.calibrated = false;
+    expect(objectiveForecastSchema.safeParse(f).success).toBe(false);
+  });
   it("requires calibrated probabilities, measured intervals and future confirmation", () => {
     expect(objectiveForecastSchema.safeParse(objectiveFixture()).success).toBe(
       true,

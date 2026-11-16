@@ -14,9 +14,13 @@ export const objectiveEvaluationSchema = z.strictObject({
   developmentEligible: z.boolean(),
   futureConfirmed: z.boolean(),
   confirmationEnd: z.string().datetime().nullable(),
+  balancedAccuracy: fraction.optional(),
+  mcc: z.number().finite().min(-1).max(1).optional(),
+  brier: z.number().finite().nonnegative().optional(),
+  qlike: z.number().finite().optional(),
 });
 const common = {
-  status: z.enum(["validated", "unavailable"]),
+  status: z.enum(["experimental", "validated", "unavailable"]),
   reason: z.string().min(1).max(256),
   generatedAt: z.string().datetime().nullable(),
   modelVersion: z.string().min(1).max(200).nullable(),
@@ -77,7 +81,7 @@ export const objectiveForecastSchema = z
     const issue = (message: string) =>
       ctx.addIssue({ code: "custom", message });
     const active = [f.direction, f.volatility].filter(
-      (o) => o.status === "validated",
+      (o) => o.status !== "unavailable",
     );
     if (f.direction.status === "unavailable") {
       if (
@@ -103,8 +107,9 @@ export const objectiveForecastSchema = z
       )
         issue("Direction label must agree with class probabilities");
       if (
-        f.direction.evaluation?.calibrationError === null ||
-        (f.direction.evaluation?.calibrationError ?? 1) > 0.05
+        f.direction.evaluation?.calibrationError == null ||
+        (f.direction.status === "validated" &&
+          f.direction.evaluation.calibrationError > 0.05)
       )
         issue("Validated direction requires measured calibration quality");
     }
@@ -117,7 +122,7 @@ export const objectiveForecastSchema = z
         issue("Unavailable volatility cannot carry numeric estimates");
     } else if (
       f.volatility.expectedVolatility === null ||
-      !f.volatility.riskCategory
+      (f.volatility.status === "validated" && !f.volatility.riskCategory)
     )
       issue(
         "Validated volatility requires an estimate and historical risk category",
@@ -126,8 +131,9 @@ export const objectiveForecastSchema = z
     if (
       interval &&
       (interval.lower > interval.upper ||
-        interval.measuredCoverage < 0.85 ||
-        interval.measuredCoverage > 0.97 ||
+        (f.volatility.status === "validated" &&
+          (interval.measuredCoverage < 0.85 ||
+            interval.measuredCoverage > 0.97)) ||
         interval.nominalCoverage !== 0.9)
     )
       issue("Unvalidated volatility interval");
@@ -143,11 +149,17 @@ export const objectiveForecastSchema = z
         !o.modelVersion ||
         !o.algorithm ||
         !o.generatedAt ||
-        !o.evaluation?.futureConfirmed ||
-        !o.evaluation.developmentEligible ||
-        o.evaluation.period !== "future" ||
-        !o.evaluation.confirmationEnd ||
-        Date.parse(o.evaluation.confirmationEnd) < objectiveConfirmationEndMs
+        !o.evaluation ||
+        (o.status === "experimental" &&
+          (o.evaluation.period !== "development" ||
+            o.evaluation.futureConfirmed)) ||
+        (o.status === "validated" &&
+          (!o.evaluation.futureConfirmed ||
+            !o.evaluation.developmentEligible ||
+            o.evaluation.period !== "future" ||
+            !o.evaluation.confirmationEnd ||
+            Date.parse(o.evaluation.confirmationEnd) <
+              objectiveConfirmationEndMs))
       )
         issue(
           "Future confirmation evidence required independently per objective",

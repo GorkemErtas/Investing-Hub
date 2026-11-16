@@ -1,5 +1,10 @@
 {
   "objectiveForecast": {
+    "model": "Model",
+    "riskUnavailable": "Not measured",
+    "localExperimental": "Experimental model selected using historical development data. These results are not future confirmation and do not guarantee accuracy.",
+    "belowBaseline": "This model did not beat its baseline on the displayed historical loss metric.",
+    "balancedAccuracy": "Balanced accuracy",
     "title": "Direction & volatility",
     "objective": "Forecast objective",
     "direction": "Direction",
