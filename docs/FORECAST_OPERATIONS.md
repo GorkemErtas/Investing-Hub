@@ -1,5 +1,8 @@
 # Forecast v2 operations and API
 
+For current startup and experimental local selection use [Windows operations](LOCAL_WINDOWS.md).
+The original benchmark/registry commands below preserve the earlier research policy.
+
 ## Reproduce locally
 
 Use Python 3.13 and the repository virtual environment. The original 96 CSV files

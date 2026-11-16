@@ -59,15 +59,16 @@ for deletion evidence, verification and future pipeline boundaries.
 
 The existing `multihorizon` worker also supports an optional objective registry and
 separate atomic v3 snapshot. Past-only finite features feed frozen calibrated
-direction and realized-variance artifacts; each objective is admitted independently
-only with checksum-matched future confirmation. The read-only `/api/v3/forecasts`
-API and shared contracts reject premature, stale or inconsistent numerical outputs.
+direction and realized-variance artifacts; local experimental candidates are selected
+independently by development loss. Historical future-confirmed states remain distinct.
+The read-only `/api/v3/forecasts` API rejects stale or inconsistent numerical outputs.
 The existing coin ForecastPanel prioritizes these objectives and keeps v2 price
-research expandable. Both minute worker enable flags default false. The v1 daily
+research expandable. The Windows launcher starts one worker explicitly; retained
+legacy deployment flags are not needed. The v1 daily
 SQLite system, native client contract and historical evidence remain supported.
 See [operations](OBJECTIVE_FORECASTS.md) and [measured findings](OBJECTIVE_FINDINGS.md)
-for the 768-trial development results and prospective limits; no live Railway
-configuration is changed by this extension.
+for the 768-trial development results and prospective limits, and [local operations](LOCAL_WINDOWS.md)
+for the current policy. Railway service/configuration is not required.
 
 ## Package/build strategy
 

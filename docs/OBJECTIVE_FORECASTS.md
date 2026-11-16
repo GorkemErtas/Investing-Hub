@@ -1,5 +1,10 @@
 # Direction and volatility forecasts
 
+**Historical Phase 2 activation policy.** Local execution now uses the experimental
+development-ranking policy in [Windows operations](LOCAL_WINDOWS.md). The future
+confirmation/statistical gates below remain research diagnostics, not prerequisites
+for displaying a local experimental model. Historical evidence is preserved.
+
 This is the objective-first extension of PR #9's existing multi-horizon system.
 The original price-regression study, daily SQLite lifecycle and v1/v2 APIs remain
 intact. No historical research result is sufficient for activation. The reserved

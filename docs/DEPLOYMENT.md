@@ -1,8 +1,13 @@
 # Local development and deployment
 
-For a single-service Docker deployment with persistent ML storage, follow the [Railway guide](RAILWAY.md). Local Compose below remains a separate guest-demo option.
+The supported workflow is now [local Windows execution](LOCAL_WINDOWS.md), without
+Railway or Docker. The former [Railway guide](RAILWAY.md) is retained as legacy
+reference. Compose below remains an optional isolated guest-demo/test configuration.
 
-Root Node 24/26 and npm are required. Use `npm ci`, then `npm run dev`. API and web can be started separately with `npm run dev:api` and `npm run dev:web`. Mobile dependencies/configuration are under `mobileapp`; see its README. Shared builds are required before runtime imports; root dev/build/test scripts handle this. Rebuild shared after domain/contract edits.
+Root Node 24/26, npm and Python 3.13 are supported. Use `.\dev.ps1 -Install` for the
+full local stack or `.\dev.ps1 -NoML` for web/API only. API and web can also be
+started separately with `npm run dev:api` and `npm run dev:web`. Mobile setup remains
+in its README. Root dev/build/test commands build shared contracts before imports.
 
 ## Docker guest demo
 

@@ -1,5 +1,13 @@
 # Local price forecasting
 
+Current Windows startup is `.\dev.ps1` from repository root. It selects existing
+direction, volatility and optional price artifacts by development loss and runs
+one frozen minute worker, without training or statistical activation thresholds.
+Outputs are explicitly experimental; old gated research decisions are preserved.
+See [local operations](../docs/LOCAL_WINDOWS.md), [Türkçe ML summary](../docs/ML_YEREL.md)
+and [local selection metrics](reports/local-selection.json). The daily system below
+remains supported independently; Railway is legacy reference only.
+
 Minute multi-horizon v2 now lives in `multihorizon/` with the separate
 `forecast_v2.py` command surface. See [operations and reproduction](../docs/FORECAST_OPERATIONS.md),
 [validation fingerprints](reports/historical-v2-validation.json) and

@@ -1,5 +1,11 @@
 # Shared API
 
+For the current Windows stack, `.\dev.ps1` at repository root starts the API,
+frontend and one frozen ML worker. The launcher loads only ignored root
+`.env.local`. v3 direction/volatility responses carry independent `experimental`
+states and development metrics; v2 optional price and v1 daily APIs remain supported.
+See [local operations](../docs/LOCAL_WINDOWS.md). No Railway service is required.
+
 Express/TypeScript serves public market data, already-generated local predictions and the retained optional mobile services. `GET /api/predictions/:symbol` returns one experimental numerical next-day forecast or an explicit unavailable state. It reads `PREDICTIONS_EXPORT_PATH` and verifies the matching `ML_DATABASE_PATH` stamp, checksum, schema and UTC expiry. It never loads a model, spawns Python, trains or sends an AI request. No research/review API remains.
 
 ```powershell
