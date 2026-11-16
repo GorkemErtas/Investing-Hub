@@ -28,6 +28,9 @@ were roughly 2.6–78 kB. These are local Windows CPU results, not Railway measu
 
 ## Executed checks
 
+These are the local verification results. Post-push Linux, Mongo, lint and
+container checks run in GitHub Actions; their final results are attached to the PR.
+
 | Check | Result |
 |---|---|
 | Original 96-file validation and Parquet normalization | Passed, all files and rows |
@@ -77,10 +80,10 @@ artifacts for 14 days. Runtime/generated screenshots are not committed.
   exit-code confirmation captures stderr inside a Python subprocess.
 - The two skipped Mongo tests require an isolated Mongo test server. No local
   Docker daemon was running; no production Mongo connection was used.
-- Docker builds and container smoke tests were **not executed**: the Docker CLI
+- Docker builds and container smoke tests were **not executed locally**: the Docker CLI
   could not connect to its local Linux daemon. Linux image size/startup/RSS and
   live Railway capacity/billing remain unmeasured. CI includes the container job.
-- Lint was not run for this task. No physical native-device/FCM/SMTP delivery or
+- Lint was not run locally; the PR workflow runs it. No physical native-device/FCM/SMTP delivery or
   production rollout was executed. Monthly fitting/evaluation was deliberately
   not executed. A deployable numerical winner is absent, so daily-runtime removal
   and activation are deferred.
