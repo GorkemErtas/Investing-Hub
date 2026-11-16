@@ -49,7 +49,8 @@ class BinanceMinutes:
             raise ValueError('provider_rate_limited')
         history = self.history[symbol]
         completed_close = self.clock()//60000*60000-1
-        if history and history[-1]['close_time'] == completed_close and symbol in self.retrieved:
+        if history and symbol in self.retrieved and (history[-1]['close_time'] == completed_close or
+                self.retrieved[symbol]//60000 == self.clock()//60000):
             return pd.DataFrame(history), self.retrieved[symbol]
         rows = self._rows({'symbol': symbol, 'interval': '1m', 'limit': min(1000, self.history_size+1), 'timeZone': '0'})
         # At most two bounded pages support one-day HAR features without durable streams.

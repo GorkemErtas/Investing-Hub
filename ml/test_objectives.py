@@ -8,7 +8,7 @@ from multihorizon.objective_features import objective_features, objective_target
 from multihorizon.objective_statistics import (direction_metrics, calibrate_temperature, apply_temperature,
     volatility_metrics, volatility_interval, conformal_radius, paired_evidence)
 from multihorizon.objective_models import (direction_model, export_direction, predict_direction,
-    fit_volatility, export_volatility, predict_volatility, predict_volatility_model)
+    fit_volatility, export_volatility, predict_volatility, predict_volatility_model, garch_forecasts)
 from multihorizon.objective_research import PROTOCOL, folds, training_rows, trial_matrix
 from test_multihorizon_data import candles
 import json
@@ -109,3 +109,21 @@ class ObjectiveTests(unittest.TestCase):
         self.assertEqual(evidence['familySize'], 912)
         self.assertEqual(evidence['movingBlockDays'], 7)
         self.assertGreater(evidence['simultaneousLowerImprovement'], 0)
+
+    def test_garch_origin_alignment_matches_native_forecast_without_future_innovations(self):
+        from arch import arch_model
+        rng = np.random.default_rng(42)
+        returns = rng.normal(0, .0005, 3600)
+        train, origins = np.arange(1, 3000), np.asarray([3100, 3500])
+        actual, _ = garch_forecasts(returns, train, origins, 15, 200)
+        fitted = arch_model(returns[train]*100, mean='Zero', vol='GARCH', p=1, q=1,
+                           rescale=False).fit(disp='off', show_warning=False, options={'maxiter': 200})
+        fixed = arch_model(returns[1:3501]*100, mean='Zero', vol='GARCH', p=1, q=1,
+                          rescale=False).fix(fitted.params)
+        expected = np.asarray([fixed.forecast(horizon=15, start=int(o-1), reindex=False).variance.iloc[0].sum()
+                               for o in origins])/10000
+        np.testing.assert_allclose(actual, expected, rtol=1e-6)
+        changed = returns.copy()
+        changed[3101:] *= 5
+        altered, _ = garch_forecasts(changed, train, origins, 15, 200)
+        self.assertAlmostEqual(actual[0], altered[0], places=12)

@@ -110,8 +110,10 @@ class ObjectiveRegistry:
                 if sha256(path) != item['artifactSha256']:
                     raise ValueError('objective_artifact_checksum')
                 artifact = json.loads(path.read_text(encoding='utf-8'))
-                if artifact['objective'] != objective or artifact['schema'] != OBJECTIVE_FEATURE_VERSION:
+                if artifact['objective'] != objective or artifact['schema'] != OBJECTIVE_FEATURE_VERSION or artifact['algorithm'] != item['algorithm']:
                     raise ValueError('objective_artifact_schema')
+                if not 1 <= len(artifact['features']) <= 96 or len(set(artifact['features'])) != len(artifact['features']):
+                    raise ValueError('objective_artifact_features')
                 if objective == 'direction' and ('temperature' not in artifact or artifact['classes'] != 3):
                     raise ValueError('validated_neutral_calibrated_probabilities_required')
                 models[pair+(objective,)] = artifact

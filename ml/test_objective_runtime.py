@@ -95,3 +95,19 @@ class ObjectiveRuntimeTests(unittest.TestCase):
         self.assertEqual(retrieved, updated)
         self.assertEqual(request.call_count, 2)
         np.testing.assert_array_equal(frame.close_time, second.close_time)
+
+    def test_lagged_provider_tail_is_not_refetched_per_horizon_within_one_minute(self):
+        raw = candles(257)
+        raw['open_time'] //= 1000
+        raw['close_time'] //= 1000
+        now = int(raw.close_time.iloc[-1])+60001
+        class Response:
+            def __enter__(self): return self
+            def __exit__(self, *_): pass
+            def read(self, _): return json.dumps(raw.to_numpy().tolist()).encode()
+        request = Mock(return_value=Response())
+        provider = BinanceMinutes(request=request, clock=lambda: now)
+        frame, retrieved = provider.candles('BTCUSDT')
+        self.assertGreater(now-int(frame.close_time.iloc[-1]), 60000)
+        provider.candles('BTCUSDT')
+        self.assertEqual(request.call_count, 1)
