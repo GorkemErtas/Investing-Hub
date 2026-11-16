@@ -3,6 +3,18 @@ import { objectiveForecastSchema } from "../objectives";
 import { objectiveFixture } from "./objective-fixtures";
 
 describe("independent direction and volatility contracts", () => {
+  it("preserves unknown baseline percentages and rejects inconsistent measured comparisons", () => {
+    const f = objectiveFixture();
+    f.direction.evaluation!.baselinePrimaryLoss = 0;
+    f.direction.evaluation!.baselineRelativeImprovement = null;
+    expect(objectiveForecastSchema.safeParse(f).success).toBe(true);
+    f.direction.evaluation!.baselineRelativeImprovement = 0;
+    expect(objectiveForecastSchema.safeParse(f).success).toBe(false);
+    f.direction.evaluation!.baselinePrimaryLoss = 1;
+    f.direction.evaluation!.baselineRelativeImprovement =
+      1 - f.direction.evaluation!.primaryLoss;
+    expect(objectiveForecastSchema.safeParse(f).success).toBe(true);
+  });
   it("allows honest experimental development outputs before future confirmation without performance thresholds", () => {
     const f = objectiveFixture();
     for (const objective of [f.direction, f.volatility]) {

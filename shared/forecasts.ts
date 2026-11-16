@@ -43,6 +43,9 @@ export const forecastSchema = z
     evaluationMetrics: z
       .strictObject({
         validationReturnRmse: metric,
+        baselineValidationReturnRmse: metric.optional(),
+        validationReturnMae: metric.optional(),
+        baselineValidationReturnMae: metric.optional(),
         holdoutReturnRmse: metric,
         baselineHoldoutReturnRmse: metric.positive(),
         holdoutDirectionalAccuracy: z.number().finite().min(0).max(1),

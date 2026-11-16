@@ -307,6 +307,20 @@ select {
   min-width: 0;
   scroll-margin-top: 24px;
 }
+.forecast-performance {
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+  margin-top: 16px;
+  font-size: 12px;
+}
+.forecast-performance p {
+  margin-bottom: 7px;
+}
+.uncertainty-note {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+}
 .forecast-panel h2 {
   display: flex;
   gap: 8px;

@@ -63,7 +63,10 @@ try {
     );
   await panel.getByRole("button", { name: "Volatility", exact: true }).click();
   await expect(panel.locator(".objective-value")).toHaveText(
-    pct(actual.volatility.expectedVolatility!),
+    new Intl.NumberFormat("en-US", {
+      style: "percent",
+      maximumSignificantDigits: 3,
+    }).format(actual.volatility.expectedVolatility!),
   );
   const priceResponse = page.waitForResponse((r) =>
     r.url().includes("/v2/forecasts/BTCUSDT?horizon=15m"),

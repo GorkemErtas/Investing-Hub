@@ -7,8 +7,8 @@ const fraction = z.number().finite().min(0).max(1);
 export const objectiveEvaluationSchema = z.strictObject({
   period: z.enum(["development", "future"]),
   candidate: z.string().min(1).max(160),
-  primaryLoss: z.number().finite(),
-  baselineRelativeImprovement: z.number().finite(),
+  primaryLoss: z.number().finite().nonnegative(),
+  baselineRelativeImprovement: z.number().finite().nullable(),
   calibrationError: fraction.nullable(),
   intervalCoverage: fraction.nullable(),
   developmentEligible: z.boolean(),
@@ -18,6 +18,14 @@ export const objectiveEvaluationSchema = z.strictObject({
   mcc: z.number().finite().min(-1).max(1).optional(),
   brier: z.number().finite().nonnegative().optional(),
   qlike: z.number().finite().optional(),
+  selectionMetric: z.enum(["logLoss", "mae"]).optional(),
+  baselinePrimaryLoss: z.number().finite().nonnegative().nullable().optional(),
+  baselineQlike: z.number().finite().optional(),
+  rmse: z.number().finite().nonnegative().optional(),
+  meanIntervalWidth: z.number().finite().nonnegative().optional(),
+  evaluationSamples: z.number().int().nonnegative().optional(),
+  evaluationStart: z.string().datetime().optional(),
+  evaluationEnd: z.string().datetime().optional(),
 });
 const common = {
   status: z.enum(["experimental", "validated", "unavailable"]),
@@ -138,6 +146,20 @@ export const objectiveForecastSchema = z
     )
       issue("Unvalidated volatility interval");
     for (const o of [f.direction, f.volatility]) {
+      const e = o.evaluation;
+      if (e && e.baselinePrimaryLoss !== undefined) {
+        const base = e.baselinePrimaryLoss;
+        if (base === null || base <= 0) {
+          if (e.baselineRelativeImprovement !== null)
+            issue("Undefined baseline percentage must remain null");
+        } else if (
+          e.baselineRelativeImprovement === null ||
+          Math.abs(e.baselineRelativeImprovement - (1 - e.primaryLoss / base)) >
+            1e-8
+        ) {
+          issue("Baseline comparison must match the reported primary losses");
+        }
+      }
       if (o.status === "unavailable") {
         if (
           o.modelVersion !== null ||

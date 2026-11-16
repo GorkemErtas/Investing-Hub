@@ -1,5 +1,16 @@
 {
   "objectiveForecast": {
+    "priceRmse": "Historical return RMSE",
+    "wideInterval": "This volatility interval is very wide and provides little precision.",
+    "coverageCaution": "Historical coverage differs substantially from its 90% target; future coverage is not guaranteed.",
+    "historicalDevelopment": "Historical development performance",
+    "notMeasured": "Not measured",
+    "baselineError": "Baseline error (same metric)",
+    "baselineQlike": "Baseline QLIKE",
+    "intervalWidth": "Mean historical volatility interval width",
+    "intervalFoldCoverage": "Measured coverage for this model's last development fold",
+    "sampleCount": "Scored development observations",
+    "evaluationPeriod": "Development evaluation period",
     "model": "Model",
     "riskUnavailable": "Not measured",
     "localExperimental": "Experimental model selected using historical development data. These results are not future confirmation and do not guarantee accuracy.",

@@ -1,5 +1,16 @@
 {
   "objectiveForecast": {
+    "priceRmse": "Geçmiş getiri RMSE",
+    "wideInterval": "Bu oynaklık aralığı çok geniştir ve sınırlı kesinlik sağlar.",
+    "coverageCaution": "Geçmiş kapsama %90 hedefinden belirgin biçimde farklıdır; gelecek kapsama garantisi yoktur.",
+    "historicalDevelopment": "Geçmiş geliştirme performansı",
+    "notMeasured": "Ölçülmedi",
+    "baselineError": "Temel model hatası (aynı ölçüt)",
+    "baselineQlike": "Temel model QLIKE",
+    "intervalWidth": "Geçmiş oynaklık aralığının ortalama genişliği",
+    "intervalFoldCoverage": "Bu modelin son geliştirme katında ölçülen kapsama",
+    "sampleCount": "Değerlendirilen geliştirme gözlemleri",
+    "evaluationPeriod": "Geliştirme değerlendirme dönemi",
     "model": "Model",
     "riskUnavailable": "Ölçülmedi",
     "localExperimental": "Geçmiş geliştirme verisiyle seçilen deneysel model. Bu sonuçlar gelecek dönem doğrulaması değildir ve doğruluk garantisi vermez.",

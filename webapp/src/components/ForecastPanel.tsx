@@ -16,7 +16,7 @@ function PriceProjection({
   horizon: ForecastHorizon;
   clock: number;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const query = useForecast(symbol, horizon);
   const f = query.data;
   const available =
@@ -48,6 +48,39 @@ function PriceProjection({
           <p className="forecast-note">
             {t('forecast.generated')} {utc(f.generatedAt)}
           </p>
+          <p className="forecast-note">
+            {t('objectiveForecast.model')}: {f.algorithm}
+          </p>
+          {f.evaluationMetrics && (
+            <div className="forecast-performance">
+              <p className="eyebrow">{t('objectiveForecast.historicalDevelopment')}</p>
+              <p>
+                {t('objectiveForecast.priceRmse')}:{' '}
+                <strong>
+                  {new Intl.NumberFormat(i18n.resolvedLanguage, {
+                    maximumSignificantDigits: 4,
+                  }).format(f.evaluationMetrics.validationReturnRmse)}
+                </strong>
+              </p>
+              <p>
+                {t('objectiveForecast.baselineImprovement')}:{' '}
+                {f.evaluationMetrics.baselineValidationReturnRmse != null &&
+                f.evaluationMetrics.baselineValidationReturnRmse > 0
+                  ? percent(
+                      (1 -
+                        f.evaluationMetrics.validationReturnRmse /
+                          f.evaluationMetrics.baselineValidationReturnRmse) *
+                        100,
+                    )
+                  : t('objectiveForecast.notMeasured')}
+              </p>
+              {f.evaluationMetrics.baselineValidationReturnRmse != null &&
+                f.evaluationMetrics.validationReturnRmse >=
+                  f.evaluationMetrics.baselineValidationReturnRmse && (
+                  <p className="forecast-note">{t('objectiveForecast.belowBaseline')}</p>
+                )}
+            </div>
+          )}
         </>
       ) : (
         <p role="status">{t('objectiveForecast.priceUnavailable')}</p>
@@ -87,6 +120,11 @@ export function ForecastPanel({ symbol, market }: { symbol: Symbol; market?: Mar
     new Intl.NumberFormat(i18n.resolvedLanguage, {
       style: 'percent',
       maximumFractionDigits: 1,
+    }).format(value);
+  const volatilityPercent = (value: number) =>
+    new Intl.NumberFormat(i18n.resolvedLanguage, {
+      style: 'percent',
+      maximumSignificantDigits: 3,
     }).format(value);
   const evaluation = selected?.evaluation;
   const explanation =
@@ -180,7 +218,9 @@ export function ForecastPanel({ symbol, market }: { symbol: Symbol; market?: Mar
                 </>
               ) : objective === 'volatility' && f.volatility.expectedVolatility !== null ? (
                 <>
-                  <p className="objective-value">{probability(f.volatility.expectedVolatility)}</p>
+                  <p className="objective-value">
+                    {volatilityPercent(f.volatility.expectedVolatility)}
+                  </p>
                   <p>
                     {t('objectiveForecast.movementLevel')}{' '}
                     <strong>
@@ -190,11 +230,23 @@ export function ForecastPanel({ symbol, market }: { symbol: Symbol; market?: Mar
                   <p className="forecast-note muted">{t('objectiveForecast.volatilityUnits')}</p>
                   {f.volatility.interval && (
                     <p className="forecast-note">
-                      {t('objectiveForecast.interval')} {probability(f.volatility.interval.lower)} –{' '}
-                      {probability(f.volatility.interval.upper)}
+                      {t('objectiveForecast.interval')}{' '}
+                      {volatilityPercent(f.volatility.interval.lower)} –{' '}
+                      {volatilityPercent(f.volatility.interval.upper)}
                       <br />
-                      {t('objectiveForecast.measuredCoverage')}{' '}
+                      {t('objectiveForecast.intervalFoldCoverage')}{' '}
                       {probability(f.volatility.interval.measuredCoverage)}
+                      {f.volatility.interval.upper - f.volatility.interval.lower >
+                        10 * f.volatility.expectedVolatility && (
+                        <span className="uncertainty-note">
+                          {t('objectiveForecast.wideInterval')}
+                        </span>
+                      )}
+                      {Math.abs(f.volatility.interval.measuredCoverage - 0.9) > 0.05 && (
+                        <span className="uncertainty-note">
+                          {t('objectiveForecast.coverageCaution')}
+                        </span>
+                      )}
                     </p>
                   )}
                 </>
@@ -235,6 +287,31 @@ export function ForecastPanel({ symbol, market }: { symbol: Symbol; market?: Mar
           )}
         </div>
         {evaluation && (
+          <div className="forecast-performance">
+            <p className="eyebrow">{t('objectiveForecast.historicalDevelopment')}</p>
+            <p>
+              {t(
+                objective === 'direction'
+                  ? 'objectiveForecast.logLoss'
+                  : 'objectiveForecast.volatilityMae',
+              )}
+              : <strong>{number(evaluation.primaryLoss)}</strong>
+            </p>
+            <p>
+              {t('objectiveForecast.baselineImprovement')}:{' '}
+              <strong>
+                {evaluation.baselineRelativeImprovement === null
+                  ? t('objectiveForecast.notMeasured')
+                  : percent(evaluation.baselineRelativeImprovement * 100)}
+              </strong>
+            </p>
+            {evaluation.baselineRelativeImprovement !== null &&
+              evaluation.baselineRelativeImprovement <= 0 && (
+                <p className="forecast-note">{t('objectiveForecast.belowBaseline')}</p>
+              )}
+          </div>
+        )}
+        {evaluation && (
           <details className="forecast-model">
             <summary>{t('forecast.modelInfo')}</summary>
             <p>
@@ -262,12 +339,54 @@ export function ForecastPanel({ symbol, market }: { symbol: Symbol; market?: Mar
               </div>
               <div>
                 <dt>{t('objectiveForecast.baselineImprovement')}</dt>
-                <dd>{percent(evaluation.baselineRelativeImprovement * 100)}</dd>
+                <dd>
+                  {evaluation.baselineRelativeImprovement === null
+                    ? t('objectiveForecast.notMeasured')
+                    : percent(evaluation.baselineRelativeImprovement * 100)}
+                </dd>
               </div>
+              {evaluation.baselinePrimaryLoss != null && (
+                <div>
+                  <dt>{t('objectiveForecast.baselineError')}</dt>
+                  <dd>{number(evaluation.baselinePrimaryLoss)}</dd>
+                </div>
+              )}
               {evaluation.qlike !== undefined && (
                 <div>
                   <dt>QLIKE</dt>
                   <dd>{number(evaluation.qlike)}</dd>
+                </div>
+              )}
+              {evaluation.baselineQlike !== undefined && (
+                <div>
+                  <dt>{t('objectiveForecast.baselineQlike')}</dt>
+                  <dd>{number(evaluation.baselineQlike)}</dd>
+                </div>
+              )}
+              {evaluation.rmse !== undefined && (
+                <div>
+                  <dt>RMSE</dt>
+                  <dd>{number(evaluation.rmse)}</dd>
+                </div>
+              )}
+              {evaluation.meanIntervalWidth !== undefined && (
+                <div>
+                  <dt>{t('objectiveForecast.intervalWidth')}</dt>
+                  <dd>{volatilityPercent(evaluation.meanIntervalWidth)}</dd>
+                </div>
+              )}
+              {evaluation.evaluationSamples !== undefined && (
+                <div>
+                  <dt>{t('objectiveForecast.sampleCount')}</dt>
+                  <dd>{number(evaluation.evaluationSamples)}</dd>
+                </div>
+              )}
+              {evaluation.evaluationStart && evaluation.evaluationEnd && (
+                <div>
+                  <dt>{t('objectiveForecast.evaluationPeriod')}</dt>
+                  <dd>
+                    {utc(evaluation.evaluationStart)} – {utc(evaluation.evaluationEnd)}
+                  </dd>
                 </div>
               )}
               {evaluation.balancedAccuracy !== undefined && (
@@ -295,9 +414,6 @@ export function ForecastPanel({ symbol, market }: { symbol: Symbol; market?: Mar
                 </div>
               )}
             </dl>
-            {evaluation.baselineRelativeImprovement <= 0 && (
-              <p className="forecast-note">{t('objectiveForecast.belowBaseline')}</p>
-            )}
           </details>
         )}
         <details
