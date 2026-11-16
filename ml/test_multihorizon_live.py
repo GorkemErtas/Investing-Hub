@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from uuid import uuid4
 import shutil
 from unittest.mock import Mock
+from unittest.mock import patch
 from urllib.error import HTTPError
 import numpy as np
 from multihorizon.data import SYMBOLS, validate_candles, save_json, digest
@@ -40,6 +41,22 @@ class FakeRegistry:
 
 
 class LiveTests(unittest.TestCase):
+    def test_atomic_metadata_retries_transient_replacement_denial(self):
+        import os
+        with temporary_registry() as directory:
+            path = directory/'retry.json'
+            original = os.replace
+            attempts = []
+            def replace(source, target):
+                attempts.append(1)
+                if len(attempts) == 1:
+                    raise PermissionError('simulated scanner sharing conflict')
+                return original(source, target)
+            with patch('multihorizon.data.os.replace', side_effect=replace), patch('multihorizon.data.time.sleep'):
+                save_json(path, {'verified': True})
+            self.assertEqual(len(attempts), 2)
+            self.assertIn('verified', path.read_text(encoding='utf-8'))
+
     def test_completed_history_frozen_inference_cache_and_freshness(self):
         frame = validate_candles(candles(256))
         now = int(frame.close_time.iloc[-1])+1000

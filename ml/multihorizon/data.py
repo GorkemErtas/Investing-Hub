@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import time
 import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -38,7 +39,16 @@ def save_json(path, value):
             json.dump(value, stream, sort_keys=True, indent=2, allow_nan=False)
             stream.flush()
             os.fsync(stream.fileno())
-        os.replace(temporary, path)
+        # Windows scanners/sync clients can briefly deny replacement of a closed
+        # file. Preserve the previous generation and retry only this atomic step.
+        for attempt in range(5):
+            try:
+                os.replace(temporary, path)
+                break
+            except PermissionError:
+                if attempt == 4:
+                    raise
+                time.sleep(.02*2**attempt)
     finally:
         temporary.unlink(missing_ok=True)
 
