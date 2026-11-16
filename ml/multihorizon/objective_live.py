@@ -35,6 +35,7 @@ class ObjectiveEngine:
 
     def cycle(self):
         results = []
+        feature_cache = {}
         for symbol in SYMBOLS:
             for horizon in HORIZONS:
                 now = self.clock()
@@ -48,13 +49,15 @@ class ObjectiveEngine:
                             bundle[name] = empty_objective(name, 'monthly_insufficient_independent_outcomes')
                         results.append(bundle)
                         continue
-                    if not any(item['status'] == 'validated' and model is not None for item, model in entries.values()):
+                    if not any(item['status'] in ('validated', 'experimental') and model is not None for item, model in entries.values()):
                         results.append(bundle)
                         continue
                     frame, updated = self.provider.candles(symbol)
-                    peers = {peer: frame if peer == symbol else self.provider.candles(peer)[0] for peer in ('BTCUSDT', 'ETHUSDT')}
-                    rich, _ = objective_features(frame, symbol, peers)
                     source = int(frame.close_time.iloc[-1])
+                    if (symbol, source) not in feature_cache:
+                        peers = {peer: frame if peer == symbol else self.provider.candles(peer)[0] for peer in ('BTCUSDT', 'ETHUSDT')}
+                        feature_cache[symbol, source] = objective_features(frame, symbol, peers)[0]
+                    rich = feature_cache[symbol, source]
                     target = target_time(source, horizon)
                     now = self.clock()
                     if not source < now < target or now-source > 90000 or rich.iloc[-16:].isna().any().any():
@@ -64,7 +67,7 @@ class ObjectiveEngine:
                     bundle.update(marketUpdatedAt=iso(updated), sourceCandleTime=iso(source),
                                   targetTime=iso(target), expiresAt=iso(expires))
                     for name, (item, model) in entries.items():
-                        if item['status'] != 'validated' or model is None:
+                        if item['status'] not in ('validated', 'experimental') or model is None:
                             continue
                         key = symbol, horizon, name
                         identity = self.registry.key, item['modelVersion'], source
@@ -77,7 +80,7 @@ class ObjectiveEngine:
                             x = rich.loc[:, columns].iloc[-16:].to_numpy(dtype=float)
                             x = x[None] if model['algorithm'] == 'lstm' else x[-1:]
                             started = time.perf_counter()
-                            result = {'status': 'validated', 'reason': 'future_confirmed_objective', 'generatedAt': iso(self.clock()),
+                            result = {'status': item['status'], 'reason': item['reason'], 'generatedAt': iso(self.clock()),
                                 'modelVersion': item['modelVersion'], 'algorithm': item['algorithm'], 'evaluation': item['evaluation']}
                             if name == 'direction':
                                 p = predict_direction(model, x)[0]
@@ -91,10 +94,10 @@ class ObjectiveEngine:
                                 if not np.isfinite(sigma) or sigma <= 0:
                                     raise ValueError('invalid_volatility_output')
                                 cuts = item['riskThresholds']
-                                category = ('low', 'medium', 'high')[int(np.digitize(sigma, cuts))]
+                                category = ('low', 'medium', 'high')[int(np.digitize(sigma, cuts))] if cuts else None
                                 interval = None
                                 calibration = item.get('intervalCalibration')
-                                if calibration and .85 <= calibration['measuredCoverage'] <= .97:
+                                if calibration and calibration['samples'] > 0 and np.isfinite(calibration['radius']) and calibration['radius'] >= 0:
                                     low, high = volatility_interval(np.asarray([variance]), calibration['radius'])
                                     interval = {'lower': float(low[0]), 'upper': float(high[0]), 'nominalCoverage': .9,
                                         'measuredCoverage': calibration['measuredCoverage'], 'method': 'past_split_conformal'}

@@ -41,8 +41,20 @@ class BinanceMinutes:
         self.history_size = history_size
         self.history = {symbol: deque(maxlen=history_size) for symbol in SYMBOLS}
         self.retrieved = {}
+        self.failed_until = {}
 
     def candles(self, symbol):
+        if self.clock() < self.blocked_until:
+            raise ValueError('provider_rate_limited')
+        if self.clock() < self.failed_until.get(symbol, 0):
+            raise ValueError('provider_failure_cooldown')
+        try:
+            return self._candles(symbol)
+        except Exception:
+            self.failed_until[symbol] = self.clock()+60000
+            raise
+
+    def _candles(self, symbol):
         if symbol not in SYMBOLS:
             raise ValueError('unsupported_symbol')
         if self.clock() < self.blocked_until:
@@ -196,12 +208,37 @@ def run_worker(registry, output, *, once=False, stop=None, objective_registry=No
     else:
         provider, objective_engine = BinanceMinutes(), None
     engine = Engine(registry, provider)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    if objective_output is not None:
+        objective_output.parent.mkdir(parents=True, exist_ok=True)
     with ExitStack() as locks:
         locks.enter_context(job_lock(output))
         if objective_engine:
             locks.enter_context(job_lock(objective_output))
         while not stop.is_set():
             began = time.perf_counter()
+            # Only two network requests at a time; both engines reuse these completed tails.
+            from concurrent.futures import ThreadPoolExecutor
+            def warm(symbol):
+                if stop.is_set():
+                    return
+                try:
+                    price_active = any(registry.get(symbol, h)[0]['status'] == 'experimental' for h in HORIZONS)
+                    objective_active = objective_registry and any(objective_registry.get(symbol, h, o)[0]['status'] in
+                        ('experimental', 'validated') for h in HORIZONS for o in ('direction', 'volatility'))
+                    if price_active or objective_active:
+                        provider.candles(symbol)
+                except Exception:
+                    pass  # Engines publish explicit per-symbol unavailable states.
+            # Refresh registries before sharing read-only caches with the fetch threads.
+            try:
+                registry.refresh()
+                if objective_registry:
+                    objective_registry.refresh()
+            except Exception:
+                pass
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                list(pool.map(warm, SYMBOLS))
             atomic_json(output, engine.cycle())
             if objective_engine:
                 atomic_json(objective_output, objective_engine.cycle())

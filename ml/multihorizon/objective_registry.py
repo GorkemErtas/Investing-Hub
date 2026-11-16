@@ -1,4 +1,4 @@
-"""Independent objective decisions. Development evidence alone cannot activate inference."""
+"""Independent objective catalog; preserves historical confirmation and local experimental states."""
 import json
 import time
 from datetime import datetime, timezone
@@ -102,23 +102,27 @@ class ObjectiveRegistry:
             for objective, item in objectives.items():
                 if item['status'] == 'unavailable':
                     continue
-                if item['status'] != 'validated' or pair[1] == '1M':
+                if item['status'] not in ('validated', 'experimental') or pair[1] == '1M':
                     raise ValueError('unvalidated_objective_entry')
-                if not confirmation_valid(item.get('confirmation', {}), item.get('artifactSha256', ''), self.clock()):
+                if item['status'] == 'validated' and not confirmation_valid(item.get('confirmation', {}), item.get('artifactSha256', ''), self.clock()):
                     raise ValueError('future_confirmation_required')
-                path = (self.path.parent/item['artifact']).resolve()
-                if not path.is_relative_to(self.path.parent.resolve()) or path.stat().st_size > 2*1024*1024:
-                    raise ValueError('objective_artifact_path_or_size')
-                if sha256(path) != item['artifactSha256']:
-                    raise ValueError('objective_artifact_checksum')
-                artifact = json.loads(path.read_text(encoding='utf-8'))
-                if artifact['objective'] != objective or artifact['schema'] != OBJECTIVE_FEATURE_VERSION or artifact['algorithm'] != item['algorithm']:
-                    raise ValueError('objective_artifact_schema')
-                if not 1 <= len(artifact['features']) <= 96 or len(set(artifact['features'])) != len(artifact['features']):
-                    raise ValueError('objective_artifact_features')
-                if objective == 'direction' and ('temperature' not in artifact or artifact['classes'] != 3):
-                    raise ValueError('validated_neutral_calibrated_probabilities_required')
-                models[pair+(objective,)] = artifact
+                try:
+                    path = (self.path.parent/item['artifact']).resolve()
+                    if not path.is_relative_to(self.path.parent.resolve()) or path.stat().st_size > 2*1024*1024:
+                        raise ValueError('objective_artifact_path_or_size')
+                    if sha256(path) != item['artifactSha256']:
+                        raise ValueError('objective_artifact_checksum')
+                    artifact = json.loads(path.read_text(encoding='utf-8'))
+                    if artifact['objective'] != objective or artifact['schema'] != OBJECTIVE_FEATURE_VERSION or artifact['algorithm'] != item['algorithm']:
+                        raise ValueError('objective_artifact_schema')
+                    if not 1 <= len(artifact['features']) <= 96 or len(set(artifact['features'])) != len(artifact['features']):
+                        raise ValueError('objective_artifact_features')
+                    if objective == 'direction' and (not 0 < artifact.get('temperature', 0) < float('inf') or artifact['classes'] != 3):
+                        raise ValueError('calibrated_neutral_probabilities_required')
+                    models[pair+(objective,)] = artifact
+                except (OSError, ValueError, KeyError, TypeError):
+                    # One lost artifact does not disable unrelated coins/objectives.
+                    objectives[objective] = objective_unavailable('objective_artifact_invalid', item.get('evaluation'))
         self.entries, self.models, self.key = entries, models, key
 
     def get(self, symbol, horizon, objective):

@@ -7,6 +7,11 @@ import json
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest='command', required=True)
+    local = commands.add_parser('local-prepare', help='Select existing frozen artifacts for local experimental inference; no training')
+    local.add_argument('--study', type=Path, default=Path('ml/artifacts/objectives-study-2026-11-16'))
+    local.add_argument('--price-study', type=Path, default=Path('ml/artifacts/multihorizon/study-final.json'))
+    local.add_argument('--dataset', type=Path, default=Path('ml/data/normalized-v2'))
+    local.add_argument('--output', type=Path, default=Path('ml/artifacts/local'))
     normalize = commands.add_parser('normalize')
     normalize.add_argument('--source', type=Path, default=Path('ml/data/coin'))
     normalize.add_argument('--output', type=Path, default=Path('ml/data/normalized-v2'))
@@ -50,6 +55,12 @@ def main(argv=None):
     objectives_catalog.add_argument('--study', type=Path, default=Path('ml/artifacts/objectives-study-2026-11-16'))
     objectives_catalog.add_argument('--output', type=Path, default=Path('ml/artifacts/objective-registry/registry.json'))
     args = parser.parse_args(argv)
+    if args.command == 'local-prepare':
+        from multihorizon.local_selection import prepare_local
+        result = prepare_local(args.study, args.price_study, args.dataset, args.output)
+        print(json.dumps({'policy': result['policy'], 'experimentalObjectives': sum(r['status'] == 'experimental' for r in result['objectives']),
+            'experimentalPrices': sum(r['status'] == 'experimental' for r in result['prices']), 'trainingPerformed': False}))
+        return 0
     if args.command == 'objective-report':
         from multihorizon.objective_reports import export_objective_report
         result = export_objective_report(args.study, args.output, explain=args.explain)
