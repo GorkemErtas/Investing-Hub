@@ -55,6 +55,20 @@ when fitting or scoring realized outcomes. Requirements and the Railway image
 retain those supported capabilities. See the [cleanup audit](CODEBASE_CLEANUP.md)
 for deletion evidence, verification and future pipeline boundaries.
 
+## Minute direction and volatility extension
+
+The existing `multihorizon` worker also supports an optional objective registry and
+separate atomic v3 snapshot. Past-only finite features feed frozen calibrated
+direction and realized-variance artifacts; each objective is admitted independently
+only with checksum-matched future confirmation. The read-only `/api/v3/forecasts`
+API and shared contracts reject premature, stale or inconsistent numerical outputs.
+The existing coin ForecastPanel prioritizes these objectives and keeps v2 price
+research expandable. Both minute worker enable flags default false. The v1 daily
+SQLite system, native client contract and historical evidence remain supported.
+See [operations](OBJECTIVE_FORECASTS.md) and [measured findings](OBJECTIVE_FINDINGS.md)
+for the 768-trial development results and prospective limits; no live Railway
+configuration is changed by this extension.
+
 ## Package/build strategy
 
 Root npm workspaces are `shared`, `backend`, `webapp`. A single root lock resolves those packages. Mobile has its own npm manifest/lock to preserve Expo SDK 53's supported React 19.0 version without duplicating React inside the native bundle. Shared has no React dependency. Node, Vite and Metro consume the same built ESM files; TypeScript uses source type declarations. Build shared before importing it at runtime. Expo's resolver could not map Node-style relative `.js` specifiers back to source `.ts`, so native source exports were replaced by the common compiled artifact.

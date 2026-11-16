@@ -31,6 +31,10 @@ def plot_reliability(directory):
         handles, legend_labels = axes.flat[0].get_legend_handles_labels()
         figure.legend(handles, legend_labels, loc='outside lower center', ncols=3)
         figure.suptitle(f'Development reliability, {horizon} — future confirmation pending\nBins with at least 25 observations; model selection uses these historical windows', fontsize=12)
-        figure.savefig(directory/f'reliability-{horizon}.svg', metadata={'Date': None})
+        destination = directory/f'reliability-{horizon}.svg'
+        figure.savefig(destination, metadata={'Date': None})
+        # Matplotlib emits trailing spaces inside multiline SVG path attributes.
+        destination.write_text('\n'.join(line.rstrip() for line in
+            destination.read_text(encoding='utf-8').splitlines())+'\n', encoding='utf-8')
         plt.close(figure)
     return {'matplotlib': matplotlib.__version__, 'figures': ['reliability-1m.svg', 'reliability-15m.svg', 'reliability-1h.svg']}

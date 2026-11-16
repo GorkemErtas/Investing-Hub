@@ -1,0 +1,293 @@
+{
+  "coins": [
+    {
+      "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+      "lagReturnCorrelation": {
+        "1": -0.009186496919533368,
+        "15": 0.0054524362934958385,
+        "60": 0.008474665195695032
+      },
+      "lagSquaredReturnCorrelation": {
+        "1": 0.2865363571423481,
+        "15": 0.0789649142327614,
+        "60": 0.056957809354305534
+      },
+      "minuteObservations": 298079,
+      "periodEndExclusiveMs": 1779840000000,
+      "symbol": "BTCUSDT",
+      "targetDiagnostics": {
+        "1": {
+          "logReturnStd": 0.0006705270068987683,
+          "realizedVarianceCoefficientOfVariation": 5.49065939425156,
+          "within24bpRoundTripCost": 0.9894289768819675,
+          "zeroReturnFraction": 0.0289822496720668
+        },
+        "15": {
+          "logReturnStd": 0.002555389992556846,
+          "realizedVarianceCoefficientOfVariation": 2.3569704147765376,
+          "within24bpRoundTripCost": 0.7894754499857414,
+          "zeroReturnFraction": 0.0004831160988375019
+        },
+        "60": {
+          "logReturnStd": 0.005045622966927528,
+          "realizedVarianceCoefficientOfVariation": 1.7367709355226173,
+          "within24bpRoundTripCost": 0.548177974632575,
+          "zeroReturnFraction": 0.00012079726192872962
+        }
+      }
+    },
+    {
+      "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+      "lagReturnCorrelation": {
+        "1": -0.014699271361805544,
+        "15": 0.004641283453002401,
+        "60": 0.008304175306101976
+      },
+      "lagSquaredReturnCorrelation": {
+        "1": 0.32446824798276097,
+        "15": 0.038242349127394396,
+        "60": 0.027281837352222754
+      },
+      "minuteObservations": 298079,
+      "periodEndExclusiveMs": 1779840000000,
+      "symbol": "ETHUSDT",
+      "targetDiagnostics": {
+        "1": {
+          "logReturnStd": 0.0009210856265197872,
+          "realizedVarianceCoefficientOfVariation": 7.783342412123955,
+          "within24bpRoundTripCost": 0.9741612122960691,
+          "zeroReturnFraction": 0.014985960097826415
+        },
+        "15": {
+          "logReturnStd": 0.0035221238986964725,
+          "realizedVarianceCoefficientOfVariation": 3.091922688633052,
+          "within24bpRoundTripCost": 0.7017060037240199,
+          "zeroReturnFraction": 0.0010299766829382853
+        },
+        "60": {
+          "logReturnStd": 0.0070157636010400514,
+          "realizedVarianceCoefficientOfVariation": 2.02570181546054,
+          "within24bpRoundTripCost": 0.453640695255352,
+          "zeroReturnFraction": 0.00044292329373867527
+        }
+      }
+    },
+    {
+      "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+      "lagReturnCorrelation": {
+        "1": -0.0009122946074562563,
+        "15": 0.007708436328440988,
+        "60": 0.012573759808631905
+      },
+      "lagSquaredReturnCorrelation": {
+        "1": 0.30758087679647605,
+        "15": 0.05396533390409152,
+        "60": 0.032528211455911456
+      },
+      "minuteObservations": 298079,
+      "periodEndExclusiveMs": 1779840000000,
+      "symbol": "SOLUSDT",
+      "targetDiagnostics": {
+        "1": {
+          "logReturnStd": 0.001006999993232901,
+          "realizedVarianceCoefficientOfVariation": 7.6461982487472335,
+          "within24bpRoundTripCost": 0.9694980189815452,
+          "zeroReturnFraction": 0.0769527541356486
+        },
+        "15": {
+          "logReturnStd": 0.0038403079122038154,
+          "realizedVarianceCoefficientOfVariation": 3.348870542975365,
+          "within24bpRoundTripCost": 0.6490329290590978,
+          "zeroReturnFraction": 0.017667287336654756
+        },
+        "60": {
+          "logReturnStd": 0.007569732407074068,
+          "realizedVarianceCoefficientOfVariation": 2.2505389512248835,
+          "within24bpRoundTripCost": 0.39661096570699955,
+          "zeroReturnFraction": 0.008744379571840816
+        }
+      }
+    },
+    {
+      "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+      "lagReturnCorrelation": {
+        "1": 0.004310223404006559,
+        "15": 0.0012902565861956938,
+        "60": 0.012002198823843901
+      },
+      "lagSquaredReturnCorrelation": {
+        "1": 0.31257940823751157,
+        "15": 0.07250420955590868,
+        "60": 0.047310217249291124
+      },
+      "minuteObservations": 298079,
+      "periodEndExclusiveMs": 1779840000000,
+      "symbol": "BNBUSDT",
+      "targetDiagnostics": {
+        "1": {
+          "logReturnStd": 0.0006778107582680631,
+          "realizedVarianceCoefficientOfVariation": 6.87940748068841,
+          "within24bpRoundTripCost": 0.9892847198225974,
+          "zeroReturnFraction": 0.03090791367389182
+        },
+        "15": {
+          "logReturnStd": 0.0026524152213182966,
+          "realizedVarianceCoefficientOfVariation": 2.9818732892145587,
+          "within24bpRoundTripCost": 0.7789039303507624,
+          "zeroReturnFraction": 0.003630080687098452
+        },
+        "60": {
+          "logReturnStd": 0.005179550863691985,
+          "realizedVarianceCoefficientOfVariation": 2.1365568264690475,
+          "within24bpRoundTripCost": 0.5220756996174754,
+          "zeroReturnFraction": 0.0017649822159586605
+        }
+      }
+    },
+    {
+      "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+      "lagReturnCorrelation": {
+        "1": -0.007485090920115491,
+        "15": 0.003481076023142498,
+        "60": 0.01631812207136975
+      },
+      "lagSquaredReturnCorrelation": {
+        "1": 0.2999504290182486,
+        "15": 0.05062271049434822,
+        "60": 0.04063270110280217
+      },
+      "minuteObservations": 298079,
+      "periodEndExclusiveMs": 1779840000000,
+      "symbol": "XRPUSDT",
+      "targetDiagnostics": {
+        "1": {
+          "logReturnStd": 0.0009432846089262413,
+          "realizedVarianceCoefficientOfVariation": 8.313782702165277,
+          "within24bpRoundTripCost": 0.9729333498837557,
+          "zeroReturnFraction": 0.05651521911976355
+        },
+        "15": {
+          "logReturnStd": 0.00357055929215451,
+          "realizedVarianceCoefficientOfVariation": 3.329728887387576,
+          "within24bpRoundTripCost": 0.6763055038330565,
+          "zeroReturnFraction": 0.01209803230838911
+        },
+        "60": {
+          "logReturnStd": 0.006994971780361182,
+          "realizedVarianceCoefficientOfVariation": 2.2636101789216063,
+          "within24bpRoundTripCost": 0.4234480907321656,
+          "zeroReturnFraction": 0.006140527481377089
+        }
+      }
+    },
+    {
+      "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+      "lagReturnCorrelation": {
+        "1": -0.026403929908790966,
+        "15": 0.002775327137519916,
+        "60": 0.012040673369897881
+      },
+      "lagSquaredReturnCorrelation": {
+        "1": 0.3587064874757832,
+        "15": 0.033299593109060964,
+        "60": 0.02053993329551956
+      },
+      "minuteObservations": 298079,
+      "periodEndExclusiveMs": 1779840000000,
+      "symbol": "ADAUSDT",
+      "targetDiagnostics": {
+        "1": {
+          "logReturnStd": 0.00109038941866907,
+          "realizedVarianceCoefficientOfVariation": 7.755255044649906,
+          "within24bpRoundTripCost": 0.9632916106132938,
+          "zeroReturnFraction": 0.19119763552615246
+        },
+        "15": {
+          "logReturnStd": 0.0040384547061559405,
+          "realizedVarianceCoefficientOfVariation": 3.17556608656915,
+          "within24bpRoundTripCost": 0.5951118044721789,
+          "zeroReturnFraction": 0.050458792545250195
+        },
+        "60": {
+          "logReturnStd": 0.007892756414026477,
+          "realizedVarianceCoefficientOfVariation": 1.9837295649029503,
+          "within24bpRoundTripCost": 0.3507818267230387,
+          "zeroReturnFraction": 0.026213005838534326
+        }
+      }
+    },
+    {
+      "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+      "lagReturnCorrelation": {
+        "1": -0.02234971628861456,
+        "15": 0.0010088169362142297,
+        "60": 0.012320917698769833
+      },
+      "lagSquaredReturnCorrelation": {
+        "1": 0.3660858938854895,
+        "15": 0.02007381523254919,
+        "60": 0.012347422216003184
+      },
+      "minuteObservations": 298079,
+      "periodEndExclusiveMs": 1779840000000,
+      "symbol": "DOGEUSDT",
+      "targetDiagnostics": {
+        "1": {
+          "logReturnStd": 0.0010454513512972046,
+          "realizedVarianceCoefficientOfVariation": 10.629424595970423,
+          "within24bpRoundTripCost": 0.9683104143532419,
+          "zeroReturnFraction": 0.06298665789941593
+        },
+        "15": {
+          "logReturnStd": 0.003932702519584264,
+          "realizedVarianceCoefficientOfVariation": 4.0875243336388305,
+          "within24bpRoundTripCost": 0.6338986462684314,
+          "zeroReturnFraction": 0.01514770268230084
+        },
+        "60": {
+          "logReturnStd": 0.007692530626693367,
+          "realizedVarianceCoefficientOfVariation": 2.4353224348592515,
+          "within24bpRoundTripCost": 0.38683645392926647,
+          "zeroReturnFraction": 0.007697469968458492
+        }
+      }
+    },
+    {
+      "datasetFingerprint": "41803b366656636186ad00e3bad1cfc42127ed8707c4f9ddc05d63305853bb54",
+      "lagReturnCorrelation": {
+        "1": -0.1295648516652763,
+        "15": 0.0005157357551457609,
+        "60": 0.007017238870160975
+      },
+      "lagSquaredReturnCorrelation": {
+        "1": 0.3339857872421613,
+        "15": 0.02335312835133386,
+        "60": 0.014201275108179734
+      },
+      "minuteObservations": 298079,
+      "periodEndExclusiveMs": 1779840000000,
+      "symbol": "LINKUSDT",
+      "targetDiagnostics": {
+        "1": {
+          "logReturnStd": 0.0012082947660502401,
+          "realizedVarianceCoefficientOfVariation": 7.414784239960674,
+          "within24bpRoundTripCost": 0.9623287786123813,
+          "zeroReturnFraction": 0.37968122544694527
+        },
+        "15": {
+          "logReturnStd": 0.00398797117814494,
+          "realizedVarianceCoefficientOfVariation": 2.840708244588604,
+          "within24bpRoundTripCost": 0.6294734370019962,
+          "zeroReturnFraction": 0.14036200157683726
+        },
+        "60": {
+          "logReturnStd": 0.007712159978516597,
+          "realizedVarianceCoefficientOfVariation": 1.71627307882608,
+          "within24bpRoundTripCost": 0.38492047513589694,
+          "zeroReturnFraction": 0.07340782497818939
+        }
+      }
+    }
+  ],
+  "scope": "descriptive pre-validation history only; no hypothesis testing or model tuning"
+}

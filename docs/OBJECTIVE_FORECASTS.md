@@ -96,6 +96,14 @@ confirmation. Passing development checks never switches the worker on. GARCH's
 historical filter can be evaluated causally, but it needs a validated bounded live
 state recovery path before being a production candidate.
 
+Development evaluation is thinned to bound CPU use; its fixed origin grid does
+not establish performance at every rolling minute. Future confirmation must cover
+all 60 UTC minute phases (at least 100 scored origins per phase), use overlap-aware
+uncertainty and retain weekly blocks. The registry checks that declaration before
+admission. Current saved artifacts are last-development-fold fits; they are not
+refits on October data. Any later refit changes the artifact checksum and needs its
+own pre-December freeze and future confirmation.
+
 ## Strict v3 API and live behavior
 
 `GET /api/v3/forecasts/:symbol?horizon=1m` returns
@@ -148,6 +156,12 @@ $env:MKL_NUM_THREADS='1'
 .\.venv\Scripts\python.exe ml/forecast_v2.py worker --once --objective-registry ml/artifacts/objective-registry/registry.json
 npm run dev
 ```
+
+Optional standalone reliability figures use
+`pip install -r ml/requirements-reports.txt` and
+`python ml/forecast_v2.py objective-report --plots`. They show measured development
+class frequencies, include sample-count limits, and explicitly state that future
+confirmation is pending. Plotting dependencies are not added to production.
 
 Use `--symbol BTCUSDT --horizon 15m` for a single registered pair. Fits are capped,
 one numerical thread and one pair/process run at a time; pair memory/time and total

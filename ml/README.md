@@ -83,6 +83,17 @@ Publication holds a SQLite writer reservation through the atomic JSON replacemen
 
 Tests cover actual trainable candidates for all eight synthetic assets, common chronological windows, scaler isolation, deterministic selection and LSTM weights, artifact parity/corruption, no future-feature leakage, explicit unavailable output, non-destructive source synchronization and the complete CLI. Actual market-data results and preserved-record checks are in [the measured run](../docs/PRICE_PREDICTIONS.md), with all 32 candidate measurements in the ignored `ml/data/price-predictions-verification.json`.
 
+## Direction and volatility research
+
+PR #9 extends the existing minute pipeline with independently calibrated direction
+and future realized-volatility objectives. The complete 768-configuration study,
+per-pair results, ablations, calibration figures and resource limits are in
+[Phase 2 findings](../docs/OBJECTIVE_FINDINGS.md). Five candidates meet development
+gates; none is accepted for live numerical publication. The genuinely future
+confirmation period starts December 2026. Existing price research and the daily
+SQLite lifecycle remain intact. See [objective operations](../docs/OBJECTIVE_FORECASTS.md)
+for reproducible commands, separate objective gates and the strict v3 API.
+
 ## Daily operation
 
 Use `pipeline.py daily` or `powershell.exe -NoProfile -File ml/run.ps1 -Task Daily` for the complete daily sequence, without training/reselection. `daily-status` reads the most recent structured execution record. Explicit schedule installation, UTC timezone handling, bounded retries/retention, lock behavior, backup and safe restore commands are in [daily operations](../docs/DAILY_UPDATES.md). Scheduler installation is opt-in and never runs in tests or startup.
