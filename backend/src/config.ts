@@ -11,6 +11,7 @@ const schema = z.object({
     .enum(["development", "test", "production"])
     .default("development"),
   PORT: z.coerce.number().int().min(1).max(65535).default(5000),
+  BIND_HOST: z.enum(["127.0.0.1", "0.0.0.0", "::1"]).default("0.0.0.0"),
   CORS_ORIGINS: z
     .string()
     .default("http://localhost:3000,http://127.0.0.1:3000"),
