@@ -32,7 +32,22 @@ def main(argv=None):
     repair.add_argument('--dataset', type=Path, default=Path('ml/data/normalized-v2'))
     repair.add_argument('--output', type=Path, default=Path('ml/artifacts/multihorizon/study-repaired.json'))
     repair.add_argument('--algorithm', choices=['xgboost', 'random_forest'], default='xgboost')
+    research = commands.add_parser('objective-research')
+    research.add_argument('--dataset', type=Path, default=Path('ml/data/normalized-v2'))
+    research.add_argument('--output', type=Path, default=Path('ml/artifacts/objectives-v1'))
+    research.add_argument('--protocol', type=Path, default=Path('ml/multihorizon/objective_study.json'))
+    research.add_argument('--symbol')
+    research.add_argument('--horizon', choices=['1m', '15m', '1h'])
+    research.add_argument('--pair-process', action='store_true', help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
+    if args.command == 'objective-research':
+        from multihorizon.objective_research import run_study, run_pair
+        if args.pair_process:
+            run_pair(args.dataset, args.output/args.symbol/args.horizon, args.symbol, args.horizon,
+                     json.loads(args.protocol.read_text(encoding='utf-8')))
+            return 0
+        outcomes = run_study(args.dataset, args.output, symbol=args.symbol, horizon=args.horizon, protocol_path=args.protocol)
+        return 0 if all(x['status'] in ('completed', 'cached') for x in outcomes) else 1
     if args.command == 'repair-artifacts':
         from multihorizon.repair import repair_artifacts
         repair_artifacts(args.study, args.dataset, args.output, args.algorithm)

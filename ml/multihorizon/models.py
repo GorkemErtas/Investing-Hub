@@ -143,13 +143,15 @@ def export_model(model, name, parity_x):
     return result
 
 
-def numeric_predict(artifact, x):
+def numeric_predict(artifact, x, *, expected_features=None, expected_schema=None):
     """NumPy only; no pickle, sklearn, boosting libraries or Torch in live inference."""
-    if artifact['schema'] != FEATURE_VERSION or artifact['features'] != list(FEATURES):
+    contract = list(FEATURES) if expected_features is None else list(expected_features)
+    version = FEATURE_VERSION if expected_schema is None else expected_schema
+    if artifact['schema'] != version or artifact['features'] != contract:
         raise ValueError('artifact_feature_schema_mismatch')
     x = np.asarray(x, dtype=float)
     name = artifact['algorithm']
-    if not np.isfinite(x).all() or x.shape[-1] != len(FEATURES):
+    if not np.isfinite(x).all() or x.shape[-1] != len(contract):
         raise ValueError('invalid_inference_features')
     if name == 'ridge':
         return (x-np.asarray(artifact['mean']))/np.asarray(artifact['scale']) @ np.asarray(artifact['coef'])+artifact['bias']

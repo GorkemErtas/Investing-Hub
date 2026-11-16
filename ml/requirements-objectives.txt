@@ -1,0 +1,3 @@
+# Offline direction/volatility research only; not copied into production Docker.
+-r requirements-multihorizon.txt
+arch==9.0.0
