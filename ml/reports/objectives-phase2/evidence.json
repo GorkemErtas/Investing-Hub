@@ -828,7 +828,7 @@
       },
       "file": "pairs/BTCUSDT-1m.json",
       "horizon": "1m",
-      "sha256": "29257debea3f444f1e00064c9d54415fb5f21f64094a642dd7b874c8b737e1f0",
+      "sha256": "da72c2e891e209127ff2e0806cd36646a61a49794e006bb0711bc5e5e0c90202",
       "symbol": "BTCUSDT"
     },
     {
@@ -1047,7 +1047,7 @@
       },
       "file": "pairs/BTCUSDT-15m.json",
       "horizon": "15m",
-      "sha256": "aefa90698c10afbc0b61579fcfab5d1408e8681a274a24cdf6ebfdf46b517828",
+      "sha256": "69a74a9f289e30d2c71d8e0a86745287d5143068b7a587bdd76b4c9860f651c2",
       "symbol": "BTCUSDT"
     },
     {
@@ -1259,7 +1259,7 @@
       },
       "file": "pairs/BTCUSDT-1h.json",
       "horizon": "1h",
-      "sha256": "9125c22e628939e85d7b15fbd657bcec37252758a62aac2bce57a2e9e2ee5ce6",
+      "sha256": "3f253854aba1282f6a9d3b62094ef878e84a1d4eccb2f0b637b7c246bf117040",
       "symbol": "BTCUSDT"
     },
     {
@@ -1450,7 +1450,7 @@
       },
       "file": "pairs/ETHUSDT-1m.json",
       "horizon": "1m",
-      "sha256": "e60fe362039d9f1931af96345fa45f3d04da2281a87c585845fb391f7afc9c4b",
+      "sha256": "17e1c3a4d0545e535823ab4c1500f6cc24af266bce681e90500200ae32ec46f1",
       "symbol": "ETHUSDT"
     },
     {
@@ -1676,7 +1676,7 @@
       },
       "file": "pairs/ETHUSDT-15m.json",
       "horizon": "15m",
-      "sha256": "290510b095c46b1330488ce7e7aeec5e65416bdc784ab8109ae0c18911d7b408",
+      "sha256": "d4e3c75597c3c17cf00077a5ef8ad952440cc17a482af677375a502aa71cc0c4",
       "symbol": "ETHUSDT"
     },
     {
@@ -1895,7 +1895,7 @@
       },
       "file": "pairs/ETHUSDT-1h.json",
       "horizon": "1h",
-      "sha256": "4a67c98a97db03c242de45c9a87b4bfcc00d68b4d236050ce8a4711fc02334be",
+      "sha256": "29eaec5ea1976cedb11cbd8c74ae9cef5da6a4c3a7765342f34cadb10e38aa04",
       "symbol": "ETHUSDT"
     },
     {
@@ -2128,7 +2128,7 @@
       },
       "file": "pairs/SOLUSDT-1m.json",
       "horizon": "1m",
-      "sha256": "e87452bf6919a522c18704fec5209621761ee04f67b2c74f6c648d3f23ddd7a4",
+      "sha256": "ce19275fd58e3c929306b66c73ce0376fd4899998c92ff8eb84bed20fe55b009",
       "symbol": "SOLUSDT"
     },
     {
@@ -2375,7 +2375,7 @@
       },
       "file": "pairs/SOLUSDT-15m.json",
       "horizon": "15m",
-      "sha256": "4b1461aff952867f0a41e0cd82ab817c2d0d62250ebad95f56dff1adacc18b68",
+      "sha256": "f940e321e981f6ad9f5aacb9e7250d763fbd159195eb07abb547fa720a0a07dc",
       "symbol": "SOLUSDT"
     },
     {
@@ -2524,7 +2524,7 @@
       },
       "file": "pairs/SOLUSDT-1h.json",
       "horizon": "1h",
-      "sha256": "10175470d1bf776614eacdf568311bcf85bbf84c27e64738d0acb6576aedccd7",
+      "sha256": "1f7fdadb6df28ae34b2fb971ccd4620a3a554a75b0cc453bcfadf6a69fcd1086",
       "symbol": "SOLUSDT"
     },
     {
@@ -2750,7 +2750,7 @@
       },
       "file": "pairs/BNBUSDT-1m.json",
       "horizon": "1m",
-      "sha256": "2806b99688a040a466d86d6c75d66d36aab103bb8d10f11ab4f177fbbc32fc33",
+      "sha256": "6ae20b628fa963e0d856843bb271e56d00c0bca4782bfa9d959d6c103e614eac",
       "symbol": "BNBUSDT"
     },
     {
@@ -2976,7 +2976,7 @@
       },
       "file": "pairs/BNBUSDT-15m.json",
       "horizon": "15m",
-      "sha256": "39bcd9c119c224fe20acc666454238f23c4ef94fd04643743e7c587dcca4ca4a",
+      "sha256": "acfbc61742f4d9cebfba3c25a6a88ab314bf843cd396d4589fa8d8fef9425d87",
       "symbol": "BNBUSDT"
     },
     {
@@ -3181,7 +3181,7 @@
       },
       "file": "pairs/BNBUSDT-1h.json",
       "horizon": "1h",
-      "sha256": "1d1fdebea8d3db16a3259ec859f0f6a7dd4b2e6e438fcf21567a7ecb51ac1bc8",
+      "sha256": "bf011079e7b30878f7426489f052ec97b6e158ee1250dd215d7c596d9f0aa8d5",
       "symbol": "BNBUSDT"
     },
     {
@@ -3428,7 +3428,7 @@
       },
       "file": "pairs/XRPUSDT-1m.json",
       "horizon": "1m",
-      "sha256": "d18fe56a882b3cfcf7f659e8aae63120be0741c66685de9cbb890e87a3e7a504",
+      "sha256": "0ac667ea3f8165dad5ef9dfb54989875d5700e42e7c45b172645ecae34ed6de4",
       "symbol": "XRPUSDT"
     },
     {
@@ -3682,7 +3682,7 @@
       },
       "file": "pairs/XRPUSDT-15m.json",
       "horizon": "15m",
-      "sha256": "2af2e7240a477f392f4a808bf3487ba9f5042ca21c80788d86d477f4b3965a3d",
+      "sha256": "e85254862825d014114a315e9270b4855757237b2942c5e261f7e87c7bcf560b",
       "symbol": "XRPUSDT"
     },
     {
@@ -3852,7 +3852,7 @@
       },
       "file": "pairs/XRPUSDT-1h.json",
       "horizon": "1h",
-      "sha256": "f7857f05cadb61edb1084db7b791e8ccfad6a8ddbe09f842f24d9c3626777fc0",
+      "sha256": "5485903d5e52968ee1b192d87d31a113b75dfcac7cc2e7a2a556aec43330a8bb",
       "symbol": "XRPUSDT"
     },
     {
@@ -4085,7 +4085,7 @@
       },
       "file": "pairs/ADAUSDT-1m.json",
       "horizon": "1m",
-      "sha256": "e9600936340a5b7734c180e68800238d0558e0475e0033901969aad00f7ff02f",
+      "sha256": "3afcce4ee5c5f151ba458b0348c919d6e9a5f29ec564bcd794214029bc66ddfc",
       "symbol": "ADAUSDT"
     },
     {
@@ -4290,7 +4290,7 @@
       },
       "file": "pairs/ADAUSDT-15m.json",
       "horizon": "15m",
-      "sha256": "09ae42eaf8075e8018801894a10db23bfd9f9dcbcfd98ee2055bd37b148f0dbf",
+      "sha256": "cde5bce4fe786375445434cc0de56212f53ac64a49a9cbd716b155ef1f69c9c5",
       "symbol": "ADAUSDT"
     },
     {
@@ -4481,7 +4481,7 @@
       },
       "file": "pairs/ADAUSDT-1h.json",
       "horizon": "1h",
-      "sha256": "d897a26f601d7a952547c96d4885ad2fa23e23d9e5721285a033ab22a1ea5702",
+      "sha256": "0557651265564e2d4a5c3085386d7399ebedb42c7066001c86b38f02a027e5a1",
       "symbol": "ADAUSDT"
     },
     {
@@ -4728,7 +4728,7 @@
       },
       "file": "pairs/DOGEUSDT-1m.json",
       "horizon": "1m",
-      "sha256": "82d43b4a6d8d6e5091a3135dc5600ca9c135480674f1355486a7680ae9768873",
+      "sha256": "172a21484fb4a5d18783ea32de57aefab7d47d2fa51254d97d2087d4bb5036d4",
       "symbol": "DOGEUSDT"
     },
     {
@@ -4961,7 +4961,7 @@
       },
       "file": "pairs/DOGEUSDT-15m.json",
       "horizon": "15m",
-      "sha256": "88d9b6e7cf2347bf40b2874d3ecf7ff6a4a63e15467ff6921018f6b52f1a7729",
+      "sha256": "59fb1c528911cd2f51e4e70d1ef1e1c4d0c311bdd5342e8eeead931e7d3e1fcb",
       "symbol": "DOGEUSDT"
     },
     {
@@ -5145,7 +5145,7 @@
       },
       "file": "pairs/DOGEUSDT-1h.json",
       "horizon": "1h",
-      "sha256": "9f18543a5818598566517bcad173010562e892b7a5652bd97b3634307f950a27",
+      "sha256": "44d1e9fbdb1e06f8fba04f46e7e249d9d09a6e4cf1edea0545de1e7e10c31932",
       "symbol": "DOGEUSDT"
     },
     {
@@ -5329,7 +5329,7 @@
       },
       "file": "pairs/LINKUSDT-1m.json",
       "horizon": "1m",
-      "sha256": "aba7b4562872b33b953be35543de7a8697cf9d40a6d58ee72a319fd22a726c9c",
+      "sha256": "134c37b02c73e9b5a12d69580402940df95a1e76fbb8d429935e6b79372940f5",
       "symbol": "LINKUSDT"
     },
     {
@@ -5534,7 +5534,7 @@
       },
       "file": "pairs/LINKUSDT-15m.json",
       "horizon": "15m",
-      "sha256": "baab615ab9df109bb77f5661dba3c68fcc9288b7ce2298e77c1bc099a4329b9b",
+      "sha256": "5051af4dfe42122b3148b3db9eea4690fedb47b5f3fd99d169abeb232dfb1402",
       "symbol": "LINKUSDT"
     },
     {
@@ -5697,7 +5697,7 @@
       },
       "file": "pairs/LINKUSDT-1h.json",
       "horizon": "1h",
-      "sha256": "0c38f0c8e49682d448fa1920fb6d5d3e44fdb7a75e640b95913c1b5b56b4fbe2",
+      "sha256": "ec1030f0e967c5d58f2b0fff5e1f4abd12fb28cc8e16e569af259e2ed7e6e751",
       "symbol": "LINKUSDT"
     }
   ],

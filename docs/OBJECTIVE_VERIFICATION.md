@@ -37,6 +37,8 @@ temperature calibration, valid zero-variance QLIKE, baselines, numeric export
 parity, native GARCH recursion alignment, future confirmation rejection,
 independent objectives, cache generation time, expiry and two-page provider bounds.
 Committed evidence tests run without local raw datasets or weights.
+Checksummed per-pair JSON uses explicit LF bytes and scoped Git attributes so
+Windows and Linux checkouts retain identical evidence hashes.
 
 API/shared tests cover normalized calibrated probabilities, chronology, independent
 availability, premature confirmation, checksum/size bounds and stale publication.

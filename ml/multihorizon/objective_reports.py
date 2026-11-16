@@ -19,6 +19,13 @@ def brief_metrics(value):
     return {k: value[k] for k in fields if k in value}
 
 
+def save_portable_evidence(path, value):
+    """Byte-stable JSON for Git-reviewed checksums, independent of host newlines."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(json.dumps(value, sort_keys=True, indent=2, allow_nan=False).encode('utf-8'))
+
+
 def explain_pair(study, symbol, horizon, protocol, maximum_seconds):
     started = time.perf_counter()
     pair = Path(study)/symbol/horizon
@@ -210,10 +217,10 @@ def export_objective_report(study, output, *, explain=False):
     index['pairs'] = []
     for pair in pairs:
         relative = Path('pairs')/f'{pair["symbol"]}-{pair["horizon"]}.json'
-        save_json(output/relative, pair)
+        save_portable_evidence(output/relative, pair)
         index['pairs'].append({'symbol': pair['symbol'], 'horizon': pair['horizon'],
             'file': relative.as_posix(), 'sha256': sha256(output/relative), 'decisions': pair['decisions']})
-    save_json(output/'evidence.json', index)
+    save_portable_evidence(output/'evidence.json', index)
     catalog_from_study(study, output/'decisions.json')
     lines = ['# Direction and volatility benchmark — Phase 2', '',
         'All values below come from the supplied historical Binance minute dataset. Historical development evidence is not final confirmation.',

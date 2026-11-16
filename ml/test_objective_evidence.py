@@ -18,6 +18,7 @@ class ObjectiveEvidenceTests(unittest.TestCase):
         for reference in index['pairs']:
             path = (root/reference['file']).resolve()
             self.assertTrue(path.is_relative_to(root.resolve()))
+            self.assertNotIn(b'\r\n', path.read_bytes(), 'Checksummed evidence must survive Git newline normalization')
             self.assertEqual(sha256(path), reference['sha256'])
             pair = json.loads(path.read_text(encoding='utf-8'))
             self.assertEqual(len(pair['trials']), 32)

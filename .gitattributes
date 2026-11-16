@@ -1,1 +1,2 @@
 *.sh text eol=lf
+ml/reports/objectives-phase2/** text eol=lf
