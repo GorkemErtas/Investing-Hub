@@ -4,6 +4,11 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./objectives": {
+      "types": "./objectives.ts",
+      "react-native": "./dist/objectives.js",
+      "default": "./dist/objectives.js"
+    },
     "./forecasts": {
       "types": "./forecasts.ts",
       "react-native": "./dist/forecasts.js",

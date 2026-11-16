@@ -46,6 +46,9 @@ const schema = z.object({
   FORECASTS_EXPORT_PATH: z.string().min(1).max(1024).default(
     fileURLToPath(new URL("../../ml/data/forecasts-v2.json", import.meta.url)),
   ),
+  OBJECTIVE_FORECASTS_EXPORT_PATH: z.string().min(1).max(1024).default(
+    fileURLToPath(new URL("../../ml/data/objective-forecasts.json", import.meta.url)),
+  ),
   ML_DATABASE_PATH: z
     .string()
     .min(1)
