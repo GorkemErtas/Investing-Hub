@@ -7,6 +7,7 @@ from unittest.mock import Mock
 from urllib.error import HTTPError
 import numpy as np
 from multihorizon.data import SYMBOLS, validate_candles, save_json, digest
+from multihorizon.data import sha256
 from multihorizon.features import HORIZONS, FEATURES, FEATURE_VERSION
 from multihorizon.live import Engine, BinanceMinutes
 from multihorizon.registry import Registry
@@ -84,3 +85,29 @@ class LiveTests(unittest.TestCase):
             save_json(path, {'payload': payload, 'sha256': digest(payload)})
             registry.refresh()
             self.assertEqual(len(registry.entries), 32)
+
+    def test_selected_artifact_checksum_missing_file_and_path_traversal_fail_closed(self):
+        with temporary_registry() as directory:
+            path = directory/'registry.json'
+            item, artifact = FakeRegistry().get('BTCUSDT', '1m')
+            save_json(directory/'ridge.json', artifact)
+            entries = [{'symbol': s, 'horizon': h, 'status': 'unavailable'} for s in SYMBOLS for h in HORIZONS]
+            entries[0].update(item, artifact='ridge.json', artifactSha256=sha256(directory/'ridge.json'))
+            payload = {'version': 'forecast-registry-v2', 'entries': entries}
+            def save():
+                save_json(path, {'payload': payload, 'sha256': digest(payload)})
+            save()
+            registry = Registry(path)
+            registry.refresh()
+            self.assertIsNotNone(registry.get('BTCUSDT', '1m')[1])
+            (directory/'ridge.json').write_text('corrupt', encoding='utf-8')
+            with self.assertRaisesRegex(ValueError, 'checksum'):
+                Registry(path).refresh()
+            entries[0]['artifact'] = '../outside.json'
+            save()
+            with self.assertRaisesRegex(ValueError, 'path'):
+                Registry(path).refresh()
+            entries[0]['artifact'] = 'missing.json'
+            save()
+            with self.assertRaises(FileNotFoundError):
+                Registry(path).refresh()

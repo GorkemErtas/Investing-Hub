@@ -47,6 +47,14 @@ jobs:
       - run: npm --prefix mobileapp run test:browser
         env:
           EXPO_NO_DOTENV: "1"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forecast-browser-evidence
+          path: |
+            webapp/test-results
+            mobileapp/test-results
+          retention-days: 14
   python:
     runs-on: ubuntu-latest
     timeout-minutes: 15
