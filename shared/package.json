@@ -4,6 +4,11 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./forecasts": {
+      "types": "./forecasts.ts",
+      "react-native": "./dist/forecasts.js",
+      "default": "./dist/forecasts.js"
+    },
     "./contracts": {
       "types": "./contracts.ts",
       "react-native": "./dist/contracts.js",
