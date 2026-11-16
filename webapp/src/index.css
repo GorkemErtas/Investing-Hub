@@ -738,64 +738,6 @@ h1 {
 .mover-row .change {
   font-size: 9px;
 }
-.prediction-teaser {
-  padding: 23px 23px 21px;
-  border: 1px solid #3e70615c;
-  border-radius: 10px;
-  position: relative;
-  overflow: hidden;
-  flex: 1;
-  background: linear-gradient(120deg, #1d39321f, var(--panel));
-}
-.prediction-icon {
-  color: var(--accent);
-  margin-bottom: 14px;
-}
-.prediction-teaser .pill {
-  font-size: 7px;
-  letter-spacing: 1px;
-  position: absolute;
-  top: 26px;
-  right: 20px;
-  background: #31c9a10b;
-  border-color: #31c9a120;
-  color: var(--accent);
-}
-.prediction-teaser h2 {
-  font-size: 20px;
-  letter-spacing: -0.8px;
-  line-height: 1.6;
-  position: relative;
-  z-index: 1;
-}
-.prediction-teaser p {
-  font-size: 9px;
-  line-height: 1.9;
-  color: var(--muted);
-  margin-top: 10px;
-  max-width: 225px;
-  position: relative;
-  z-index: 1;
-}
-.prediction-teaser a {
-  font-size: 10px;
-  color: var(--accent);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 20px;
-  position: relative;
-  z-index: 1;
-}
-.teaser-grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(#41d3ae07 1px, transparent 1px),
-    linear-gradient(90deg, #41d3ae07 1px, transparent 1px);
-  background-size: 25px 25px;
-  mask-image: linear-gradient(to left, black, transparent);
-}
 .pill {
   display: inline-flex;
   align-items: center;
@@ -1514,9 +1456,6 @@ dd {
     padding-top: 20px;
     padding-bottom: 20px;
   }
-  .prediction-teaser p {
-    max-width: 260px;
-  }
   .price-canvas {
     height: 345px;
   }
@@ -1555,16 +1494,6 @@ dd {
   .dashboard-grid {
     grid-template-columns: minmax(0, 1fr) 250px;
     gap: 16px;
-  }
-  .prediction-teaser {
-    padding: 19px;
-  }
-  .prediction-teaser .pill {
-    font-size: 6px;
-    right: 14px;
-  }
-  .prediction-teaser h2 {
-    font-size: 18px;
   }
   .mover-row {
     gap: 6px;
@@ -1639,20 +1568,6 @@ dd {
   }
   .mover-row {
     padding: 15px 20px;
-  }
-  .prediction-teaser h2 {
-    font-size: 22px;
-    margin-top: 25px;
-  }
-  .prediction-teaser p {
-    font-size: 10px;
-  }
-  .prediction-teaser a {
-    margin-top: 25px;
-  }
-  .prediction-teaser .pill {
-    font-size: 7px;
-    top: 23px;
   }
   .stats-grid {
     grid-template-columns: 1fr 1fr;
@@ -1902,18 +1817,6 @@ dd {
   }
   .dashboard-aside {
     grid-template-columns: 1fr;
-  }
-  .prediction-teaser {
-    padding: 23px;
-  }
-  .prediction-teaser h2 {
-    margin-top: 10px;
-  }
-  .prediction-teaser p {
-    max-width: none;
-  }
-  .prediction-teaser a {
-    margin-top: 19px;
   }
   .chart-price {
     font-size: 20px;
