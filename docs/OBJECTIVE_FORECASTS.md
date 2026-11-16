@@ -36,7 +36,7 @@ that a directional movement is economically tradable.
 
 Realized variance is `sum(log(close[j]/close[j-1])**2, j=t+1..t+h)`. The displayed
 volatility is its square root: nonannualized horizon log-return standard deviation.
-For example, `0.004` displays as `0.4%` total horizon movement. It is neither a
+For example, `0.004` displays as `0.4%` horizon volatility. It is neither a
 future price, probability of a rise/loss, nor a guaranteed price range.
 
 Research reuses the original finite feature pipeline and adds 2/4/8-hour momentum,

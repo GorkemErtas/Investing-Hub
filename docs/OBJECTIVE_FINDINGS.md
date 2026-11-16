@@ -195,7 +195,7 @@ test. GARCH matches native causal forecasts in tests but remains research-only
 until bounded live state recovery is designed and validated. Raw weights, CSVs,
 Parquet and runtime publications remain outside Git; reviewable metrics are committed.
 
-Keep all direction, volatility and price numerical publication disabled. Freeze
+Keep minute direction, volatility and experimental price publication disabled. Freeze
 candidate artifacts before December, collect complete future minutes and evaluate
 all 60 UTC minute phases with overlap-aware uncertainty (at least 100 origins per
 phase), using the same gates and an expanded comparison family if experiments are
